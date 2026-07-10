@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String?   @unique
+  phone         String?   @unique
+  password      String
+  nickname      String    @default("易算用户")
+  avatarUrl     String?
+  status        String    @default("active")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  profile         UserProfile?
+  charts          Chart[]
+  analysisRecords AnalysisRecord[]
+
+  @@index([email])
+  @@index([phone])
+  @@map("users")
+}
+
+model UserProfile {
+  id             String    @id @default(uuid())
+  userId         String    @unique
+  realName       String?
+  gender         String?
+  birthDate      DateTime?
+  birthTime      String?
+  birthPlace     String?
+  birthProvince  String?
+  birthCity      String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+model Chart {
+  id         String   @id @default(uuid())
+  userId     String
+  chartType  String
+  title      String?
+  inputData  String   @default("{}")
+  chartData  String   @default("{}")
+  isPublic   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  analysisRecords  AnalysisRecord[]
+
+  @@index([userId])
+  @@index([chartType])
+  @@map("charts")
+}
+
+model AnalysisRecord {
+  id            String    @id @default(uuid())
+  userId        String
+  chartId       String?
+  analysisType  String
+  inputData     String    @default("{}")
+  resultData    String    @default("{}")
+  createdAt     DateTime  @default(now())
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chart Chart? @relation(fields: [chartId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([chartId])
+  @@index([createdAt])
+  @@map("analysis_records")
+}
+
+model Feedback {
+  id           String   @id @default(uuid())
+  userId       String?
+  feedbackType String   @default("建议")
+  content      String
+  adminReply   String?
+  status       String   @default("pending")
+  createdAt    DateTime @default(now())
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("feedbacks")
+}
+
+model HanziLibrary {
+  id            Int      @id @default(autoincrement())
+  character     String   @unique
+  kangxiStrokes Int
+  simplified    String?
+  pinyin        String?
+  wuxing        String?
+  meaning       String?
+  isSurname     Boolean  @default(false)
+  auspicious    Boolean  @default(true)
+  score         Int      @default(80)
+  createdAt     DateTime @default(now())
+
+  @@index([character])
+  @@index([wuxing])
+  @@index([kangxiStrokes])
+  @@map("hanzi_library")
+}

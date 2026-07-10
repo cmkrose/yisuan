@@ -1,0 +1,240 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200;300;400;500;600;700;900&display=swap');
+
+:root {
+  --xuan-black: #0a0a0f;
+  --xuan-dark: #12121a;
+  --xuan-card: #1a1a24;
+  --xuan-border: #2a2a3a;
+  --xuan-gold: #d4a853;
+  --xuan-gold-light: #e8c97a;
+  --xuan-gold-dark: #b8922e;
+  --xuan-red: #c45c4a;
+  --xuan-cyan: #5ca8c4;
+  --xuan-jade: #5ca87a;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', 'Noto Serif SC', system-ui, sans-serif;
+  background-color: var(--xuan-black);
+  color: #e5e5e5;
+  overflow-x: hidden;
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--xuan-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--xuan-gold-dark);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--xuan-gold);
+}
+
+/* 选中文本样式 */
+::selection {
+  background: rgba(212, 168, 83, 0.3);
+  color: #fff;
+}
+
+/* 玻璃态效果 */
+.glass {
+  background: rgba(26, 26, 36, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(212, 168, 83, 0.1);
+}
+
+.glass-dark {
+  background: rgba(10, 10, 15, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(212, 168, 83, 0.08);
+}
+
+/* 金色边框发光效果 */
+.gold-glow {
+  position: relative;
+}
+
+.gold-glow::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(135deg, #d4a853, transparent, #d4a853);
+  border-radius: inherit;
+  z-index: -1;
+  opacity: 0.5;
+  transition: opacity 0.3s ease;
+}
+
+.gold-glow:hover::before {
+  opacity: 1;
+}
+
+/* 水墨晕染效果 */
+.ink-wash {
+  position: relative;
+  overflow: hidden;
+}
+
+.ink-wash::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle, rgba(212, 168, 83, 0.3) 0%, transparent 70%);
+  transform: translate(-50%, -50%) scale(0);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.ink-wash:hover::after {
+  animation: inkDrop 1s ease-out forwards;
+}
+
+/* 卡片悬停效果 */
+.card-hover {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(212, 168, 83, 0.15);
+}
+
+/* 文字渐变效果 */
+.text-gradient-gold {
+  background: linear-gradient(135deg, #d4a853 0%, #e8c97a 50%, #d4a853 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 八卦符号样式 */
+.bagua-symbol {
+  font-family: 'Noto Serif SC', serif;
+  font-weight: 900;
+}
+
+/* 水墨笔触装饰 */
+.ink-stroke {
+  position: relative;
+}
+
+.ink-stroke::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--xuan-gold), transparent);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.ink-stroke:hover::after {
+  transform: scaleX(1);
+}
+
+/* 星辰粒子效果 */
+.stars-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 渐入动画延迟 */
+.animation-delay-100 { animation-delay: 100ms; }
+.animation-delay-200 { animation-delay: 200ms; }
+.animation-delay-300 { animation-delay: 300ms; }
+.animation-delay-400 { animation-delay: 400ms; }
+.animation-delay-500 { animation-delay: 500ms; }
+
+/* 响应式字体 */
+@layer base {
+  html {
+    @apply text-base;
+  }
+  
+  @media (min-width: 640px) {
+    html {
+      @apply text-lg;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    html {
+      @apply text-xl;
+    }
+  }
+}
+
+/* 自定义组件样式 */
+@layer components {
+  .btn-gold {
+    @apply px-6 py-3 bg-gradient-to-r from-xuan-gold-dark via-xuan-gold to-xuan-gold-dark
+           text-xuan-black font-semibold rounded-lg
+           transition-all duration-300 ease-out
+           hover:shadow-gold-lg hover:scale-105
+           active:scale-95;
+  }
+  
+  .btn-outline-gold {
+    @apply px-6 py-3 border border-xuan-gold text-xuan-gold rounded-lg
+           transition-all duration-300 ease-out
+           hover:bg-xuan-gold hover:text-xuan-black
+           active:scale-95;
+  }
+  
+  .card-xuan {
+    @apply bg-xuan-card/80 backdrop-blur-sm border border-xuan-border rounded-xl
+           transition-all duration-300;
+  }
+  
+  .card-xuan-gold {
+    background: rgba(26, 26, 36, 0.8);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(212, 168, 83, 0.2);
+    border-radius: 0.75rem;
+    transition: all 0.3s ease;
+  }
+  .card-xuan-gold:hover {
+    border-color: rgba(212, 168, 83, 0.5);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
