@@ -6,12 +6,13 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: [
-      process.env.APP_URL,
-      'http://localhost:3000',
-      'http://localhost:3001',
-      /\.vercel\.app$/,
-    ].filter(Boolean),
+    origin: (origin, callback) => {
+      if (!origin || origin.endsWith('.vercel.app') || origin.startsWith('http://localhost')) {
+        callback(null, true);
+      } else {
+        callback(null, true); // 允许所有来源
+      }
+    },
     credentials: true,
   });
 
