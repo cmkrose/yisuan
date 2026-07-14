@@ -1,0 +1,20 @@
+{
+  "build": {
+    "builder": "NIXPACKS",
+    "nixpacksConfig": {
+      "phases": {
+        "build": {
+          "cmds": [
+            "npm install -g pnpm",
+            "pnpm install --no-frozen-lockfile",
+            "cd backend && npx prisma generate && npx nest build"
+          ]
+        }
+      }
+    }
+  },
+  "deploy": {
+    "startCommand": "cd backend && node dist/main.js",
+    "restartPolicyType": "ON_FAILURE"
+  }
+}
