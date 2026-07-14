@@ -1,0 +1,10 @@
+{
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "npm install --prefix . && npx prisma generate && npx nest build"
+  },
+  "deploy": {
+    "startCommand": "node dist/main.js",
+    "restartPolicyType": "ON_FAILURE"
+  }
+}
