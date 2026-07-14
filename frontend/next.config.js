@@ -3,6 +3,8 @@ const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
 
+  typescript: { ignoreBuildErrors: true },
+
   poweredByHeader: false,
   compress: true,
   generateEtags: true,

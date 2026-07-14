@@ -1,5 +1,5 @@
 {
   "framework": "nextjs",
-  "buildCommand": "NEXT_DISABLE_ESLINT=1 pnpm build",
+  "buildCommand": "next build",
   "installCommand": "pnpm install --no-frozen-lockfile"
 }
