@@ -2,6 +2,7 @@
   "name": "yisuan",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@8.15.0",
   "description": "《易算》- 东方传统文化智能分析平台",
   "workspaces": [
     "frontend",
