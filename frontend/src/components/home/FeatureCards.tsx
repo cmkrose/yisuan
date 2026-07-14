@@ -20,16 +20,15 @@ const categories = [
     ],
   },
   {
-    title: '占卜系统',
-    subtitle: '占卜预测',
-    icon: '☳',
-    href: '/divination',
+    title: '三式绝学',
+    subtitle: '奇门遁甲',
+    icon: '门',
+    href: '/divination/qimen',
     color: 'from-cyan-500/20 to-blue-500/20',
     borderColor: 'border-cyan-500/30 hover:border-cyan-500/60',
     items: [
-      { name: '六爻占卜', href: '/divination/liuyao', icon: '爻' },
-      { name: '梅花易数', href: '/divination/meihua', icon: '梅' },
       { name: '奇门遁甲', href: '/divination/qimen', icon: '门' },
+      { name: '大六壬', href: '/divination/qimen', icon: '壬' },
     ],
   },
   {
@@ -40,22 +39,10 @@ const categories = [
     color: 'from-emerald-500/20 to-teal-500/20',
     borderColor: 'border-emerald-500/30 hover:border-emerald-500/60',
     items: [
-      { name: '八宅风水', href: '/fengshui/bazhai', icon: '宅' },
-      { name: '玄空飞星', href: '/fengshui/feixing', icon: '星' },
-      { name: '罗盘分析', href: '/fengshui/compass', icon: '盘' },
-    ],
-  },
-  {
-    title: 'AI分析系统',
-    subtitle: '智能分析',
-    icon: '🤖',
-    href: '/ai-analysis',
-    color: 'from-purple-500/20 to-pink-500/20',
-    borderColor: 'border-purple-500/30 hover:border-purple-500/60',
-    items: [
-      { name: '智能解读', href: '/ai-analysis', icon: 'AI' },
-      { name: '综合报告', href: '/ai-analysis/report', icon: '报' },
-      { name: '个性化建议', href: '/ai-analysis/advice', icon: '议' },
+      { name: '罗盘', href: '/fengshui', icon: '盘' },
+      { name: '八宅', href: '/fengshui', icon: '宅' },
+      { name: '飞星', href: '/fengshui', icon: '星' },
+      { name: '阳宅阴宅', href: '/fengshui', icon: '屋' },
     ],
   },
 ];
@@ -94,7 +81,7 @@ export default function FeatureCards() {
           功能模块
         </span>
         <h2 className="text-3xl sm:text-4xl font-chinese font-bold text-gradient-gold mb-4">
-          四大核心系统
+          三大核心系统
         </h2>
         <p className="text-xuan-muted font-chinese max-w-xl mx-auto">
           融合传统智慧与现代科技，为您提供全方位的玄学分析服务
@@ -142,7 +129,7 @@ export default function FeatureCards() {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {category.items.map((item) => (
                 <Link
-                  key={item.href}
+                  key={item.name}
                   href={item.href}
                   className={`relative p-4 rounded-lg bg-gradient-to-br ${category.color} border border-transparent hover:border-xuan-gold/20 transition-all duration-300 group/item`}
                 >

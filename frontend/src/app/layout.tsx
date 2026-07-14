@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   title: { default: APP_NAME, template: `%s | ${APP_NAME}` },
   description: APP_DESCRIPTION,
   applicationName: APP_NAME,
-  keywords: ['八字命理','紫微斗数','姓名学','风水堪舆','六爻占卜','梅花易数','奇门遁甲','择日','AI命理','东方智慧','传统文华'],
+  keywords: ['八字命理','紫微斗数','姓名学','风水堪舆','奇门遁甲','择日','AI命理','东方智慧','传统文化'],
   authors: [{ name: '易算团队' }],
   creator: '易算',
   publisher: '易算科技',

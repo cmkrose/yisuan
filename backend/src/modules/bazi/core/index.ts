@@ -1,6 +1,6 @@
 export { calculatePillars } from './pillars';
 export { analyzeBazi, dayMasterStrength, judgePattern, calcDayun, calcLiunian } from './analysis';
-export type { DayMasterAnalysis, PatternResult, Dayun, BaziAnalysis } from './analysis';
+export type { DayMasterAnalysis, PatternResult, Dayun, BaziAnalysis, DetailedAnalysis } from './analysis';
 export {
   HEAVENLY_STEMS, EARTHLY_BRANCHES, SHENG_XIAO,
   getStemElement, getStemYinYang, getBranchElement, getBranchYinYang,

@@ -6,32 +6,46 @@ import { motion } from 'framer-motion';
 
 const quickTools = [
   {
-    name: '八字速排',
-    description: '输入出生信息，一键排盘',
+    name: '八字排盘',
+    description: '输入出生信息，查看详细命理分析',
     icon: '☰',
     href: '/bazi',
     color: 'text-amber-400',
   },
   {
+    name: '紫微斗数',
+    description: '十二宫位排盘，四化星曜分析',
+    icon: '★',
+    href: '/ziwei',
+    color: 'text-purple-400',
+  },
+  {
     name: '姓名测试',
-    description: '测试姓名五格吉凶',
+    description: '五格三才分析，改名建议',
     icon: '名',
     href: '/name',
     color: 'text-cyan-400',
   },
   {
     name: '今日黄历',
-    description: '查看今日宜忌',
+    description: '查看每日宜忌、吉凶',
     icon: '历',
     href: '/zeri',
     color: 'text-emerald-400',
   },
   {
-    name: 'AI解读',
-    description: '智能分析命理',
-    icon: 'AI',
-    href: '/ai-analysis',
-    color: 'text-purple-400',
+    name: '奇门遁甲',
+    description: '九宫八门，局势分析',
+    icon: '门',
+    href: '/divination/qimen',
+    color: 'text-blue-400',
+  },
+  {
+    name: '风水堪舆',
+    description: '罗盘八宅，阳宅阴宅',
+    icon: '屋',
+    href: '/fengshui',
+    color: 'text-teal-400',
   },
 ];
 

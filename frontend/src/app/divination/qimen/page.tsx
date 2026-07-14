@@ -26,21 +26,40 @@ const bgForElement: Record<string, string> = {
   土:'from-amber-900/30 to-orange-900/20 border-amber-500/40',
 };
 
+const purposeOptions = [
+  { v: 'career', l: '事业' },
+  { v: 'wealth', l: '财运' },
+  { v: 'marriage', l: '婚姻' },
+  { v: 'health', l: '健康' },
+  { v: 'general', l: '综合' },
+];
+
 export default function SanshiPage() {
   const [tab, setTab] = useState<TabKey>('qimen');
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
-  // Qimen form
   const now = new Date();
   const [qm, setQm] = useState({ year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate(), hour: now.getHours() });
+  const [qmBirth, setQmBirth] = useState({ birthYear: 1990, birthMonth: 1, birthDay: 1, birthHour: 12 });
+  const [qmGender, setQmGender] = useState<'male' | 'female'>('male');
+  const [qmLocation, setQmLocation] = useState('');
+  const [qmPurpose, setQmPurpose] = useState('general');
 
   const runQimen = async () => { setLoading(true);
-    try { const r = await api.post('/api/sanshi/qimen', { year: Number(qm.year), month: Number(qm.month), day: Number(qm.day), hour: Number(qm.hour) });
-      setResult({ type: 'qimen', data: r.data }); } catch(e){} finally { setLoading(false); }
+    try {
+      const r = await api.post('/api/sanshi/qimen', {
+        year: Number(qm.year), month: Number(qm.month), day: Number(qm.day), hour: Number(qm.hour),
+        birthYear: Number(qmBirth.birthYear), birthMonth: Number(qmBirth.birthMonth),
+        birthDay: Number(qmBirth.birthDay), birthHour: Number(qmBirth.birthHour),
+        gender: qmGender,
+        location: qmLocation,
+        purpose: qmPurpose,
+      });
+      setResult({ type: 'qimen', data: r.data });
+    } catch(e){} finally { setLoading(false); }
   };
 
-  // Liuren form
   const [lr, setLr] = useState({ month: now.getMonth() + 1, hour: now.getHours() });
 
   const runLiuren = async () => { setLoading(true);
@@ -83,14 +102,12 @@ export default function SanshiPage() {
       <Navbar />
       <div className="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
-          {/* Header */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
             <span className="inline-block text-xs tracking-[0.3em] text-purple-400/70 font-chinese mb-4">高级预测</span>
             <h1 className="text-3xl sm:text-4xl font-chinese font-bold text-gradient-gold mb-4">三式预测</h1>
             <p className="text-xuan-muted font-chinese">太乙神数 · 奇门遁甲 · 大六壬 · 古老帝王三式</p>
           </motion.div>
 
-          {/* Tab Selector */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
             className="grid grid-cols-3 gap-3 mb-8">
             {tabs.map((t) => (
@@ -108,12 +125,12 @@ export default function SanshiPage() {
             ))}
           </motion.div>
 
-          {/* ========== QIMEN ========== */}
           <AnimatePresence mode="wait">
             {tab === 'qimen' && (
               <motion.div key="qimen" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
                 <div className="card-xuan-gold p-6 sm:p-8 mb-8">
-                  <div className="grid grid-cols-4 gap-3 mb-4">
+                  <h3 className="text-sm font-chinese font-bold text-xuan-gold mb-4">排盘时间</h3>
+                  <div className="grid grid-cols-4 gap-3 mb-6">
                     <div><label className="text-xs text-xuan-muted font-chinese mb-1 block">年</label>
                       <select value={qm.year} onChange={(e) => setQm({...qm, year: Number(e.target.value)})}
                         className="w-full px-2 py-2.5 bg-xuan-dark border border-xuan-border rounded-lg text-sm text-white">
@@ -131,6 +148,53 @@ export default function SanshiPage() {
                         {Array.from({ length: 24 }, (_, i) => i).map(h => <option key={h} value={h}>{String(h).padStart(2,'0')}:00</option>)}
                       </select></div>
                   </div>
+
+                  <h3 className="text-sm font-chinese font-bold text-xuan-gold mb-4">个人信息</h3>
+                  <div className="grid grid-cols-4 gap-3 mb-3">
+                    <div><label className="text-xs text-xuan-muted font-chinese mb-1 block">出生年份</label>
+                      <select value={qmBirth.birthYear} onChange={(e) => setQmBirth({...qmBirth, birthYear: Number(e.target.value)})}
+                        className="w-full px-2 py-2.5 bg-xuan-dark border border-xuan-border rounded-lg text-sm text-white">
+                        {Array.from({ length: 101 }, (_, i) => 1924 + i).map(y => <option key={y} value={y}>{y}年</option>)}
+                      </select></div>
+                    <div><label className="text-xs text-xuan-muted font-chinese mb-1 block">出生月份</label>
+                      <select value={qmBirth.birthMonth} onChange={(e) => setQmBirth({...qmBirth, birthMonth: Number(e.target.value)})}
+                        className="w-full px-2 py-2.5 bg-xuan-dark border border-xuan-border rounded-lg text-sm text-white">{genOptions(12,'月')}</select></div>
+                    <div><label className="text-xs text-xuan-muted font-chinese mb-1 block">出生日期</label>
+                      <select value={qmBirth.birthDay} onChange={(e) => setQmBirth({...qmBirth, birthDay: Number(e.target.value)})}
+                        className="w-full px-2 py-2.5 bg-xuan-dark border border-xuan-border rounded-lg text-sm text-white">{genOptions(31,'日')}</select></div>
+                    <div><label className="text-xs text-xuan-muted font-chinese mb-1 block">出生时辰</label>
+                      <select value={qmBirth.birthHour} onChange={(e) => setQmBirth({...qmBirth, birthHour: Number(e.target.value)})}
+                        className="w-full px-2 py-2.5 bg-xuan-dark border border-xuan-border rounded-lg text-sm text-white">
+                        {Array.from({ length: 24 }, (_, i) => i).map(h => <option key={h} value={h}>{String(h).padStart(2,'0')}:00</option>)}
+                      </select></div>
+                  </div>
+                  <div className="mb-4">
+                    <label className="text-xs text-xuan-muted font-chinese mb-1 block">性别</label>
+                    <div className="flex gap-2">
+                      {[{v:'male' as const,l:'男'},{v:'female' as const,l:'女'}].map(o=>(
+                        <button key={o.v} onClick={()=>setQmGender(o.v)}
+                          className={`flex-1 py-2.5 rounded-lg text-sm border font-chinese ${qmGender===o.v?'border-purple-400 bg-purple-500/10 text-purple-400':'border-xuan-border text-xuan-muted hover:border-purple-400/30'}`}>{o.l}</button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <h3 className="text-sm font-chinese font-bold text-xuan-gold mb-4">预测参数</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                    <div>
+                      <label className="text-xs text-xuan-muted font-chinese mb-1 block">当前地址/方位</label>
+                      <input type="text" value={qmLocation} onChange={(e) => setQmLocation(e.target.value)}
+                        placeholder="如：北京、东南方"
+                        className="w-full px-3 py-2.5 bg-xuan-dark border border-xuan-border rounded-lg text-sm text-white placeholder-xuan-muted" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-xuan-muted font-chinese mb-1 block">预测事项</label>
+                      <select value={qmPurpose} onChange={(e) => setQmPurpose(e.target.value)}
+                        className="w-full px-3 py-2.5 bg-xuan-dark border border-xuan-border rounded-lg text-sm text-white">
+                        {purposeOptions.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
                   <button onClick={runQimen} disabled={loading}
                     className="w-full btn-gold py-4 text-lg font-chinese disabled:opacity-50">
                     {loading ? '排盘中...' : '开始排盘'}
@@ -139,7 +203,6 @@ export default function SanshiPage() {
 
                 {result?.type === 'qimen' && (
                   <div className="space-y-4">
-                    {/* Info Bar */}
                     <div className="card-xuan p-4 flex flex-wrap gap-3 text-sm font-chinese">
                       <span className="px-3 py-1 bg-purple-500/10 text-purple-400 rounded-full">
                         {result.data.yangDun ? '阳遁' : '阴遁'}{result.data.juShu}局
@@ -150,7 +213,6 @@ export default function SanshiPage() {
                       </span>
                     </div>
 
-                    {/* 9-Gong Grid */}
                     <div className="card-xuan-gold p-4 sm:p-6">
                       <h3 className="text-lg font-chinese font-bold text-xuan-gold mb-4 text-center">奇门九宫格</h3>
                       <div className="grid grid-cols-3 gap-2 sm:gap-3 max-w-lg mx-auto">
@@ -158,7 +220,6 @@ export default function SanshiPage() {
                       </div>
                     </div>
 
-                    {/* Legend */}
                     <div className="card-xuan p-4">
                       <div className="flex flex-wrap gap-3 text-xs font-chinese">
                         <div className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-xuan-gold/30" /><span className="text-xuan-gold">八门</span></div>
@@ -168,12 +229,20 @@ export default function SanshiPage() {
                         <div className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-amber-500/30" /><span className="text-amber-400">地盘</span></div>
                       </div>
                     </div>
+
+                    {result.data.analysis && (
+                      <div className="card-xuan-gold p-4 sm:p-6 mt-4">
+                        <h3 className="text-lg font-chinese font-bold text-xuan-gold mb-4">详细分析</h3>
+                        <div className="text-sm font-chinese text-xuan-silver leading-relaxed whitespace-pre-wrap">
+                          {result.data.analysis}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </motion.div>
             )}
 
-            {/* ========== LIUREN ========== */}
             {tab === 'liuren' && (
               <motion.div key="liuren" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
                 <div className="card-xuan-gold p-6 sm:p-8 mb-8">
@@ -195,7 +264,6 @@ export default function SanshiPage() {
 
                 {result?.type === 'liuren' && (
                   <div className="space-y-6">
-                    {/* Four Lessons */}
                     <div className="card-xuan-gold p-6">
                       <h3 className="text-lg font-chinese font-bold text-xuan-gold mb-4">四课</h3>
                       <div className="grid grid-cols-4 gap-3">
@@ -213,7 +281,6 @@ export default function SanshiPage() {
                       </div>
                     </div>
 
-                    {/* Three Transmissions */}
                     <div className="card-xuan-gold p-6">
                       <h3 className="text-lg font-chinese font-bold text-xuan-gold mb-4">三传</h3>
                       <div className="flex items-center gap-2 mb-4">
@@ -230,7 +297,6 @@ export default function SanshiPage() {
                       </div>
                     </div>
 
-                    {/* Twelve Generals */}
                     <div className="card-xuan-gold p-6">
                       <h3 className="text-lg font-chinese font-bold text-xuan-gold mb-4">十二天将</h3>
                       <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
@@ -244,16 +310,23 @@ export default function SanshiPage() {
                       </div>
                     </div>
 
-                    {/* Interpretation */}
                     <div className="card-xuan-gold p-4 text-sm font-chinese text-xuan-silver leading-relaxed">
                       {result.data.interpretation}
                     </div>
+
+                    {result.data.analysis && (
+                      <div className="card-xuan-gold p-4 mt-3">
+                        <h4 className="text-base font-chinese font-bold text-xuan-gold mb-3">详细分析</h4>
+                        <div className="text-sm font-chinese text-xuan-silver leading-relaxed whitespace-pre-wrap">
+                          {result.data.analysis}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </motion.div>
             )}
 
-            {/* ========== TAIYI PLACEHOLDER ========== */}
             {tab === 'taiyi' && (
               <motion.div key="taiyi" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 <div className="card-xuan-gold p-12 text-center">

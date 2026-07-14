@@ -10,15 +10,9 @@ const footerLinks = {
     { name: '姓名学', href: '/name' },
     { name: '择日', href: '/zeri' },
   ],
-  占卜: [
-    { name: '六爻占卜', href: '/divination/liuyao' },
-    { name: '梅花易数', href: '/divination/meihua' },
-    { name: '奇门遁甲', href: '/divination/qimen' },
-  ],
   风水: [
-    { name: '八宅风水', href: '/fengshui/bazhai' },
-    { name: '玄空飞星', href: '/fengshui/feixing' },
-    { name: '罗盘分析', href: '/fengshui/compass' },
+    { name: '风水堪舆', href: '/fengshui' },
+    { name: '奇门遁甲', href: '/divination/qimen' },
   ],
   关于: [
     { name: '关于我们', href: '/about' },
@@ -80,7 +74,7 @@ export default function Footer() {
         {/* Bottom */}
         <div className="mt-12 pt-8 border-t border-xuan-border flex flex-col md:flex-row items-center justify-between">
           <p className="text-xs text-xuan-muted font-chinese">
-            © 2024 易算. All rights reserved.
+            © 2026 易算. All rights reserved.
           </p>
           <p className="text-xs text-xuan-muted font-chinese mt-2 md:mt-0">
             仅供娱乐参考，不构成任何建议

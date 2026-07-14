@@ -1,283 +1,787 @@
-import {
-  HEAVENLY_STEMS, EARTHLY_BRANCHES, PALACES,
-  TianGan, DiZhi, Star, Palace, PalaceName, ZiweiResult,
-} from './constants';
-
-const ziweiRelPos  = [0, -1, -2, -3, -4, -5];
-const tianjiRelPos  = [0, -1, 2, -3, 4, -5];
-const taiyangRelPos = [0, -3, 2, -5, 4, -1];
-const wuquRelPos    = [0, -4, 2, -1, 4, -3];
-const tiantongRelPos= [0, -5, 2, -3, 4, -1];
-const lianzhenRelPos= [0, 4, 2, -5, -3, -1];
-
-const tianfuStars: string[] = ['天府','太阴','贪狼','巨门','天相','天梁','七杀','破军'];
+export const HEAVENLY_STEMS = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'] as const;
+export const EARTHLY_BRANCHES = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'] as const;
+export const PALACES = ['命宫','兄弟','夫妻','子女','财帛','疾厄','迁移','交友','事业','田宅','福德','父母'];
+export type TianGan = typeof HEAVENLY_STEMS[number];
+export type DiZhi = typeof EARTHLY_BRANCHES[number];
+export type PalaceName = typeof PALACES[number];
 
 const wuxingJuTable: Record<string, string> = {
-  '甲子': '金四局','乙丑': '金四局','丙寅': '火六局','丁卯': '火六局','戊辰': '木三局','己巳': '木三局',
-  '庚午': '土五局','辛未': '土五局','壬申': '金四局','癸酉': '金四局',
-  '甲戌': '火六局','乙亥': '火六局','丙子': '水二局','丁丑': '水二局','戊寅': '土五局','己卯': '土五局',
-  '庚辰': '金四局','辛巳': '金四局','壬午': '木三局','癸未': '木三局',
-  '甲申': '水二局','乙酉': '水二局','丙戌': '土五局','丁亥': '土五局','戊子': '火六局','己丑': '火六局',
-  '庚寅': '木三局','辛卯': '木三局','壬辰': '水二局','癸巳': '水二局',
-  '甲午': '金四局','乙未': '金四局','丙申': '火六局','丁酉': '火六局','戊戌': '木三局','己亥': '木三局',
-  '庚子': '土五局','辛丑': '土五局','壬寅': '金四局','癸卯': '金四局',
-  '甲辰': '火六局','乙巳': '火六局','丙午': '水二局','丁未': '水二局','戊申': '土五局','己酉': '土五局',
-  '庚戌': '金四局','辛亥': '金四局','壬子': '木三局','癸丑': '木三局',
-  '甲寅': '水二局','乙卯': '水二局','丙辰': '土五局','丁巳': '土五局','戊午': '火六局','己未': '火六局',
-  '庚申': '木三局','辛酉': '木三局','壬戌': '水二局','癸亥': '水二局',
+  '甲子':'金四局','乙丑':'金四局','丙寅':'火六局','丁卯':'火六局','戊辰':'木三局','己巳':'木三局',
+  '庚午':'土五局','辛未':'土五局','壬申':'金四局','癸酉':'金四局','甲戌':'火六局','乙亥':'火六局',
+  '丙子':'水二局','丁丑':'水二局','戊寅':'土五局','己卯':'土五局','庚辰':'金四局','辛巳':'金四局',
+  '壬午':'木三局','癸未':'木三局','甲申':'水二局','乙酉':'水二局','丙戌':'土五局','丁亥':'土五局',
+  '戊子':'火六局','己丑':'火六局','庚寅':'木三局','辛卯':'木三局','壬辰':'水二局','癸巳':'水二局',
+  '甲午':'金四局','乙未':'金四局','丙申':'火六局','丁酉':'火六局','戊戌':'木三局','己亥':'木三局',
+  '庚子':'土五局','辛丑':'土五局','壬寅':'金四局','癸卯':'金四局','甲辰':'火六局','乙巳':'火六局',
+  '丙午':'水二局','丁未':'水二局','戊申':'土五局','己酉':'土五局','庚戌':'金四局','辛亥':'金四局',
+  '壬子':'木三局','癸丑':'木三局','甲寅':'水二局','乙卯':'水二局','丙辰':'土五局','丁巳':'土五局',
+  '戊午':'火六局','己未':'火六局','庚申':'木三局','辛酉':'木三局','壬戌':'水二局','癸亥':'水二局',
 };
 
 const ziweiTables: Record<number, number[]> = {
-  2: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0, 1, 2, 3, 4, 5],
-  3: [0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 0, 0, 1, 1, 2, 2],
-  4: [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7, 8, 8, 8, 9, 9, 9],
-  5: [0, 6, 0, 6, 1, 7, 0, 6, 1, 7, 1, 7, 2, 8, 1, 7, 2, 8, 2, 8, 3, 9, 2, 8, 3, 9, 3, 9, 4, 10],
-  6: [0, 0, 6, 6, 0, 6, 1, 7, 0, 6, 1, 7, 1, 7, 2, 8, 1, 7, 2, 8, 2, 8, 3, 9, 2, 8, 3, 9, 3, 9],
+  2: [0,1,2,3,4,5,6,7,8,9,10,11,0,1,2,3,4,5,6,7,8,9,10,11,0,1,2,3,4,5],
+  3: [0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,0,0,1,1,2,2],
+  4: [0,0,0,1,1,1,2,2,2,3,3,3,4,4,4,5,5,5,6,6,6,7,7,7,8,8,8,9,9,9],
+  5: [0,6,0,6,1,7,0,6,1,7,1,7,2,8,1,7,2,8,2,8,3,9,2,8,3,9,3,9,4,10],
+  6: [0,0,6,6,0,6,1,7,0,6,1,7,1,7,2,8,1,7,2,8,2,8,3,9,2,8,3,9,3,9],
 };
 
-export function calculateZiwei(
-  birthYear: number, birthMonth: number, birthDay: number,
-  birthHour: number, gender: 'male' | 'female',
-): ZiweiResult {
-  const ysi = (birthYear - 4) % 10, ybi = (birthYear - 4) % 12;
-  const ys = HEAVENLY_STEMS[(ysi + 10) % 10], yb = EARTHLY_BRANCHES[(ybi + 12) % 12];
+const SIHUA_TABLE: Record<string, { 禄: string; 权: string; 科: string; 忌: string }> = {
+  '甲': { 禄:'廉贞', 权:'破军', 科:'武曲', 忌:'太阳' },
+  '乙': { 禄:'天机', 权:'天梁', 科:'紫微', 忌:'太阴' },
+  '丙': { 禄:'天同', 权:'天机', 科:'文昌', 忌:'廉贞' },
+  '丁': { 禄:'太阴', 权:'天同', 科:'天机', 忌:'巨门' },
+  '戊': { 禄:'贪狼', 权:'太阴', 科:'右弼', 忌:'天机' },
+  '己': { 禄:'武曲', 权:'贪狼', 科:'天梁', 忌:'文曲' },
+  '庚': { 禄:'太阳', 权:'武曲', 科:'太阴', 忌:'天同' },
+  '辛': { 禄:'巨门', 权:'太阳', 科:'文曲', 忌:'文昌' },
+  '壬': { 禄:'天梁', 权:'紫微', 科:'左辅', 忌:'武曲' },
+  '癸': { 禄:'破军', 权:'巨门', 科:'太阴', 忌:'贪狼' },
+};
 
-  const monthBranchIdx = (birthMonth + 1) % 12;
-  const lifeBranchIdx = ((2 + birthMonth - 1 - birthHour + 12) % 12 + 12) % 12;
-  const lifeBranch = EARTHLY_BRANCHES[lifeBranchIdx];
-  const bodyBranchIdx = ((2 + birthMonth - 1 + birthHour + 12) % 12 + 12) % 12;
-  const bodyBranch = EARTHLY_BRANCHES[bodyBranchIdx];
+export interface PalaceSiHua { 禄?: string; 权?: string; 科?: string; 忌?: string }
+export interface Star { name: string; brightness: string; isMajor: boolean }
+export interface Palace {
+  name: string; branch: string; stem: string;
+  majorStars: Star[]; minorStars: Star[];
+  isBodyPalace: boolean;
+  majorLimit: { startAge: number; endAge: number } | null;
+  siHua: PalaceSiHua;
+  sanFang: string[];
+  duiGong: string;
+}
 
-  // Palace stems
-  const yiIdx = EARTHLY_BRANCHES.indexOf('寅');
-  const yiStemForYear: Record<string, number> = { 甲:0, 己:0, 乙:2, 庚:2, 丙:4, 辛:4, 丁:6, 壬:6, 戊:8, 癸:8 };
-  const yiStemIdx = yiStemForYear[ys] || 0;
-  const palaceStems: TianGan[] = [];
+function getPalaceStars(p: { majorStars: Star[]; minorStars: Star[] }): string[] {
+  return [...p.majorStars.map(s => s.name), ...p.minorStars.map(s => s.name)];
+}
+
+function buildSanFangDuiGong(): { sanFangMap: Record<number, string[]>; duiGongMap: Record<number, string> } {
+  const sanFangMap: Record<number, string[]> = {};
+  const duiGongMap: Record<number, string> = {};
   for (let i = 0; i < 12; i++) {
-    palaceStems.push(HEAVENLY_STEMS[(yiStemIdx + i) % 10]);
+    sanFangMap[i] = [PALACES[i], PALACES[(i + 4) % 12], PALACES[(i + 8) % 12]];
+    duiGongMap[i] = PALACES[(i + 6) % 12];
   }
+  return { sanFangMap, duiGongMap };
+}
 
-  // Build 12 palaces
-  const palaces: Palace[] = [];
+interface StarComboRule { stars: [string, string]; name: string; description: string }
+
+const STAR_COMBOS: StarComboRule[] = [
+  { stars: ['紫微','天府'], name: '紫府同宫格', description: '紫微与天府同宫或三合照会，形成紫府同宫格。此格极为尊贵，兼具紫微的帝王之气与天府的库藏之能，命主天生具有领袖气质和卓越的管理才能，处事稳重而有魄力，既能统领全局又能厚积薄发。一生事业有成，财库丰盈，堪称上格。' },
+  { stars: ['紫微','七杀'], name: '紫杀格', description: '紫微与七杀同宫形成紫杀格。紫微的帝王气质配上七杀的威猛果断，命主性格刚强果决，具有强大的执行力和开拓精神。在事业上适合担任领导者，敢作敢为有魄力。但因双星过刚，感情方面较为孤独，需要学会柔和的处世之道，避免因性格过于刚硬而失去人情温暖。' },
+  { stars: ['太阳','太阴'], name: '日月并明格', description: '太阳与太阴同宫或对照，形成日月并明格。太阳代表光明博爱，太阴代表温柔内敛，日月同辉象征阴阳调和、刚柔并济。命主性格健全，既有热情大方的一面又有细腻体贴的一面，在事业和人际关系上都能左右逢源，人生光明磊落且前程似锦。' },
+  { stars: ['廉贞','贪狼'], name: '廉贪格', description: '廉贞与贪狼同宫形成廉贪格。廉贞为次桃花星，贪狼为第一桃花星，双桃花同宫，命主才华横溢、魅力四射，在艺术创意和人际交往方面天赋异禀。但桃花过旺易生感情纠葛，需把持心性，将才华和精力投入到事业中，方能化桃花为成就。' },
+  { stars: ['武曲','天府'], name: '武府格', description: '武曲与天府同宫形成武府格。武曲为第一正财星，天府为库藏之星，两星相会代表财运极为亨通。命主不仅有强大的赚钱能力，更有卓越的理财和守财天赋，财富积累扎实稳健。在金融投资、企业管理等领域能大展拳脚，一生财富丰裕，但需注意不要过于功利而忽视了生活情趣。' },
+  { stars: ['廉贞','七杀'], name: '廉杀格', description: '廉贞与七杀同宫形成廉杀格。廉贞的才华与七杀的魄力相结合，命主在处理复杂事务时能力极强，洞察力敏锐，执行力果断。适合从事法律、刑侦、监察等需要精确判断的行业。性格方面刚中带变，情绪起伏较大，需要修炼心性，保持平和稳定的心态方能成就大业。' },
+  { stars: ['天机','天梁'], name: '机梁格', description: '天机与天梁同宫形成机梁格。天机的聪慧谋略配合天梁的稳重寿考，命主智谋深远且成熟稳重，善于用智慧解决复杂问题。在学术研究、战略规划、医疗养生等领域有独特天赋。此格主智慧和长寿，命主若能善用天赋，必能在专业领域取得卓越成就，且晚年福寿双全。' },
+  { stars: ['天同','太阴'], name: '同阴格', description: '天同与太阴同宫形成同阴格。天同的福气和太阴的温柔相辅相成，命主性格温和善良，待人亲切有礼，具有化解矛盾的能力。生活态度知足常乐，不喜争斗，在文化艺术、服务行业等领域能发挥所长。此格虽不主大富大贵，但一生平顺安逸，福气深厚，是难得的福格。' },
+  { stars: ['太阳','巨门'], name: '巨日格', description: '太阳与巨门同宫形成巨日格。太阳的光明驱散了巨门的暗曜之性，将巨门的口才转化为社会影响力。命主口才出众，善于表达和传播思想，适合从事教育、传媒、法律、公关等需要影响他人的职业。此格主社会名望和公众影响力，命主若能善用口才和智慧，必能在社会中崭露头角。' },
+  { stars: ['紫微','破军'], name: '紫破格', description: '紫微与破军同宫形成紫破格。紫微的权威配上破军的变革之力，命主性格强势且敢于打破常规，具有开创新时代的气魄。适合从事改革创新类的工作，或自主创业开拓新领域。但双星力量过强，人生起伏较大，需要经历破而后立的过程。感情生活较为动荡，晚婚或在婚姻中保持独立空间较为有利。' },
+  { stars: ['武曲','七杀'], name: '武杀格', description: '武曲与七杀同宫形成武杀格。武曲为将星主财，七杀为将星主杀，双将星同宫代表极强的执行力和竞争力。命主做事雷厉风行，不畏艰难，在竞争激烈的行业中反而能脱颖而出。适合军警执法、金融投资、竞技体育等行业。性格刚硬，需要注意人际关系的柔和处理，避免因过于强势而得罪人。' },
+  { stars: ['天机','巨门'], name: '机巨格', description: '天机与巨门同宫形成机巨格。天机的谋略配上巨门的口才和深层分析能力，命主思维敏捷且善于沟通表达，是天生的谋士和顾问型人才。适合从事律师、咨询、分析研究、新闻评论等需要智慧和口才并重的职业。注意不要聪明反被聪明误，管住嘴巴避免口舌是非，方能发挥此格的最大优势。' },
+  { stars: ['太阴','天同'], name: '月同格', description: '太阴与天同同宫形成月同格。太阴的温柔美丽与天同的福气相融，命主生性温柔善良，有艺术美感，生活态度从容优雅。在文化艺术、美容护肤、心理咨询等领域有独特才能。此格主福气和美感，命主一生虽然不会大起大落，但生活品质高，精神世界充实丰富。' },
+  { stars: ['紫微','天相'], name: '紫相格', description: '紫微与天相同宫形成紫相格。紫微的帝王气质与天相的辅佐公正之性相结合，命主既有领导才能又有服务精神，善于在大型组织中发挥核心作用。适合从事行政管理、公共服务、咨询等需要权威与协调并重的工作。此格之人是优秀的组织者和管理者，既能把控大局又能体恤下属，事业顺遂。' },
+  { stars: ['廉贞','破军'], name: '廉破格', description: '廉贞与破军同宫形成廉破格。廉贞的才华与破军的变革力量交织，命主人生充满变化和挑战，但每次困境都能激发出新的创造力和生命力。适合从事需要不断创新和突破的工作，如创业、研发、艺术设计等。感情和事业都较为动荡，需要建立稳定的内心世界来应对外部变化，不惧失败是最大的优势。' },
+  { stars: ['武曲','贪狼'], name: '武贪格', description: '武曲与贪狼同宫形成武贪格。武曲的正财运与贪狼的交际才能和偏财运结合，命主在财富方面有多元渠道，既能正职赚钱又有偏财机遇。贪狼的社交能力为武曲的刚硬添加了润滑剂，使命主在商场中游刃有余。适合从事金融贸易、房地产、娱乐产业等需要资本运作和人际关系的行业。财运起伏较大，需注意风险控制。' },
+  { stars: ['太阳','天梁'], name: '阳梁格', description: '太阳与天梁同宫形成阳梁格。太阳的光明博爱配合天梁的庇护长寿之性，命主天生具有助人为乐的精神和长者风范。适合从事公益慈善、教育医疗、社会福利等能够服务和帮助他人的行业。此格主阳寿和福荫，命主一生阳气充足、身体健康、福泽绵长，且能获得众人的尊敬和爱戴。' },
+  { stars: ['天府','天相'], name: '府相格', description: '天府与天相同宫形成府相格。天府的管理包容之才与天相的公正协调之力相结合，命主是极其出色的行政管理和组织协调人才。适合担任企业高管、政府官员、项目总监等需要统筹全局的职位。此格主稳定和秩序，命主行事有条有理、公正无私，在团队中是不可或缺的中坚力量，事业发展稳健持久。' },
+  { stars: ['天机','文昌'], name: '机昌格', description: '天机的智慧谋略与文昌的文学才华相结合，命主天资聪颖且学业运极强，在学术研究、文学创作、教育等领域有卓越天赋。文思敏捷，考试运佳，适合继续深造取得高学历。一生以知识为立身之本，通过学识和智慧获得社会地位和经济收入，是典型的文贵之格。此格最宜进入教育界或研究机构发展。' },
+  { stars: ['紫微','左辅'], name: '紫辅格', description: '紫微与左辅同宫或相会形成紫辅格。紫微为帝星，得左辅之助力，犹如明君得贤臣辅佐，贵气倍增。命主天生具有统御能力和团队领导才能，身边聚集了大量有才干的人愿意追随和帮助。事业上贵人运极强，常得有力人士提携，发展顺遂。此格之人需要一个好的团队来成就自己的事业版图。' },
+];
+
+function findPalaceCombos(palace: Palace, allPalaces: Palace[], palIdx: number): string[] {
+  const results: string[] = [];
+  const pStars = getPalaceStars(palace);
+  const sfIdx = [(palIdx + 4) % 12, (palIdx + 8) % 12, (palIdx + 6) % 12];
+  const connectedStars = new Set<string>();
+  for (const idx of sfIdx) {
+    getPalaceStars(allPalaces[idx]).forEach(s => connectedStars.add(s));
+  }
+  const allRelevantStars = new Set([...pStars, ...connectedStars]);
+
+  for (const combo of STAR_COMBOS) {
+    const [s1, s2] = combo.stars;
+    if (allRelevantStars.has(s1) && allRelevantStars.has(s2)) {
+      results.push(`${combo.name}：${combo.description}`);
+    }
+  }
+  return results;
+}
+
+export function calculateZiwei(year: number, month: number, day: number, hour: number, gender: 'male' | 'female') {
+  const ysi = (year - 4) % 10, ybi = (year - 4) % 12;
+  const ysIdx = ((ysi % 10) + 10) % 10;
+  const ys = HEAVENLY_STEMS[ysIdx];
+  const yb = EARTHLY_BRANCHES[((ybi % 12) + 12) % 12];
+  const hIdx = Math.floor((hour + 1) / 2) % 12;
+
+  const lifeIdx = ((2 + month - 1 - hIdx) % 12 + 12) % 12;
+  const lifeBranch = EARTHLY_BRANCHES[lifeIdx];
+
+  const bodyIdx = ((2 + month - 1 + hIdx) % 12 + 12) % 12;
+
+  const yiStemBase: Record<string, number> = { 甲:0, 己:0, 乙:2, 庚:2, 丙:4, 辛:4, 丁:6, 壬:6, 戊:8, 癸:8 };
+  const yiStemIdx = yiStemBase[ys] || 0;
+  const yiBranchIdx = EARTHLY_BRANCHES.indexOf('寅');
+
+  const { sanFangMap, duiGongMap } = buildSanFangDuiGong();
+  const siHuaStars = SIHUA_TABLE[ys];
+  if (!siHuaStars) throw new Error(`Invalid year stem: ${ys}`);
+
+  const tempPalaces: { name: string; branch: string; stem: string; majorStars: Star[]; minorStars: Star[]; isBodyPalace: boolean; majorLimit: { startAge: number; endAge: number } | null }[] = [];
   for (let i = 0; i < 12; i++) {
-    const bi = (lifeBranchIdx + i) % 12;
-    palaces.push({
-      name: PALACES[0],
+    const bi = (lifeIdx + i) % 12;
+    const stemIdx = (yiStemIdx + (bi - yiBranchIdx + 12) % 12) % 10;
+    tempPalaces.push({
+      name: PALACES[i],
       branch: EARTHLY_BRANCHES[bi],
-      stem: palaceStems[(bi - yiIdx + 12) % 12],
-      majorStars: [],
-      minorStars: [],
-      isBodyPalace: bi === bodyBranchIdx,
+      stem: HEAVENLY_STEMS[stemIdx],
+      majorStars: [], minorStars: [],
+      isBodyPalace: bi === bodyIdx,
       majorLimit: null,
     });
   }
-  for (let i = 0; i < 12; i++) {
-    palaces[i].name = PALACES[i];
-  }
 
   // Five Element Bureau
-  const gongSg = palaces[0].stem + palaces[0].branch;
+  const gongSg = tempPalaces[0].stem + tempPalaces[0].branch;
   const bureau = wuxingJuTable[gongSg] || '水二局';
-  const bureauNum = parseInt(bureau.match(/\d/)![0]);
+  const match = bureau.match(/\d/);
+  const bureauNum = match ? parseInt(match[0]) : 2;
 
-  // Ziwei position
-  const div = Math.floor(birthDay / bureauNum);
-  const rem = birthDay % bureauNum;
+  // Ziwei star position
+  const div = Math.floor(day / bureauNum);
+  const rem = day % bureauNum;
   const zwTable = ziweiTables[bureauNum] || ziweiTables[5];
-  const ziweiOffset = rem === 0 ? zwTable[Math.min(div - 1, zwTable.length - 1)] : zwTable[Math.min(div, zwTable.length - 1)];
-  const ziweiBranchIdx = (lifeBranchIdx - ziweiOffset + 0 + 12) % 12;
+  const zwOffsetIdx = rem === 0 ? Math.max(0, div - 1) : div;
+  const zwOffset = zwTable[Math.min(zwOffsetIdx, zwTable.length - 1)];
+  const zwIdx = ((lifeIdx - zwOffset) % 12 + 12) % 12;
 
-  // Place 14 major stars
-  placeMajorStars(palaces, ziweiBranchIdx, div, rem, bureauNum);
+  // 14 major stars - simple placement
+  const ziweiStars = ['紫微','天机','','太阳','武曲','天同','','','','','廉贞',''];
+  const ziweiOffsets = [0,-1,-2,-3,-4,-5,-6,-7,-8,-9,4,-8];
 
-  // Place auxiliary stars
-  const hsi = EARTHLY_BRANCHES.indexOf(palaces[5].branch); // 疾厄 branch index
-  const ysiVal = HEAVENLY_STEMS.indexOf(ys);
+  for (let j = 0; j < ziweiStars.length; j++) {
+    if (!ziweiStars[j]) continue;
+    const pi = ((zwIdx + ziweiOffsets[j]) % 12 + 12) % 12;
+    tempPalaces[pi].majorStars.push({ name: ziweiStars[j], brightness: '平', isMajor: true });
+  }
 
-  placeAuxStars(palaces, ysiVal, birthMonth, birthHour, lifeBranchIdx);
+  // Tianfu at 4 positions after Ziwei  
+  const tfIdx = ((zwIdx + 4) % 12 + 12) % 12;
+  const tfStars = ['天府','太阴','贪狼','巨门','天相','天梁','七杀','','','破军'];
+  const tfOffsets = [0,1,2,3,4,5,6,7,8,10];
 
-  // Determine body palace
-  const bodyPalace = PALACES[(bodyBranchIdx - lifeBranchIdx + 0 + 12) % 12];
+  for (let j = 0; j < tfStars.length; j++) {
+    if (!tfStars[j]) continue;
+    const pi = ((tfIdx + tfOffsets[j]) % 12 + 12) % 12;
+    tempPalaces[pi].majorStars.push({ name: tfStars[j], brightness: '平', isMajor: true });
+  }
+
+  // Simple auxiliary stars
+  const auxData: [string, number][] = [
+    ['文昌', ((10 - (hour % 12)) % 12 + 12) % 12],
+    ['文曲', ((4 - (hour % 12)) % 12 + 12) % 12],
+    ['左辅', ((4 + month - 1) % 12 + 12) % 12],
+    ['右弼', ((10 - (month - 1)) % 12 + 12) % 12],
+    ['天魁', ((ysIdx * 2) % 12 + 12) % 12],
+    ['天钺', ((ysIdx * 2 + 6) % 12 + 12) % 12],
+    ['禄存', ((ysIdx * 3) % 12 + 12) % 12],
+    ['天马', (ybi % 12 + 12) % 12],
+  ];
+
+  for (const [name, relPos] of auxData) {
+    const pi = ((lifeIdx + relPos) % 12 + 12) % 12;
+    tempPalaces[pi].minorStars.push({ name, brightness: '平', isMajor: false });
+  }
 
   // Major cycles
-  const isYang = (HEAVENLY_STEMS.indexOf(ys)) % 2 === 0;
+  const isYang = ysIdx % 2 === 0;
   const forward = (isYang && gender === 'male') || (!isYang && gender === 'female');
-  const majorCycles = calcMajorCycles(palaces, forward, bureauNum);
-
-  return {
-    palaces,
-    bodyPalace,
-    fiveElementBureau: bureau,
-    majorCycles,
-    currentCycle: getCurrentCycle(majorCycles, birthYear),
-  };
-}
-
-function placeMajorStars(palaces: Palace[], zwi: number, div: number, rem: number, bureau: number) {
-  const totalPalaces = 12;
-  const offset = (idx: number) => ((idx % totalPalaces) + totalPalaces) % totalPalaces;
-
-  const ziweiStarsRel: Record<number, { star: string; offset: number }[]> = {
-    0: [{ star: '紫微', offset: 0 }, { star: '天机', offset: -1 }, { star: '', offset: -2 },
-         { star: '太阳', offset: -3 }, { star: '武曲', offset: -4 }, { star: '天同', offset: -5 },
-         { star: '廉贞', offset: 4 }],
-  };
-
-  const zwRel = ziweiStarsRel[0];
-  for (const s of zwRel) {
-    if (!s.star) continue;
-    const pi = offset(zwi + s.offset);
-    palaces[pi].majorStars.push({ name: s.star as any, brightness: '平', isMajor: true });
-  }
-
-  // Tianfu position - opposite to Ziwei + some offset
-  const tfOffset = (3 - (div % bureau === 0 ? div - 1 : div)) % 2 === 0 ? 4 : 5;
-  const tianfuIdx = offset(zwi + 4);
-
-  const tfRel = [
-    { star: '天府', offset: 0 }, { star: '太阴', offset: 1 }, { star: '贪狼', offset: 2 },
-    { star: '巨门', offset: 3 }, { star: '天相', offset: 4 }, { star: '天梁', offset: 5 },
-    { star: '七杀', offset: 6 }, { star: '破军', offset: 10 },
-  ];
-
-  for (const s of tfRel) {
-    const pi = offset(tianfuIdx + s.offset);
-    palaces[pi].majorStars.push({ name: s.star as any, brightness: '平', isMajor: true });
-  }
-
-  // Mark brightness
-  setBrightness(palaces);
-}
-
-function setBrightness(palaces: Palace[]) {
-  const brightnessMap: Record<string, number[]> = {
-    紫微: [0,1,3,5,7,8,9,11],
-    天府: [0,1,2,3,4,5,6,9,10,11],
-    天机: [1,3,5,6,8],
-    太阳: [3,5,6,7],
-    武曲: [3,4,7,8,11],
-    天同: [1,6,7,8],
-    廉贞: [1,5,8],
-    太阴: [1,7,8,11],
-    贪狼: [1,3,8],
-    巨门: [3,5,8],
-    天相: [3,5,8],
-    天梁: [3,5,8],
-    七杀: [1,5,9],
-    破军: [3,7],
-  };
+  const majorCycles: { palace: string; startAge: number; endAge: number }[] = [];
 
   for (let i = 0; i < 12; i++) {
-    for (const star of palaces[i].majorStars) {
-      const good = brightnessMap[star.name] || [];
-      if (good.includes(i)) star.brightness = '庙';
-      else star.brightness = '平';
-    }
+    const start = i === 0 ? bureauNum * 2 : majorCycles[i - 1].endAge + 1;
+    const end = Math.min(start + 9, 120);
+    const pi = forward ? i : (12 - i) % 12;
+    majorCycles.push({ palace: tempPalaces[pi].name, startAge: start, endAge: end });
+    tempPalaces[pi].majorLimit = { startAge: start, endAge: end };
   }
-}
 
-function placeAuxStars(palaces: Palace[], yearStemIdx: number, month: number, hour: number, lifeIdx: number) {
-  const total = 12;
-  const offset = (i: number) => ((i % total) + total) % total;
+  const age = new Date().getFullYear() - year;
+  const currentCycle = majorCycles.find(c => age >= c.startAge && age <= c.endAge) || null;
 
-  const auxData: { star: string; position: (name: string) => number | null; brightness: string }[] = [
-    { star: '文昌', position: () => offset(10 - hour + 0), brightness: '平' },
-    { star: '文曲', position: () => offset(4 - hour + 0), brightness: '平' },
-    { star: '左辅', position: () => offset(4 + (month - 1) + 0), brightness: '平' },
-    { star: '右弼', position: () => offset(10 - (month - 1) + 0), brightness: '平' },
-    { star: '天魁', position: () => {
-      const pos = [2, 0, 10, 8, 2, 0, 8, 6, 4, 2];
-      return offset(pos[yearStemIdx] + lifeIdx);
-    }, brightness: '平' },
-    { star: '天钺', position: () => {
-      const pos = [8, 6, 4, 2, 8, 6, 2, 0, 10, 8];
-      return offset(pos[yearStemIdx] + lifeIdx);
-    }, brightness: '平' },
-    { star: '禄存', position: () => {
-      const pos = [2, 3, 5, 6, 5, 6, 8, 9, 11, 0];
-      return offset(pos[yearStemIdx] + lifeIdx);
-    }, brightness: '平' },
-    { star: '天马', position: () => {
-      // Based on year branch, placed at specific branches relative to life palace
-      const tianmaByBranch: Record<string, number> = {
-        寅:0, 午:0, 戌:0, 申:6, 子:6, 辰:6, 巳:3, 酉:3, 丑:3, 亥:9, 卯:9, 未:9,
-      };
-      const bi = (new Date().getFullYear() - 4) % 12;
-      const yBranch = EARTHLY_BRANCHES[(bi + 12) % 12];
-      return (tianmaByBranch[yBranch] || 0) % 12;
-    }, brightness: '平' },
-    { star: '擎羊', position: () => {
-      const pos = [4, 5, 6, 7, 8, 9, 10, 11, 0, 1];
-      return offset(pos[yearStemIdx] + lifeIdx);
-    }, brightness: '陷' },
-    { star: '陀罗', position: () => {
-      const pos = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-      return offset(pos[yearStemIdx] + lifeIdx);
-    }, brightness: '陷' },
-    { star: '火星', position: () => {
-      const hsi = hour;
-      return offset((hsi < 12 ? (11 - hsi) : (23 - hsi)) + lifeIdx);
-    }, brightness: '陷' },
-    { star: '铃星', position: () => {
-      const hsi = hour;
-      return offset((hsi < 12 ? (11 - hsi + 6) : (23 - hsi + 6)) + lifeIdx);
-    }, brightness: '陷' },
-    { star: '地空', position: () => {
-      return offset(11 - hour + lifeIdx);
-    }, brightness: '陷' },
-    { star: '地劫', position: () => {
-      return offset(11 - hour + 6 + lifeIdx);
-    }, brightness: '陷' },
-    { star: '擎羊', position: () => offset(lifeIdx + 3), brightness: '陷' },
-  ];
+  const siHuaResult: { 禄: string; 权: string; 科: string; 忌: string } = { 禄:'', 权:'', 科:'', 忌:'' };
+  const siHuaKeys: Array<keyof typeof siHuaResult> = ['禄','权','科','忌'];
 
-  for (const aux of auxData) {
-    for (let attempt = 0; attempt < 1; attempt++) {
-      const pos = aux.position?.(aux.star);
-      if (pos !== null && pos !== undefined) {
-        // Check if already exists
-        const exists = palaces[pos].minorStars.some(s => s.name === aux.star);
-        if (!exists) {
-          palaces[pos].minorStars.push({
-            name: aux.star as any,
-            brightness: aux.brightness as any,
-            isMajor: false,
-          });
-        }
+  const palaces: Palace[] = tempPalaces.map((p, i) => {
+    const siHua: PalaceSiHua = {};
+    const allStarsHere = getPalaceStars(p);
+    for (const key of siHuaKeys) {
+      const starName = siHuaStars[key];
+      if (allStarsHere.includes(starName)) {
+        siHua[key] = starName;
+        siHuaResult[key] = `${starName}(${p.name})`;
       }
     }
-  }
+    return {
+      name: p.name, branch: p.branch, stem: p.stem,
+      majorStars: p.majorStars, minorStars: p.minorStars,
+      isBodyPalace: p.isBodyPalace, majorLimit: p.majorLimit,
+      siHua,
+      sanFang: [sanFangMap[i][1], sanFangMap[i][2]],
+      duiGong: duiGongMap[i],
+    };
+  });
 
-  // Remove duplicates by name
-  for (let i = 0; i < 12; i++) {
-    const seen = new Set<string>();
-    palaces[i].minorStars = palaces[i].minorStars.filter(s => {
-      if (seen.has(s.name)) return false;
-      seen.add(s.name);
-      return true;
-    });
-  }
+  const analysis = generateZiweiAnalysis(palaces, PALACES[bodyIdx], bureau, majorCycles, currentCycle, gender, year, ys, siHuaStars);
+
+  return { palaces, bodyPalace: PALACES[bodyIdx], fiveElementBureau: bureau, majorCycles, currentCycle, analysis, siHuaStars: siHuaResult };
 }
 
-function calcMajorCycles(palaces: Palace[], forward: boolean, bureau: number) {
-  const lifeAge = bureau * 2;
-  const cycles: { palace: PalaceName; startAge: number; endAge: number }[] = [];
+const STAR_MEANINGS: Record<string, string> = {
+  '紫微': '帝王之星，北斗第一星，五行属己土，化气为尊，代表权力、地位、尊贵和统御能力。紫微入命宫之人天生具有领导才能，志向远大，有王者风范，行事稳重有魄力，善于统筹全局。在事业上适合担任管理、行政、决策类岗位，尤其适合政府机构、大型企业高管或自主创业。性格方面自尊心强，有主见，但容易自负孤高，需要学会倾听他人意见。紫微喜得左辅右弼相拱，尤其适合在迁移宫、事业宫或财帛宫出现，则贵人助力强、事业有成、财运亨通。若落入疾厄宫则需注意脾胃消化系统，落入夫妻宫则配偶有才干但关系较强势。紫微作为群星之首，能化解诸煞星的凶性，是命盘中最重要的吉星。',
+  '天机': '智慧之星，北斗第三星，五行属乙木，化气为善，代表谋略、机变、思考和策划能力。天机入命宫者天资聪颖，思维敏捷，好奇心强，善于分析和谋略规划，具有发明创造的天赋。性格灵活多变，适应力强，但容易心思散乱，缺乏持久性，需培养专注力。事业方面适合从事研究开发、战略规划、咨询顾问、IT互联网、教育学术等需要脑力劳动的工作，也可从事贸易流通行业。天机星在兄弟宫时兄弟姐妹多才，在迁移宫时善于交际应酬，在福德宫时精神生活丰富。天机星最忌讳落入疾厄宫，需特别注意神经系统和肝胆功能，避免过度用脑导致神经衰弱。天机虽为善星，但若与煞星同度则容易聪明反被聪明误。',
+  '太阳': '光明之星，中天主星，五行属丙火，化气为贵，代表热情、声望、博爱和奉献精神。太阳入命宫者为人坦荡光明，热情大方，乐于助人，具有强烈的社会责任感和公益心。博爱宽厚，不计小节，人缘极佳，在社会上容易获得名望和声誉。事业上适合从事教育、文化传播、公益慈善、公关传媒、外交事务等面向大众的行业。太阳在事业宫时事业心强，在财帛宫时仗义疏财，在迁移宫时适合外地发展。性格方面过于操劳，容易为他人之事奔波劳累，需要注意劳逸结合。太阳落在疾厄宫需关注心脏、眼睛和血液循环系统，落在夫妻宫则配偶性格外向但关系需要双方包容。太阳最喜在寅卯辰巳午位（日出到正午），光芒最盛，力量最强。',
+  '武曲': '财帛之星，北斗第六星，五行属辛金，化气为财，代表财富、刚毅、果决和执行能力。武曲入命宫者性格刚强果敢，做事雷厉风行，有军人般的纪律性和执行力，是典型的行动派。在理财方面天赋异禀，对金钱有敏锐的嗅觉，擅长资金运作和资产管理。事业方面适合从事金融投资、银行保险、财务会计、军警执法、工程制造、机械技术等行业，尤其适合担任财务总监、基金经理、项目经理等需要精确和果断的岗位。武曲在财帛宫时是典型的财星入财位，财运极佳，但需防过于刚硬导致人际关系紧张。在夫妻宫时配偶务实能干但感情生活可能缺乏浪漫。武曲落入疾厄宫需注意呼吸系统和筋骨损伤。武曲最喜与天府、天相同度，财库充实而稳定。',
+  '天同': '福寿之星，南斗第四星，五行属壬水，化气为福，代表温和、福气、享受和知足常乐。天同入命宫者性格温顺柔和，待人亲切，不喜争斗，知足常乐，是十二主星中最有福气的一颗星。天生具有化解灾厄的能力，能够在逆境中保持乐观心态。事业方面适合从事文化艺术、餐饮美食、休闲娱乐、服务行业等不需要太大压力的工作，也适合与人合作创业。天同在福德宫时精神愉悦，在田宅宫时家庭和睦，在迁移宫时外出常有贵人收留。性格弱点是缺乏进取心和竞争力，过于安逸容易错失发展机会，需要适当鞭策自己。天同落入疾厄宫需注意泌尿系统和肾脏功能，不宜长期熬夜和过度劳累。天同最喜得禄存或化禄相会，福气倍增，一生衣食无忧。',
+  '廉贞': '次桃花星，北斗第五星，五行属丁火兼戊土，化气为囚，代表才华、约束、变化和复杂性。廉贞入命宫者才华横溢，性情多变，具有极强的洞察力和分析能力，善于处理复杂问题，但情绪波动较大。在事业上适合从事法律、监察、审计、刑侦、医疗、科研等需要精细思维和严谨态度的行业，也可从事艺术创作和设计工作。廉贞在事业宫时工作能力突出但职业变动较多，在财帛宫时财运起伏较大。廉贞为次桃花星，在夫妻宫时感情丰富但容易产生波折，需理性对待情感问题。性格方面容易冲动固执，需要修炼心性，培养平和稳定的情绪。廉贞落入疾厄宫需注意血液循环和内分泌系统，同时关注心理健康，避免长期压抑。廉贞最喜遇文昌文曲，才华得以充分发挥。',
+  '天府': '库藏之星，南斗主星，五行属戊土，化气为令，代表稳重、包容、财富积累和管理能力。天府入命宫者性格稳重踏实，胸怀宽广，善于包容和管理，具有大将之风。天府为南斗主星，其地位仅次于紫微，入命宫者天生具有掌控全局的能力和组织管理天赋。在事业上适合从事企业管理、行政人事、金融投资、房地产、物流仓储等行业，尤其擅长资产管理和资源整合。天府在财帛宫时财运稳定持久，在田宅宫时房产运强，在父母宫时家世背景较好。性格弱点是比较保守，不善于创新和冒险，过于求稳可能错失发展机遇。天府落入疾厄宫需注意脾胃消化系统，不宜暴饮暴食。天府最喜与禄存或化禄同宫，形成"禄库充盈"的格局，财富积累能力极强。',
+  '太阴': '中天阴星，五行属癸水，化气为富，代表温柔、美丽、财富和内在修养。太阴入命宫者性格温柔细腻，心地善良，具有艺术审美和美感追求，重视内在修养和精神生活。太阴为财星，入命者往往有不错的理财能力和财富积累运势，尤其适合通过文化艺术品收藏等途径获利。事业方面适合从事文化艺术、美容护肤、室内设计、酒店管理、心理咨询、教育培训等需要细腻感知的行业。女性太阴入命者格外有魅力，男性太阴入命者温和体贴。太阴在夫妻宫时配偶温柔体贴，在田宅宫时家庭环境优雅舒适，在迁移宫时旅行运势佳。太阴落入疾厄宫需注意生殖系统和泌尿系统健康。太阴的亮度随月相盈亏而变化，在申酉戌亥子丑位为太阴得地，力量最强。',
+  '贪狼': '桃花之星，北斗第一星（实际为第二），五行属甲木兼癸水，化气为桃花，代表欲望、才艺、交际和开拓精神。贪狼入命宫者多才多艺，兴趣广泛，擅长社交和人际交往，具有强烈的求知欲和探索精神。贪狼星兼具木的生机和水的流动，既有创造力又有应变能力。事业方面适合从事娱乐演艺、市场营销、公关外交、国际贸易、旅游行业等需要与人打交道的工作，也可从事宗教哲学研究。贪狼在迁移宫时善于交际应酬，在财帛宫时财运起伏较大但若能把握好则有横发之机。性格方面欲望较强，需懂得节制，避免贪多嚼不烂。贪狼为第一桃花星，在夫妻宫时异性缘极佳但也容易引发感情纠纷。贪狼落入疾厄宫需注意肝胆和肾脏功能，节制欲望有益健康。贪狼最喜遇火铃，形成"火贪格"，为爆发之象。',
+  '巨门': '暗曜之星，北斗第二星，五行属癸水，化气为暗，代表口才、是非、深层研究和竞争。巨门入命宫者口才出众，思维深刻，善于辩论和分析问题，具有探究事物本质的能力。巨门之"暗"并非负面，而是指深入隐藏层面的能力，适合从事法律、侦探、科研、心理咨询等需要深挖真相的工作。事业方面适合从事律师、记者、评论员、分析师、研究员、审计师等行业。巨门在交友宫时需注意择友，在兄弟宫时手足之间可能有些口舌，在父母宫时与长辈可能有代沟。性格弱点是好辩，容易招惹口舌是非，需要管住嘴巴，学会沉默的力量。巨门落入疾厄宫需关注口腔、牙齿和消化系统健康，同时注意心理健康。巨门最喜得太阳照射，形成"巨日同宫"格，则口才转化为社会影响力。',
+  '天相': '辅佐之星，南斗第五星，五行属壬水，化气为印，代表公正、协调、服务和辅助能力。天相入命宫者为人公正无私，乐于助人，善于协调各方关系，是天生的辅佐良臣。天相星具有"成人之美"的特质，善于在团队中发挥协调作用，是组织中不可或缺的润滑剂。事业方面适合从事行政管理、人事协调、客户服务、公共关系、法律咨询、医疗护理等需要服务精神的工作，尤其适合担任副手、秘书、助理等辅助性职位。天相在事业宫时工作认真负责但晋升较慢，在夫妻宫时配偶体贴但可能缺乏主见，在福德宫时乐于助人而自得其乐。天相落入疾厄宫需注意肾脏和泌尿系统。天相最喜遇左辅右弼，则辅助能力倍增，贵人运强。天相若遇破军或七杀，则可能由辅助转为自主发展。',
+  '天梁': '寿星，南斗第二星，五行属戊土，化气为荫，代表长寿、稳重、老人缘和庇护之力。天梁入命宫者成熟稳重，少年老成，具有超出年龄的成熟度，待人有长者风范，乐于照顾和庇护他人。天梁星有延长寿命、化解灾难的吉祥意涵，入命者通常寿命较长且能逢凶化吉。事业方面适合从事医疗健康、养老产业、教育、宗教、保险、社保福利等行业，尤其适合中医、养生、心理咨询等工作。天梁在父母宫时长辈缘佳，在疾厄宫时反而健康有保障，在福德宫时晚年幸福。性格弱点是过于严肃，有时显得固执保守，缺乏灵活性。天梁落入疾厄宫时虽然主长寿，但仍需注意脾胃和骨骼关节的保养。天梁最喜遇文昌文曲，学识渊博且寿高。',
+  '七杀': '将星，南斗第六星，五行属辛金兼丁火，化气为将，代表权威、魄力、竞争和开创精神。七杀入命宫者魄力十足，有强烈的竞争心和进取心，是天生的开拓者和领导者。七杀星具有威猛刚强的特性，做事雷厉风行，不惧挑战和困难，适合开拓新局面的工作。事业方面适合从事军警、执法、企业管理、体育竞技、创业等需要魄力和决断力的行业，尤其适合担任开拓型项目的负责人。七杀在事业宫时事业有成但过程艰辛，在迁移宫时适合外出闯荡，在财帛宫时财运起伏大但敢拼能赢。性格弱点是过于刚强好胜，容易让人感到压迫和孤独，需要学会柔和的处世之道。七杀落入疾厄宫需注意骨骼关节和意外伤害。七杀最喜遇紫微，形成"紫杀"格，威权在握。',
+  '破军': '耗星，北斗第七星，五行属癸水，化气为耗，代表变革、破坏、重建和勇敢。破军入命宫者勇于革新，敢于打破常规，具有破坏旧秩序建设新世界的气魄和胆识。破军星是先破后成之星，入命者的人生往往经历大起大落，但每次低谷之后都能浴火重生。事业方面适合从事改革创新的工作，如创业、产品研发、军事变革、社会改造等领域，也适合从事军警、探险、极限运动等需要勇气的工作。破军在事业宫时事业变动大，在财帛宫时财运大起大落，在夫妻宫时感情生活波折较多。性格弱点是行事极端，缺乏中间地带，需要学会中庸之道。破军落入疾厄宫需注意泌尿系统和情绪管理。破军最喜遇禄存或化禄，以禄解耗，化破坏为建设之力。',
+  '文昌': '文星贵人，五行属辛金，化气为文魁，主文学、考试、才华和学术成就。文昌入命者学业有成，文笔出众，考试运强，在学术研究方面具有天赋。文昌最宜入命宫、事业宫、父母宫，在这些宫位时能充分发挥其助力作用。文昌在命宫时聪明好学、才思敏捷；在事业宫时适合文职、教育、写作等职业；在父母宫时学业顺利、科举运强。文昌也代表正规教育和文书契约，在迁移宫时外出求学有利，在财帛宫时通过知识变现的能力较强。文昌不宜在疾厄宫，需注意呼吸道健康。文昌与文曲同宫则文采斐然，与天魁天钺同宫则考试运极佳，与禄存同宫则学以致用能生财。文昌在大小限遇之时适合参加考试、签约或进修深造。',
+  '文曲': '艺术口才星，五行属癸水，化气为文华，主口才、艺术、异性缘和表演天分。文曲入命者有艺术天赋，口才流利，思维活跃，异性缘佳，在艺术创作和表演方面有独特才能。文曲最宜入命宫、福德宫、迁移宫，在这些宫位时能激发其艺术潜能。文曲在命宫时多才多艺、善于表达；在福德宫时精神享受丰富、艺术鉴赏力强；在迁移宫时在外人缘佳、交际顺利。文曲与文昌不同，文昌偏重正统学术，文曲则偏重艺术和实用技能。文曲在事业宫时适合从事演艺、播音、设计、写作等创造性工作，在财帛宫时可通过文化艺术产业获利。文曲不宜在疾厄宫，需注意神经系统和口腔健康。文曲最喜遇贪狼，形成"文贪"格，才艺双绝。',
+  '左辅': '辅佐贵人星，北斗第八星，五行属戊土，化气为助，代表左手边的帮助、支持、贵人提携和积极主动的助力。左辅入命者天生有贵人运，善于借助他人力量发展自己，在事业和生活中常有主动送上门的机会和帮助。左辅最宜入命宫、事业宫、迁移宫，在这些宫位时贵人运最强且助力最为直接。左辅在命宫时一生多贵人相助、左右逢源；在事业宫时上司提携、同事协助；在迁移宫时外出常有贵人接应。左辅代表的是积极主动的帮助，与右弼的默默配合相辅相成。在夫妻宫时配偶是自己的得力助手，在财帛宫时有他人助力增财。左辅不喜入疾厄宫，有时代表容易受人牵连。左辅与右弼同宫或相会则力量倍增，是紫微、天府等主星最需要的辅佐吉星。',
+  '右弼': '辅佐贵人星，北斗第九星，五行属己土，化气为佐，代表右手边的配合、幕后支持、协调能力和隐性贵人。右弼入命者善于配合他人，具有良好的团队精神和协作能力，贵人多为幕后的支持者。右弼最宜入命宫、福德宫、田宅宫，在这些宫位时能获得最稳定的支持力量。右弼在命宫时善于协调、有团队精神；在福德宫时精神上有依靠、晚年得到照应；在田宅宫时家庭支持力量强、房产运有助力。右弼代表的是隐性配合的力量，不像左辅那样直接，但更加持久稳定。在夫妻宫时配偶是自己的最佳搭档，在事业宫时有可靠的团队支持。右弼不喜入疾厄宫，有时意味着需要依赖他人照顾。右弼与左辅同为辅佐吉星，遇之主星如虎添翼，事业生活皆有依靠。',
+  '天魁': '天乙贵人星，阳贵，五行属丙火，化气为阳贵，代表上层贵人、机遇、提拔和科举之运。天魁入命者易得长辈和权威人士的提携和赏识，贵人运极强，在事业升迁和考试方面有先天优势。天魁最宜入命宫、事业宫、父母宫，在这些宫位时贵人助力最为明显。天魁在命宫时气质高雅、贵人环绕；在事业宫时上司赏识、升迁顺利；在父母宫时家世背景好、长辈提携。天魁代表的是来自上层的提携力量，与天钺一阳一阴，相辅相成。天魁在财帛宫时财富来源多与贵人有关，在迁移宫时外出多有意外机遇。天魁不喜入疾厄宫，有时代表贵人难遇。天魁与天钺同宫或三方相会，形成"魁钺夹命"或"魁钺拱命"的贵格，一生机遇不断。',
+  '天钺': '天乙贵人星，阴贵，五行属丁火，化气为阴贵，代表女性贵人、辅佐力量、隐性机遇和意外帮助。天钺入命者易得女性贵人的帮助，贵人运同样很强，只是更偏向于阴性的、隐性的支持力量。天钺最宜入命宫、夫妻宫、福德宫，在这些宫位时贵人展现最为充分。天钺在命宫时异性缘佳、常有意外之助；在夫妻宫时配偶是自己的贵人；在福德宫时晚年贵人多、福气深。天钺代表的是隐性的、幕后的机遇和帮助，其力量虽然不如天魁那么明显，但更加细水长流。天钺在事业宫时多获女性领导赏识，在财帛宫时有意外之财。天钺不喜入疾厄宫，需注意不要过度依赖他人。天钺与天魁同为天乙贵人星，是命盘中最尊贵的贵人星曜。',
+  '禄存': '财禄之星，北斗星曜，五行属己土，化气为禄，代表财富积累、福气、稳定和衣食无忧。禄存入命者财运稳定，有较强的财富积累能力，一生衣食无忧，是典型的福禄之星。禄存最宜入财帛宫、田宅宫、命宫，在这些宫位时财富积累最为扎实。禄存在财帛宫时财运亨通、收入稳定；在田宅宫时房产运强、不动产丰富；在命宫时一生福禄不缺、生活安定。禄存代表的是稳定积累的财富，不主横发，但也不主破败，是最稳妥的财星。禄存在夫妻宫时婚姻生活富足，在事业宫时工作收入稳定优厚。禄存不喜入疾厄宫，需注意财富过多带来的物质负担。禄存有一个特点，其前后位置必有擎羊和陀罗，所以禄存虽然主财，但也带有一定的压力和阻挠。禄存最喜遇化禄，形成"双禄"格，财运倍增。',
+  '天马': '驿马之星，五行属丙火，化气为驿，代表奔波、远行、变动、迁移和行动力。天马入命者好动不喜静，喜欢旅行和新的环境，适合在外地发展，有强烈的行动力和执行力。天马最宜入迁移宫、事业宫、命宫，在这些宫位时最能发挥其行动力优势。天马在迁移宫时外出发展顺利、旅行运佳；在事业宫时工作变动多但每次变动都有进步；在命宫时行动力强、说做就做。天马代表动态的力量，入命者一生总是在路上，不论是实际的旅行还是人生的奋斗。天马在财帛宫时适合从事贸易、物流、运输等需要"跑动"的行业，在夫妻宫时可能与配偶聚少离多。天马不喜入疾厄宫，需注意交通安全和运动损伤。天马最喜遇禄存，形成"禄马交驰"格，动中得财，财运极佳。天马遇贪狼则为"风流彩杖"，需防桃花纠纷。',
+};
 
-  const startIdx = 0;
-  for (let i = 0; i < 12; i++) {
-    const idx = forward ? (startIdx + i) % 12 : (startIdx - i + 12) % 12;
-    const startAge = i === 0 ? lifeAge : cycles[cycles.length - 1].endAge + 1;
-    const endAge = i === 11 ? 120 : Math.min(startAge + 9, 120);
-    cycles.push({ palace: palaces[idx].name, startAge, endAge });
-    palaces[idx].majorLimit = { startAge, endAge };
-  }
-  return cycles;
-}
+const PALACE_MEANINGS: Record<string, string> = {
+  '命宫': '命宫是整个紫微斗数命盘的核心枢纽，位列十二宫之首，代表一个人的先天禀赋、基本性格、外貌体格、智慧才华和整体命运走向。命宫中的主星配置决定了命主的人生态度、处事方式和核心特质，是整个命盘解读的根基。分析命宫时需要综合考虑主星的庙旺利陷、辅星的配合以及三方四正的照会关系，才能全面判断一个人的先天优势和后天潜力。命宫星曜组合好的人，往往性格健全、机遇多、人生发展顺利；若命宫不利，则需通过其他宫位和后天努力来弥补。命宫的地支方位对应不同的五行属性，会影响星曜的庙旺程度，例如紫微在午宫为"极响离明"格，力量最强；在子宫则为"贪狼朝斗"等不同格局。',
+  '兄弟': '兄弟宫代表一个人的兄弟姐妹关系、同辈朋友缘分以及与同学同事之间的互动模式。此宫位不仅反映了手足之情的深厚度，还能看出与他人的合作竞争能力、团队协作精神和在群体中的位置。兄弟宫星曜吉利者，手足团结互助，人际关系融洽，在事业上容易获得同辈的辅助;若星曜不吉，则可能有兄弟争产、朋友反目之事。兄弟宫也是命宫的三方之一，其星曜配置会直接影响命宫的特质表现。在分析兄弟宫时，还需结合父母宫的星曜来看兄弟姐妹的数量和质量。兄弟宫中若有左辅右弼，则表示兄弟姐妹中有人才且对自己有帮助;若有廉贞七杀等煞星，则手足之间可能竞争激烈。',
+  '夫妻': '夫妻宫代表一个人的婚姻状况、配偶的性格特征和容貌、与异性的缘分深浅以及婚后生活的质量。此宫位不仅反映了命主的感情态度和择偶倾向，还关系着家庭和睦程度和婚姻的稳定性。夫妻宫星曜配置好者，婚姻幸福美满，配偶贤良能干，夫妻感情深厚;若星曜不吉，则可能婚姻波折、晚婚或配偶缘分较浅。夫妻宫与事业宫互为对宫，事业成功与否往往影响婚姻质量，已婚者的配偶情况也会对事业产生促进或阻碍作用。在择偶时，应重点参考夫妻宫的星曜特点来寻找合适的伴侣类型。夫妻宫中若有贪狼、廉贞等桃花星，则异性缘佳但需注意感情的稳定性和专一度;若有天府、天相等稳重之星，则婚姻关系较为持久和谐。',
+  '子女': '子女宫代表一个人的子女缘分、后代的资质发展以及与晚辈的关系互动。此宫位不仅反映了子女的数量和质量，还体现了命主的创造力、享受生活的能力和桃花运的深浅。子女宫星曜吉利者，子女聪慧有成就，亲子关系融洽，晚年有子女依靠;若星曜不吉，则可能子女缘薄、生育困难或子女不听话难管教。子女宫也与桃花运和娱乐活动有关，星曜配置好的人懂得享受生活，有丰富的业余爱好;配置差的人则可能纵欲过度或子女管教不当。在分析子女宫时，还需要结合田宅宫的星曜来看子女的成长环境和教育条件。子女宫中若有文昌文曲，则子女学业优良;若有天机、天同等智慧之星，则子女聪明伶俐;若有七杀、破军等刚星，则子女个性较强需多加引导。',
+  '财帛': '财帛宫代表一个人的财运状况、赚钱能力和理财观念，是判断财富大小和来源方向的关键宫位。此宫位反映了命主对金钱的态度、获取财富的方式和渠道、消费习惯以及财富的积累能力。财帛宫星曜吉利者，一生财运亨通，赚钱能力强，理财有道，财富积累持久稳定;若星曜不吉，则可能财运起伏、赚钱辛苦或守财能力差。财帛宫与命宫、事业宫互为三方，命格格局和事业发展都会影响财运的好坏。在分析财帛宫时，还需结合田宅宫（库位）来看财富的储存能力，结合福德宫来看命主对财富的满足程度。财帛宫中若有武曲、天府等财星，则正财运强，适合通过正当职业积累财富;若有贪狼、廉贞等变动之星，则偏财运较多但波动也大;若有禄存、天马同宫形成"禄马交驰"格，则财运极佳且有横发机遇。',
+  '疾厄': '疾厄宫代表一个人的健康状况、体质强弱、疾病倾向和抗病能力，是命盘中关乎身心健康的核心宫位。此宫位不仅反映了先天体质和后天疾病的发生概率，还能看出命主面对困难和逆境时的心理承受能力。疾厄宫星曜吉利者，身体健康少病，抵抗力强，纵有小恙也能迅速康复;若星曜不吉，则需特别关注相应脏器的健康状况，定期体检防范未然。因为不同星曜对应不同的五行属性，在疾厄宫出现时会影响相应的脏腑经络。例如火属性的星曜（太阳、廉贞）在疾厄宫需注意心脏和血液循环;水属性星曜（太阴、天同、巨门）需注意肾脏和泌尿系统;木属性（天机、贪狼）需注意肝胆;金属性（武曲、七杀）需注意呼吸系统和骨骼;土属性（紫微、天府、天梁）需注意脾胃消化系统。疾厄宫也反映了一个人的抗压能力，星曜配置好的人面对困难能从容应对，配置差的人则容易被疾病和困境击倒。',
+  '迁移': '迁移宫代表一个人的外出运势、旅行运、社交能力和在外地发展的潜力，是判断一个人是否适合在外闯荡的关键宫位。此宫位反映了命主的外在形象、待人接物的能力和在陌生环境中的适应力。迁移宫星曜吉利者，适合离乡发展，外出旅行顺利，在外地容易遇到贵人和机遇，社交能力强、人面广;若星曜不吉，则可能外出不顺、旅途多波折或不适应外地生活。迁移宫与命宫互为对宫，对宫的星曜会直接影响命宫的特质表现，因此迁移宫的配置好坏直接关系到命主的外在表现和与他人的互动能力。迁移宫在分析时还需结合事业宫来看外出工作的发展前景，结合交友宫来看在外人际关系的质量。迁移宫中若有天马，则旅行和搬迁频繁;若有紫微、天府等帝王之星，则在外有贵人扶持且发展顺利;若有七杀、破军等开拓之星，则适合外出打拼创业。',
+  '交友': '交友宫代表一个人与朋友、同事、下属和社会大众的关系，是判断人际关系质量和团队合作能力的重要宫位。此宫位反映了命主的社交圈子质量、朋友的多寡和可靠程度，以及对待下属和合作伙伴的态度。交友宫星曜吉利者，朋友众多且可靠，在社会上人缘好，能得到朋友和下属的真心帮助;若星曜不吉，则可能遭朋友背叛、下属不服或社交圈子素质不高。交友宫也是判断合伙创业是否成功的重要参考，星曜组合好的话适合与人合伙经营，组合差的话则适合独立发展。在分析交友宫时，还需结合兄弟宫来看同辈关系，结合迁移宫来看社交能力的发挥。交友宫中若有左辅右弼，则朋友中有能人且乐于帮助自己;若有天魁天钺，则朋友圈层次较高且有贵人;若有巨门，则需防口舌是非;若有贪狼，则朋友多但良莠不齐需谨慎择友。',
+  '事业': '事业宫代表一个人的职业发展方向、工作能力和事业成就的大小，是命盘中判断人生事业成败的关键宫位。此宫位反映了适合的行业方向、工作中的表现能力、与上司同事的相处模式以及事业的最终成就高度。事业宫星曜吉利者，事业有成，工作顺利，职业发展步步高升，在所选行业中能做出成绩;若星曜不吉，则可能事业波折、工作不顺、职业方向不明确或频繁跳槽。事业宫与命宫、财帛宫互为三方四正，命格格局和财运状况都会影响事业的走向和最终的成就。在分析事业宫时，还需结合迁移宫来看在外地的事业发展，结合父母宫来看长辈和上司的提携作用。事业宫中若有紫微、天府等帝王之星，则适合担任管理领导者;若有武曲、七杀等将星，则适合需要魄力和执行力的职业;若有天机、文昌等智慧之星，则适合策划研究类工作;若有破军，则适合创新变革的行业。',
+  '田宅': '田宅宫代表一个人的家庭环境、房产运势、不动产积累和家庭关系的和谐程度，是判断居住质量和置业运的重要宫位。此宫位反映了命主的家庭背景、居住环境的好坏、买卖房产的时机以及整个家族的兴衰。田宅宫星曜吉利者，家庭和睦温馨，房产运强，有不动产积累，居住环境舒适;若星曜不吉，则可能家庭不和、房产纠纷、居住环境差或置业困难。田宅宫也是财库之所在，与财帛宫的财运直接相关，田宅宫好则财富有处可存，田宅宫差则即使赚钱能力强也难守财。在分析田宅宫时，还需结合子女宫来看家庭氛围，结合父母宫来看家族背景和遗产问题。田宅宫中若有天府，则财富丰厚且不动产多;若有禄存，则房产运极强;若有天同，则家庭生活温馨美满;若有破军，则可能多次搬迁或房产方面有大的变动。',
+  '福德': '福德宫代表一个人的福气、精神享受、内心快乐程度和晚年运势，是判断人生幸福感和生活质量的重要宫位。此宫位反映了命主的精神世界、兴趣爱好、生活品味和对待人生的态度。福德宫星曜吉利者，精神生活丰富，内心安宁快乐，生活品质高，晚年幸福有依靠;若星曜不吉，则可能精神空虚、缺乏乐趣、生活品质不高或晚年孤独。福德宫是财帛宫的迁移宫，代表财运的外在表现，也反映了命主对财富的满足度和消费观念。在分析福德宫时，还需结合命宫来看整体人格特质，结合疾厄宫来看身心健康状况。福德宫中若有天同，则福气深厚且知足常乐;若有天梁，则晚年福寿双全;若有贪狼，则兴趣广泛、精神生活丰富多彩;若有文昌文曲，则有高雅的艺术鉴赏力和精神追求;若为空宫无主星，则需要通过自我修养来提升精神层面的满足感。',
+  '父母': '父母宫代表一个人的父母关系、长辈缘分、家庭教育和来自长辈的庇佑力量，是判断家族背景和成长环境的重要宫位。此宫位反映了与父母的关系质量、受教育的条件和程度以及事业发展中来自长辈上级的帮助。父母宫星曜吉利者，父母健康长寿，亲子关系融洽，家庭背景优良，在教育方面得到良好培养，事业发展中能得到长辈的提携;若星曜不吉，则可能父母关系紧张、长辈缘薄、家庭教育缺失或得不到祖荫庇佑。父母宫也与命主的"上司缘"有关，因为在紫微斗数中父母宫也代表职场中的上级和权威人物。在分析父母宫时，还需结合兄弟宫来看与家族成员的互动，结合事业宫来看上司的关系。父母宫中若有紫微、天府等尊星，则父母有身份地位;若有文昌文曲，则书香门第出身;若有天魁天钺，则得长辈提携力度大;若有太阳太阴，则父母开明健康;若有煞星，则可能与父母缘分较浅或需注意父母健康。',
+};
 
-function getCurrentCycle(cycles: { startAge: number; endAge: number }[], birthYear: number) {
-  const age = new Date().getFullYear() - birthYear;
-  for (const c of cycles) {
-    if (age >= c.startAge && age <= c.endAge) return c as any;
+function generateZiweiAnalysis(
+  palaces: Palace[], bodyPalace: string, bureau: string,
+  majorCycles: { palace: string; startAge: number; endAge: number }[],
+  currentCycle: { palace: string; startAge: number; endAge: number } | null,
+  gender: 'male' | 'female', birthYear: number,
+  yearStem: string, siHuaStars: { 禄: string; 权: string; 科: string; 忌: string }
+) {
+  const palAnalysis: Record<string, string> = {};
+
+  for (let pi = 0; pi < 12; pi++) {
+    const p = palaces[pi];
+    const stars = p.majorStars.map(s => s.name).filter(Boolean);
+    const minStars = p.minorStars.map(s => s.name).filter(Boolean);
+    const combos = findPalaceCombos(p, palaces, pi);
+    let text = '';
+
+    text += `${PALACE_MEANINGS[p.name] || ''}\n\n`;
+    text += `此宫干支为${p.stem}${p.branch}，地支位于${p.branch}方。`;
+
+    const branchDescriptions: Record<string, string> = {
+      '子': '子为正北方属水，为桃花沐浴之地，主智慧和流动。',
+      '丑': '丑为东北方属土，为金库之地，主积累和坚韧。',
+      '寅': '寅为东北方属木，为火之长生地，主生机和原动力。',
+      '卯': '卯为正东方属木，为桃花沐浴之地，主成长和交流。',
+      '辰': '辰为东南方属土，为水库之地，主包容和转折。',
+      '巳': '巳为东南方属火，为金之长生地，主热情和升腾。',
+      '午': '午为正南方属火，为帝旺之地，主鼎盛和光明。',
+      '未': '未为西南方属土，为木库之地，主柔和和收敛。',
+      '申': '申为西南方属金，为水之长生地，主变革和通达。',
+      '酉': '酉为正西方属金，为桃花帝旺地，主精致和原则。',
+      '戌': '戌为西北方属土，为火库之地，主厚重和终结。',
+      '亥': '亥为西北方属水，为木之长生地，主智慧和酝酿。',
+    };
+    text += `${branchDescriptions[p.branch] || ''}\n\n`;
+
+    if (p.isBodyPalace) {
+      text += '【身宫在此】此宫同时也是身宫所在。身宫代表后天发展和实际作为的方向，对命主35岁以后的人生有极其重大的影响。';
+      text += '身宫是后天造化之所在，先天命格再好若身宫不利则后天难有大成；反之先天命格平平若身宫星曜配合得宜，则后天努力可改变命运。';
+      text += `身宫落在${p.name}，命主后天发展的重心和着力点应放在${p.name}方面，此处是逆天改命的关键所在。\n\n`;
+    }
+
+    if (stars.length > 0) {
+      text += `【主星分析】此宫主星：${stars.join('、')}\n\n`;
+      for (const s of stars) {
+        const generic = STAR_MEANINGS[s];
+        if (generic) {
+          text += `${s}在${p.name}宫：${generic}\n\n`;
+        } else {
+          text += `${s}在此宫位产生独特的影响。\n\n`;
+        }
+      }
+    } else {
+      text += '【空宫】此宫无主星为空宫。空宫并非完全空白，而是需要参考对宫的星曜来综合判断。';
+      text += `此宫的对宫为${p.duiGong}，可参考${p.duiGong}宫的星曜一并分析。`;
+      text += '无主星之宫位优点是灵活性强，不会被固定的星曜特性所局限，可以随环境和自身修养而灵活调整；缺点是在此方面缺乏先天的主心骨，需通过后天学习和努力来弥补。\n\n';
+    }
+
+    if (minStars.length > 0) {
+      text += `【辅星分析】此宫辅星：${minStars.join('、')}\n`;
+      if (minStars.includes('文昌') || minStars.includes('文曲')) {
+        text += '文昌文曲在此宫，增加了文采和才华的色彩，此宫相关事务偏向于知识技能领域。';
+        if (minStars.includes('文昌')) text += '文昌主正统学术与文书，代表学习考试运的加持。';
+        if (minStars.includes('文曲')) text += '文曲主艺术与口才，代表艺术天赋和表达能力的提升。';
+        text += '\n';
+      }
+      if (minStars.includes('左辅') || minStars.includes('右弼')) {
+        text += '左辅右弼在此宫，贵人助力强劲，此宫事务容易得到他人主动的帮助和支持。';
+        if (minStars.includes('左辅') && minStars.includes('右弼')) text += '左辅右弼双星汇聚，左右贵人齐全，助力翻倍。';
+        text += '\n';
+      }
+      if (minStars.includes('天魁') || minStars.includes('天钺')) {
+        text += '天魁天钺为天乙贵人星在此宫，代表上层贵人的提携和意外机遇。';
+        if (minStars.includes('天魁')) text += '天魁为阳贵，主来自上位者的直接提携。';
+        if (minStars.includes('天钺')) text += '天钺为阴贵，主来自幕后的隐性帮助。';
+        text += '\n';
+      }
+      if (minStars.includes('禄存')) {
+        text += '禄存为财禄之星在此宫，代表此宫事务有稳定的福禄基础，财富积累扎实可靠，是细水长流的稳定之财。\n';
+      }
+      if (minStars.includes('天马')) {
+        text += '天马为奔波之星在此宫，代表此宫事务变动较多，需要不断奔走和适应变化。';
+        if (minStars.includes('禄存')) text += '禄存与天马同宫形成禄马交驰格，动中得财财运极佳。';
+        text += '\n';
+      }
+      text += '\n';
+    }
+
+    const siHuaEntries = Object.entries(p.siHua);
+    if (siHuaEntries.length > 0) {
+      text += '【四化影响】此宫受到以下四化之力的影响：\n';
+      const siHuaMeanings: Record<string, Record<string, string>> = {
+        '化禄': {
+          '命宫': '命宫得化禄加持，福气倍增，一生机遇众多，做事常有意外收获，生活富足安逸。',
+          '兄弟': '兄弟宫有化禄星，兄弟姐妹财运亨通，能给予帮助和支持。',
+          '夫妻': '夫妻宫得化禄，婚姻富足美满，配偶经济能力较强。',
+          '子女': '子女宫有化禄，子女福气深厚，成长顺遂安康。',
+          '财帛': '财帛宫得化禄，财运亨通，正财偏财都不错，收入渠道多元化。',
+          '疾厄': '疾厄宫有化禄，能以财富换取优质医疗资源，健康有一定保障。',
+          '迁移': '迁移宫得化禄，外出运势极佳，在外地求财得利。',
+          '交友': '交友宫有化禄，朋友和合作伙伴能带来财富和机遇。',
+          '事业': '事业宫得化禄，职场发展顺遂，易获上司赏识和同事支持。',
+          '田宅': '田宅宫得化禄，房产运极强，家宅兴旺。',
+          '福德': '福德宫得化禄，福气深厚，精神生活富足，晚年安逸幸福。',
+          '父母': '父母宫有化禄，得父母物质支持和关爱，家世背景较好。',
+        },
+        '化权': {
+          '命宫': '命宫得化权加持，领导能力和决断力大幅增强，做事果断有力。',
+          '兄弟': '兄弟宫有化权星，手足中有人有权势或领导才能。',
+          '夫妻': '夫妻宫得化权，配偶能力出众，婚姻中需平衡权力分配。',
+          '子女': '子女宫有化权，子女有领导才能和主见。',
+          '财帛': '财帛宫得化权，在财富获取上有强烈的进取心和控制欲。',
+          '疾厄': '疾厄宫有化权，面对疾病时有强大的意志力和恢复力。',
+          '迁移': '迁移宫得化权，在外地发展有掌控力和领导力。',
+          '交友': '交友宫有化权，在朋友圈中处于核心或领导地位。',
+          '事业': '事业宫得化权，事业心极强，适合管理决策类职位或自主创业。',
+          '田宅': '田宅宫得化权，在家庭中处于主导决策地位。',
+          '福德': '福德宫得化权，精神世界追求权力和影响力。',
+          '父母': '父母宫有化权，父母较为强势，管教严格。',
+        },
+        '化科': {
+          '命宫': '命宫得化科加持，文采和才华显著提升，容易获得声誉和荣耀。',
+          '兄弟': '兄弟宫有化科星，兄弟姐妹学业优良，有才华和学问。',
+          '夫妻': '夫妻宫得化科，配偶温文尔雅有学识，婚姻中充满文化共鸣。',
+          '子女': '子女宫有化科，子女聪慧好学，学业成绩优异。',
+          '财帛': '财帛宫得化科，通过知识和才华获取财富，是以文生财的格局。',
+          '疾厄': '疾厄宫有化科，有较好的自我保健意识，能通过知识维护健康。',
+          '迁移': '迁移宫得化科，外出发展和学习深造的机会较多。',
+          '交友': '交友宫有化科，朋友圈以知识分子和学者为主。',
+          '事业': '事业宫得化科，以才华和智慧在职场中取胜，适合学术教育等文职。',
+          '田宅': '田宅宫得化科，家中有浓厚的文化氛围和书香气。',
+          '福德': '福德宫得化科，精神世界以知识和文化为滋养。',
+          '父母': '父母宫有化科，父母知书达理，重视教育培养。',
+        },
+        '化忌': {
+          '命宫': '命宫有化忌星，是命主一生中最大的挑战所在。化忌如砂石磨砺宝石，经痛苦成长。',
+          '兄弟': '兄弟宫有化忌星，手足关系可能存在隔阂或问题。',
+          '夫妻': '夫妻宫有化忌，感情道路可能经历挫折，需要更多包容和理解。',
+          '子女': '子女宫有化忌，养育子女的过程可能比较辛苦。',
+          '财帛': '财帛宫有化忌，财运上可能遇到困难，理财需格外谨慎。',
+          '疾厄': '疾厄宫有化忌，需特别关注身体健康，定期体检至关重要。',
+          '迁移': '迁移宫有化忌，外出发展可能遇到较多波折，需做好准备。',
+          '交友': '交友宫有化忌，交友需特别谨慎，避免被不可靠的朋友拖累。',
+          '事业': '事业宫有化忌，职业发展可能遇到阻力，需要更多耐心和努力。',
+          '田宅': '田宅宫有化忌，家庭和房产方面可能遇到麻烦和困扰。',
+          '福德': '福德宫有化忌，内心可能缺乏安全感，需要主动建设精神生活。',
+          '父母': '父母宫有化忌，与父母缘分较浅或关系存在困难。',
+        },
+      };
+      for (const [type, star] of siHuaEntries) {
+        text += `${star}在${p.name}化${type}：${siHuaMeanings[`化${type}`]?.[p.name] || `${p.name}宫受化${type}之力影响，在此领域产生显著的助力或挑战。`}\n`;
+      }
+      text += '\n';
+    }
+
+    if (combos.length > 0) {
+      text += '【特殊格局】\n';
+      for (const combo of combos) {
+        text += `${combo}\n`;
+      }
+      text += '\n';
+    }
+
+    text += '【三方四正照会】\n';
+    text += `此宫的三方为：${p.name}、${p.sanFang[0]}、${p.sanFang[1]}，三方宫位的星曜共同构成此宫的外围格局。`;
+    text += `对宫为${p.duiGong}，与对宫互为表里、相互映照。\n`;
+    const sfPalaceNames = [p.name, ...p.sanFang];
+    const sfStarsAll = new Set<string>();
+    for (const sfName of sfPalaceNames) {
+      const sfPalace = palaces.find(pl => pl.name === sfName);
+      if (sfPalace) getPalaceStars(sfPalace).forEach(s => sfStarsAll.add(s));
+    }
+    const duiPalace = palaces.find(pl => pl.name === p.duiGong);
+    const duiStars = duiPalace ? getPalaceStars(duiPalace) : [];
+    if (sfStarsAll.size > 0) {
+      text += `三方宫位汇聚的星曜包括：${[...sfStarsAll].join('、')}，这些星曜共同塑造了此宫的总体能量场。`;
+    }
+    if (duiStars.length > 0) {
+      text += `对宫${p.duiGong}的星曜（${duiStars.join('、')}）也通过对照关系影响着此宫的特质表现。`;
+    }
+    text += '\n\n';
+
+    text += `【${p.name}宫生活建议】\n`;
+    const adviceMap: Record<string, string> = {
+      '命宫': '命宫为一生之根本，建议深入了解自身命宫星曜特性，扬长避短，选择符合自身命格的发展方向。命宫强旺应勇往直前大胆追求；命宫偏弱应韬光养晦后发制人。后天的努力和德行修养能在很大程度上弥补先天的不足。',
+      '财帛': '财帛宫主一生财运，建议根据财帛宫星曜特性选择适合的理财方式和赚钱途径。财运好时应居安思危做好储备，财运差时应稳扎稳打避免冒险。良好的财务规划和消费习惯是守财的根本。',
+      '事业': '事业宫决定职业发展方向，建议选择与事业宫星曜特性相符的行业，顺应星性能事半功倍。事业上升期应把握机遇积极进取，事业低潮期应沉潜蓄力等待时机。找准方向是成功的一半。',
+      '夫妻': '夫妻宫关乎婚姻和感情幸福，建议择偶时参考夫妻宫星曜特点，选择性格互补的伴侣。婚姻需要双方共同经营，保持沟通和理解是维系感情的基石。真正的幸福还需自己去创造和珍惜。',
+      '疾厄': '疾厄宫关乎身体健康，建议根据疾厄宫星曜提示有针对性地进行健康管理。定期体检保持良好的生活习惯和心态，是维护健康的基本功。预防永远胜于治疗。',
+    };
+    text += adviceMap[p.name] || `建议在${p.name}方面多加留心，顺应此宫星曜的特性来规划和生活。吉星汇聚之处可多加投入发展，煞星汇聚之处需谨慎行事。人生的智慧在于知进退、懂取舍。`;
+    text += '\n';
+
+    if (p.majorLimit) {
+      text += `\n【大限运势】此宫大限为${p.majorLimit.startAge}-${p.majorLimit.endAge}岁，`;
+      if (p.majorLimit.startAge <= 30) {
+        text += '这是人生较早的阶段，此十年大限对命主的基础发展和人生方向的确立至关重要，是打基础和确定方向的阶段。';
+      } else if (p.majorLimit.startAge <= 50) {
+        text += '这是人生的黄金时期（中年阶段），此十年大限直接影响事业的高度和家庭的稳固程度，是人生收获的关键期。';
+      } else {
+        text += '这是人生的成熟阶段（中晚年），此十年大限关系着晚年的生活质量和精神满足，是享受人生成果和总结智慧的阶段。';
+      }
+      text += '大限走到此宫时，此宫星曜力量被全面激活，此方面事务将成为该阶段的绝对重心。\n';
+    }
+
+    palAnalysis[p.name] = text;
   }
-  return null;
+
+  const mingPalace = palaces[0];
+  const mingStars = mingPalace.majorStars.map(s => s.name).join('、') || '无主星';
+  const mingMinStars = mingPalace.minorStars.map(s => s.name).join('、') || '无辅星';
+  const ziFuPalace = palaces[9];
+  const caiBoPalace = palaces[4];
+  const fuQiPalace = palaces[2];
+  const jiaoYouPalace = palaces[7];
+  const tianZhaiPalace = palaces[8];
+  const jiEPalace = palaces[5];
+  const fuDePalace = palaces[10];
+
+  let overview = '';
+  overview += `命局五行局为${bureau}，命主出生于${birthYear}年，${gender === 'male' ? '乾造' : '坤造'}。`;
+  overview += `岁次${yearStem}年，四化诀曰"${yearStem}${siHuaStars.禄}化禄、${siHuaStars.权}化权、${siHuaStars.科}化科、${siHuaStars.忌}化忌"。
+
+`;
+  overview += '\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501 命格总论 \u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n\n';
+
+  overview += `命宫主星为${mingStars}（辅星：${mingMinStars}），身宫在${bodyPalace}。命宫为先天禀赋之根基，身宫为后天造化之方向，两者共同构成命主一生的基本格局。
+
+`;
+  if (mingPalace.majorStars.length > 0) {
+    const firstStar = mingPalace.majorStars[0].name;
+    overview += `命宫以${firstStar}坐守，此为命主安身立命之根本。${firstStar}入命之人，天生具有与其星曜相应的性格特质和人生倾向。从命宫可以看出先天禀赋和命运基调，是解读整个命盘的出发点和落脚点。`;
+    overview += `命宫星曜的庙旺利陷以及三方四正的照会，决定了命主一生的总体格局高低。命宫星曜庙旺且得吉星辅佐者，一生运势顺遂，事业发展顺利，人际关系和谐，福气深厚；若星曜失陷又遇煞星冲破，则人生道路多有坎坷，需要付出加倍的努力才能获得相应的回报。`;
+
+    const mingSiHua = Object.entries(mingPalace.siHua);
+    if (mingSiHua.length > 0) {
+      overview += `\n\n命宫同时受到${mingSiHua.map(([t, s]) => `${s}化${t}`).join('、')}的影响，此为命格中的关键变化因素。`;
+      for (const [type] of mingSiHua) {
+        if (type === '禄') overview += '命宫化禄代表天生福气深厚，一生机遇众多，但也需防过于顺遂而缺乏进取心。';
+        if (type === '权') overview += '命宫化权代表天生具有领导才能和决断力，做事果断有力，适合在组织中担任领导角色。';
+        if (type === '科') overview += '命宫化科代表才华横溢，学业和事业上容易获得声誉和荣耀。';
+        if (type === '忌') overview += '命宫化忌代表人生课题和成长方向，虽道路曲折但终能历练成金。';
+      }
+    }
+  } else {
+    overview += '命宫无主星，命主的性格较为灵活多变，不易被某种固定的特质所局限。无主星之命格，需借对宫迁移宫的星曜来综合分析命主的性格倾向。这种命格的优点是适应性强，可根据环境和时机灵活调整人生方向；缺点是在某些关键时刻可能缺乏主心骨，需多加自我修炼。';
+  }
+
+  overview += `\n\n身宫落在${bodyPalace}，说明命主后天发展的重心和着力点应在${bodyPalace}方面。身宫是后天造化之所在，35岁以后身宫的影响力会逐渐超越命宫，成为主导命运走向的关键因素。先天命格为根基，后天身宫为发展，两者相辅相成。命好身好则终生成就非凡；命好身不好则先成后败需及时调整方向；命不好身好则后天努力可补先天之不足，大器晚成。`;
+
+  const mingCombos = findPalaceCombos(mingPalace, palaces, 0);
+  if (mingCombos.length > 0) {
+    overview += '\n\n【命宫特殊格局】\n';
+    for (const combo of mingCombos) overview += `${combo}\n`;
+  }
+
+  if (currentCycle) {
+    overview += `\n当前大限在${currentCycle.palace}宫（${currentCycle.startAge}-${currentCycle.endAge}岁），此十年间${currentCycle.palace}方面的事务是命主的生活重心和运势焦点。抓住大限带来的机遇，顺势而为则事半功倍；若此宫星曜配置不理想，则应稳守为主、以退为进。`;
+  }
+
+  overview += '\n\n综观全局，命主的命盘格局具有独特的特点和潜力。紫微斗数讲究天地人三才的配合——天命为根基、地理为环境、人事为作为。先天命盘虽有定数，但后天的努力、选择和德行修养同样能在很大程度上影响人生的走向和高度。建议结合各宫位的详细分析和大运走势，制定适合自己的人生规划，在顺应天命的同时积极发挥主观能动性，方能趋吉避凶、幸福安康。\n';
+
+
+
+
+  let career = '';
+  career += '══════════ 事业前程分析 ══════════\n\n';
+  const careerStars = ziFuPalace.majorStars.map(s => s.name).join('、') || '无主星';
+  const careerMinStars = ziFuPalace.minorStars.map(s => s.name).join('、') || '无';
+  career += `事业宫位于${ziFuPalace.stem}${ziFuPalace.branch}方，主星：${careerStars}，辅星：${careerMinStars}。
+
+`;
+  career += `【事业宫核心解读】\n事业宫为官禄之位，决定职业发展方向和成就高度。${careerStars}在事业宫，命主职业表现和特质与这些星曜的特性紧密相连。
+`;
+  if (careerStars.includes('紫微') || careerStars.includes('天府')) {
+    career += '事业宫有帝王或库星坐守，格局宏大，胸怀宽广。命主不适合屈就于小公司或基层岗位，需在有足够发展空间的平台上施展抱负。天生具有领导统御之才，适合担任管理决策类职位或自主创业当领导者。事业发展讲究厚积薄发，中年之后方能达到事业巅峰。性格方面具有大局观和统御力，善用人才，但需注意不要过于自负，需要建立可靠的团队作为支撑。';
+  } else if (careerStars.includes('武曲') || careerStars.includes('七杀')) {
+    career += '事业宫有将星坐守，执行力和决断力超群。命主是典型的实干派，做事雷厉风行，不畏艰难。在竞争激烈的行业中反而更能激发斗志和潜能。适合从事金融投资、军警执法、工程制造、竞技体育等需要魄力果敢的职业。需要注意的是将星过刚易折，在职场中要适当柔和处事，维护好同事关系。';
+  } else if (careerStars.includes('天机') || careerStars.includes('巨门')) {
+    career += '事业宫有智星坐守，思维敏捷，善于分析和策划。适合从事脑力劳动为主的职业，如科研开发、战略咨询、教育培训、法律顾问、IT编程等。脑力是这类人的核心竞争力，持续学习和知识更新是保持职业竞争力的关键。需要注意的是不要想得太多而行动太少，要学会将智慧转化为实际的执行力。';
+  } else if (careerStars.includes('天同') || careerStars.includes('天梁')) {
+    career += '事业宫有福寿之星坐守，在服务业、文化教育、医疗健康等需要耐心和善心的行业中具有独特优势。追求的不是权力和财富，而是工作的意义和生活的平衡。适合从事教育、医疗、养老、文化传播、公益慈善等行业，在这些领域中能够如鱼得水、找到深层的满足感。';
+  } else if (careerStars.includes('贪狼') || careerStars.includes('廉贞')) {
+    career += '事业宫有才艺之星坐守，在创意、艺术或管理领域具有天赋。才华横溢且善于人际交往，适合从事娱乐演艺、文化创意、市场营销、公关外交、法律刑侦等多元化职业。职业发展往往带有一定的波折和变化，但每次变动都蕴含着新的机遇和突破。';
+  } else if (careerStars.includes('破军')) {
+    career += '事业宫有破军星，创新变革是职业发展的主旋律。不适合墨守成规的工作，需要在不断变化和创新中找到成就感。适合创业、产品研发、创意设计等需要突破和变革的行业。破军是先破后成之星，事业发展往往先经历挫折和困难，尔后才能浴火重生取得真正的突破。';
+  } else if (!careerStars) {
+    career += '事业宫无主星，需借对宫夫妻宫的星曜来综合判断。这类命主在事业发展上比较灵活，可适应多种不同的行业和职位，但也需要付出更多的时间和精力来寻找最适合自己的职业方向。职业生涯中可能需要经历多次尝试才能找到真正适合自己的道路。';
+  }
+
+  career += '\n\n【财帛宫关联分析】\n';
+  const caiStars = caiBoPalace.majorStars.map(s => s.name).join('、') || '无主星';
+  career += `财帛宫主星为${caiStars}，财帛宫与事业宫互为三合，财运的好坏直接影响事业的发展和方向。`;
+  if (caiStars.includes('武曲') || caiStars.includes('天府')) {
+    career += '命主财运根基扎实，在事业上不仅能够发挥才干，还能获得相应的物质回报。建议在职业选择上优先考虑能够充分发挥专业能力的领域，回报会与付出成正比。';
+  } else if (caiBoPalace.minorStars.map(s => s.name).includes('禄存')) {
+    career += '禄存在财帛宫，财运稳定持久，建议在职业上选择稳定增长的行业和公司，以长期积累和稳健进取为策略。';
+  } else {
+    career += '财运与事业的选择密切相关，建议命主在职业规划中充分考虑财务回报，选择与自身技能匹配且有一定经济前景的行业。';
+  }
+  career += '\n';
+
+  const careerSiHua = Object.entries(ziFuPalace.siHua);
+  if (careerSiHua.length > 0) {
+    career += '\n【事业宫四化之力】\n';
+    for (const [type, star] of careerSiHua) {
+      const siHuaLabels: Record<string, string> = { '禄': '事业发展顺遂机遇多，易获上司赏识和同事支持，有春风得意之势', '权': '领导能力和决断力大幅增强，适合管理决策类岗位或自主创业', '科': '在职场中以才华和智慧取胜，适合学术教育、写作等文职，职业声誉良好', '忌': '职业发展可能遇到阻力和挑战，需要更多的耐心和韧性，经挫折后的成就更加牢固' };
+      career += `${star}在事业宫化${type}：${siHuaLabels[type] || `在事业方面产生显著的${type}效应`}。\n`;
+    }
+  }
+
+  career += '\n【事业锦囊】\n选择顺应星曜特性的职业方向，能够事半功倍。善用事业宫中的吉星力量，如贵人之助、禄存之稳、天马之动。事业的成功不仅取决于事业宫的好坏，还与命宫、财帛宫、父母宫等有密切关系。建议在适合的大限中把握机遇积极进取，在不适合的大限中韬光养晦积蓄力量。\n';
+
+  let marriage = '';
+  marriage += '\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501 婚姻感情分析 \u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n\n';
+  const marriageStars = fuQiPalace.majorStars.map(s => s.name).join('、') || '无主星';
+  const marriageMinStars = fuQiPalace.minorStars.map(s => s.name).join('、') || '无';
+  marriage += `夫妻宫位于${fuQiPalace.stem}${fuQiPalace.branch}方，主星：${marriageStars}，辅星：${marriageMinStars}。
+
+`;
+  marriage += `【夫妻宫核心解读】\n夫妻宫为婚姻的命脉，决定配偶的性格特征、容貌气质以及婚姻生活的质量。${marriageStars}在夫妻宫，命主的感情生活和婚姻模式与这些星曜的特质紧密相关。
+`;
+  if (marriageStars.includes('贪狼') || marriageStars.includes('廉贞')) {
+    marriage += '夫妻宫有桃花星坐守，命主异性缘佳，在感情方面天生具有吸引力，容易遇到外貌和能力都不错的伴侣，感情生活丰富多彩。但也正因为桃花星的特质，感情方面容易出现波折和诱惑，需学会收心和专注。择偶时最重要的是找一个能让自己安定下来的人，不求激情似火，但求细水长流、相知相守。';
+  } else if (marriageStars.includes('天府') || marriageStars.includes('天相')) {
+    marriage += '夫妻宫有稳重之星坐守，是上佳的婚姻配置。配偶性格稳重可靠，有责任感和管理能力，是人生中最重要的依靠。婚姻关系和谐稳定，虽然不够浪漫但非常实在。这类婚姻经得起时间的考验，平淡之中见真情，是最适合长厢厮守的良缘。';
+  } else if (marriageStars.includes('紫微') || marriageStars.includes('武曲')) {
+    marriage += '夫妻宫有强势之星坐守，配偶能力出众、事业心强，在婚姻中处于主导或半主导地位。好处是配偶能够分担家庭的经济压力，事业上也对命主有所帮助；挑战在于夫妻双方都可能有较强的主见，需更多沟通、包容和尊重。建议在婚姻中学会柔化和妥协，给彼此足够的空间。';
+  } else if (marriageStars.includes('天机') || marriageStars.includes('太阴')) {
+    marriage += '夫妻宫有柔和之星坐守，配偶性格温和细腻，重视感情交流和精神共鸣。天机在夫妻宫者配偶聪明灵活但心思多变，需给予足够安全感；太阴在夫妻宫者配偶温柔体贴，善解人意，是理想的伴侣。这类配置下婚姻关系总体和谐美满，双方都懂得照顾对方的感受。';
+  } else if (marriageStars.includes('七杀') || marriageStars.includes('破军')) {
+    marriage += '夫妻宫有刚强或变动之星坐守，婚姻中可能出现较多的考验和波折。七杀者配偶个性强、有主见，需多一些忍让和包容；破军者感情生活变动较大，建议晚婚或择偶时选择性格互补的人。这类配置下的婚姻虽然挑战较多，但如果双方能够共同面对和克服，感情反而会更加坚固和深刻。';
+  } else if (marriageStars.includes('巨门')) {
+    marriage += '夫妻宫有巨门星坐守，夫妻之间容易因言语不当而产生误会和摩擦。沟通是婚姻中最重要的课题，需要学会倾听和表达的艺术，不要总想辨出个对错输赢。选择一个性格开朗乐观、善于包容的伴侣，可以有效缓解巨门的不利影响。';
+  } else if (!marriageStars) {
+    marriage += '夫妻宫无主星，需借对宫事业宫的星曜来综合判断。这类命主在感情方面比较随缘，不强求不将就。婚姻的主动权更多地掌握在自己手中，通过对自身和对伴侣的深入了解，能够做出更加理性和适合自己的选择。';
+  }
+
+  const marriageSiHua = Object.entries(fuQiPalace.siHua);
+  if (marriageSiHua.length > 0) {
+    marriage += '\n\n【夫妻宫四化之力】\n';
+    for (const [type, star] of marriageSiHua) {
+      const siHuaLabels: Record<string, string> = { '禄': '婚姻生活富足美满，配偶经济能力较强或婚后家运兴旺，配偶是命主的福星', '权': '配偶能力突出，在婚姻中处于主导地位，婚姻关系需在权力分配上达成平衡', '科': '配偶温文尔雅有学识，婚姻中充满文化共鸣和精神契合，以文会友', '忌': '感情道路可能经历挫折和痛苦，需付出更多包容和理解，晚婚或经历挫折后更稳固' };
+      marriage += `${star}在夫妻宫化${type}：${siHuaLabels[type] || ''}。\n`;
+    }
+  }
+
+  marriage += '\n\n【交友宫关联分析】\n';
+  const jiaoStars = jiaoYouPalace.majorStars.map(s => s.name).join('、') || '无主星';
+  marriage += `交友宫主星为${jiaoStars}，此宫关系着命主的交友圈和社交质量，间接影响感情的广度。`;
+  if (jiaoStars.includes('贪狼') || jiaoStars.includes('廉贞')) {
+    marriage += '交友宫有桃花星，社交圈子中异性可能较多，需要注意日常社交中的边界感，维护好与伴侣的信任。';
+  } else if (jiaoStars.includes('左辅') || jiaoStars.includes('右弼')) {
+    marriage += '交友宫的贵人星有助于在社交圈中结识优质的朋友，包括可能的婚恋对象，人脉质量较高。';
+  }
+  marriage += '\n';
+
+  marriage += '\n【感情锦囊】\n好的婚姻需要双方的共同努力和用心经营。择偶时应选择与自己夫妻宫星曜特性相合的伴侣，注意双方的性格互补和价值观一致。婚后要保持沟通和理解，不要让日常琐事消磨掉最初的爱意和热情。婚姻是需要持续投入和经营的关系，无论是星曜吉利还是配置不佳的命盘，用心呵护才是婚姻长久幸福的根本。\n';
+
+  let wealth = '';
+  wealth += '\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501 财运财富分析 \u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n\n';
+  const wealthStars = caiBoPalace.majorStars.map(s => s.name).join('、') || '无主星';
+  const wealthMinStars = caiBoPalace.minorStars.map(s => s.name).join('、') || '无';
+  wealth += `财帛宫位于${caiBoPalace.stem}${caiBoPalace.branch}方，主星：${wealthStars}，辅星：${wealthMinStars}。
+
+`;
+  wealth += `【财帛宫核心解读】\n财帛宫为一生财运的命脉，决定赚钱能力、理财观念和财富积累的方式。${wealthStars}在财帛宫，命主的财运模式和金钱态度深受这些星曜的影响。
+`;
+  if (wealthStars.includes('武曲') || wealthStars.includes('天府')) {
+    wealth += '财帛宫有财星坐守，上佳的财运配置。武曲为第一正财星，赚钱能力极强，适合通过金融投资、企业管理、工程制造等需要专业技能的途径积累财富。天府为库藏之星，不仅会赚钱更会守财，财富积累扎实稳定。两者都代表正财之格，适合从事与金钱打交道的行业，财库充盈且不易破财。';
+  } else if (wealthStars.includes('太阴') || wealthStars.includes('贪狼')) {
+    wealth += '财帛宫有柔财或动财之星坐守。太阴之财如同月光般细腻持久，适合通过文化艺术、美容养护、设计创意等与美相关的行业获利。贪狼之财运起伏较大，偏财运和商业嗅觉极佳，适合多元化投资和灵活经营。两种配置下的财运都有不错的发展潜力，关键是根据星性选择合适的方式。';
+  } else if (wealthStars.includes('紫微') || wealthStars.includes('太阳')) {
+    wealth += '财帛宫有尊贵或光明之星坐守，财富来源正当且受人尊敬。紫微者财富与权力地位密切相关，位高则财厚；太阳者慷慨大方，仗义疏财，赚钱能力不差但花钱也大方。君子爱财取之有道，财富多来自于正途。';
+  } else if (wealthStars.includes('天机') || wealthStars.includes('巨门')) {
+    wealth += '财帛宫有智慧或口才之星坐守，靠脑力和口才赚钱。天机者适合策划咨询、技术开发等智慧型工作；巨门者口才就是财富，适合律师、顾问、销售等职业。财运虽然不会暴发，但胜在通过自身的能力持续稳定地获得收入。';
+  } else if (wealthStars.includes('七杀') || wealthStars.includes('破军')) {
+    wealth += '财帛宫有刚强或变动之星坐守，财运波动较大，敢赚也敢花。七杀者在竞争中反而能脱颖而出获得财富，但风险较高；破军者钱财易来易去，需要特别注意守财和风险控制。稳健理财和分散风险是保障财富安全的重要策略。';
+  } else if (!wealthStars) {
+    wealth += '财帛宫无主星，财运相对灵活，可以通过后天学习和努力来改善财务状况。无主星意味着财富不是命盘中最突出的领域，但也正因如此，命主不会过于执着于金钱，心态反而较为平和。建议从自身的专长和兴趣出发，稳扎稳打地积累财富。';
+  }
+
+  const wealthSiHua = Object.entries(caiBoPalace.siHua);
+  if (wealthSiHua.length > 0) {
+    wealth += '\n\n【财帛宫四化之力】\n';
+    for (const [type, star] of wealthSiHua) {
+      const siHuaLabels: Record<string, string> = { '禄': '财运亨通，正财偏财都不错，收入渠道多元化，赚钱轻松财富积累速度快', '权': '在财富获取上有强烈的进取心和控制欲，适合通过经营和投资来积累财富', '科': '通过知识和才华获取财富，是以文生财的格局，君子爱财取之有道', '忌': '财运上可能遇到困难和挑战，理财需格外谨慎，化忌是培养财务智慧的好机会' };
+      wealth += `${star}在财帛宫化${type}：${siHuaLabels[type] || ''}。\n`;
+    }
+  }
+
+  wealth += '\n\n【田宅宫（财库）关联分析】\n';
+  const tzStars = tianZhaiPalace.majorStars.map(s => s.name).join('、') || '无主星';
+  const hasLuCun = caiBoPalace.minorStars.map(s => s.name).includes('禄存') || tianZhaiPalace.minorStars.map(s => s.name).includes('禄存');
+  wealth += `田宅宫主星为${tzStars}，田宅宫为财库之所在，与财帛宫的财运直接相关。`;
+  if (hasLuCun) {
+    wealth += '禄存在财帛宫或田宅宫，财运根基稳固，有较强的财富积累能力。禄存的财富是细水长流的稳定之财，一生衣食无忧，是最稳妥的财星配置。';
+  }
+  if (tzStars.includes('天府') || tzStars.includes('紫微')) {
+    wealth += '财库有贵星坐守，财富储存能力强，不动产运旺。长线持有优质资产是最适合的财富策略。';
+  } else if (tzStars.includes('武曲')) {
+    wealth += '财库有武曲坐守，通过不动产投资或实业经营来储存财富是最佳途径，资产增值潜力较大。';
+  } else {
+    wealth += '田宅宫配置尚可，建议关注不动产领域的投资机会，将流动资金转化为优质固定资产是守财的良策。';
+  }
+  wealth += '\n';
+
+  wealth += '\n【财富锦囊】\n无论财帛宫配置如何，科学的理财规划和良好的消费习惯都是积累财富的基础。建议建立三分法的资金管理习惯：日常开销、储蓄保本和投资理财各占合理比例。选择顺应星性的赚钱方式，善用财帛宫和田宅宫中的吉星力量。财富的最终目的不是堆积数字，而是让生活更加美好和自由，取之有道、用之有度方为理财的最高境界。\n';
+
+  let health = '';
+  health += '\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501 身心安康分析 \u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n\n';
+  const healthStars = jiEPalace.majorStars.map(s => s.name).join('、') || '无主星';
+  const healthMinStars = jiEPalace.minorStars.map(s => s.name).join('、') || '无';
+  health += `疾厄宫位于${jiEPalace.stem}${jiEPalace.branch}方，主星：${healthStars}，辅星：${healthMinStars}。
+
+`;
+  const elementHealth: Record<string, string[]> = {
+    '金': ['呼吸系统（肺、气管、鼻子）', '骨骼关节（脊椎、牙齿、膝盖）', '皮肤和大肠功能'],
+    '木': ['肝胆系统（肝脏、胆囊、筋脉）', '神经系统（神经衰弱、失眠、头痛）', '眼睛视力和四肢协调'],
+    '水': ['泌尿系统（肾脏、膀胱、尿道）', '生殖系统（生殖器官、内分泌）', '耳部听力和体液循环'],
+    '火': ['心血管系统（心脏、血管、血压）', '眼部（视力、眼睛疲劳）', '小肠功能和体温调节'],
+    '土': ['消化系统（脾胃、肠道）', '肌肉和软组织', '口腔和味觉功能'],
+  };
+  const bureauElement2 = bureau.charAt(0);
+  const healthFocus = elementHealth[bureauElement2] || elementHealth['土'];
+  health += `命主命局为${bureau}，${bureauElement2}行体质。根据五行学说，${bureauElement2}行体质需特别关注：${healthFocus.join('、')}。日常保养应以固本培元为主，顺应${bureauElement2}行的特性来调理身体。
+
+`;
+  health += `【疾厄宫核心解读】\n疾厄宫为健康命脉，决定先天体质、疾病倾向和抗病能力。${healthStars}在疾厄宫，命主的健康状况与这些星曜的特性密切相关。
+`;
+  if (healthStars.includes('紫微')) {
+    health += '紫微在疾厄宫，整体体质尚可，帝王之气能压制部分煞星影响。但仍需注意脾胃消化系统，避免暴饮暴食和饮食不规律。命主面对疾病时有较强的意志力，能以积极心态应对健康挑战。';
+  } else if (healthStars.includes('天机')) {
+    health += '天机在疾厄宫，需特别注意神经系统和肝胆功能。命主容易用脑过度导致神经衰弱、失眠和头痛，应合理安排工作休息时间。肝胆功能较为敏感，避免长期熬夜和过量饮酒。保持规律作息对健康至关重要。';
+  } else if (healthStars.includes('太阳')) {
+    health += '太阳在疾厄宫，需关注心脏、眼睛和血液循环系统。火行体质容易心火旺盛，注意血压和心血管健康。眼睛容易疲劳干涩，长时间用眼后需适当休息。保持心态平和、避免过度激动对健康有重要作用。';
+  } else if (healthStars.includes('武曲')) {
+    health += '武曲在疾厄宫，需注意呼吸系统和筋骨损伤。肺部和气管较为敏感，应避免吸烟和长期处于空气污浊的环境。骨骼关节容易因运动或工作受伤，运动前需充分热身。整体体质较硬朗，但需定期保养。';
+  } else if (healthStars.includes('天同')) {
+    health += '天同在疾厄宫，需注意泌尿系统和肾脏功能，不宜长期熬夜和过度劳累。天同的福气能化解不少煞气，整体健康运势尚可，但需保持良好的生活习惯。适量饮水、避免憋尿对泌尿系统有益。';
+  } else if (healthStars.includes('廉贞')) {
+    health += '廉贞在疾厄宫，需注意血液循环和内分泌系统，同时关注心理健康。情绪波动大直接影响身体健康，长期压抑可能导致心身疾病。建议培养规律的运动习惯和良好的情绪宣泄渠道。定期体检关注心脏和消化系统。';
+  } else if (healthStars.includes('天府')) {
+    health += '天府在疾厄宫，需注意脾胃消化系统，不宜暴饮暴食和饮食不规律。天府在疾厄宫整体体质尚可，稳重包容的特性能帮助命主抵抗不少疾病。建议保持饮食有节，少食多餐。';
+  } else if (healthStars.includes('太阴')) {
+    health += '太阴在疾厄宫，需注意生殖系统和泌尿系统健康。水行阴柔体质，肾水系统较为敏感，女性需特别关注妇科保健。保持身体温暖，避免寒凉，适当运动促进血液循环对健康有益。整体体质偏柔，需后天积极锻炼增强。';
+  } else if (healthStars.includes('贪狼')) {
+    health += '贪狼在疾厄宫，需注意肝胆和肾脏功能，节制欲望有益健康。过度放纵会损耗身体，保持节制和规律的生活习惯对健康至关重要。贪狼也与生殖系统有关，注意相关的保健和定期检查。';
+  } else if (healthStars.includes('巨门')) {
+    health += '巨门在疾厄宫，需关注口腔、牙齿和消化系统健康。水行暗曜体质，口腔和胃部较为敏感，保持口腔卫生和饮食规律非常重要。巨门也与心理和情绪有关，长期心理压抑会影响消化功能，保持心情舒畅对健康很重要。';
+  } else if (healthStars.includes('天相')) {
+    health += '天相在疾厄宫，需注意肾脏和泌尿系统。水行体质的命主应保持充足的水分摄入和规律的排尿习惯。天相在疾厄宫总体健康状况尚可，其协调性质能帮助身体维持平衡状态。';
+  } else if (healthStars.includes('天梁')) {
+    health += '天梁在疾厄宫，虽主长寿但需注意脾胃和骨骼关节保养。天梁为土行寿星，消化系统和骨骼是关注重点。天梁在疾厄宫最特殊的是反而对健康有保障作用，能化解一部分疾病的侵害。适当运动和规律饮食是健康长寿的关键。';
+  } else if (healthStars.includes('七杀')) {
+    health += '七杀在疾厄宫，需注意骨骼关节和外伤。骨骼系统较脆弱，易出现骨折、关节损伤等问题。运动和工作时需做好防护，避免冒险和危险的活动。整体体质硬朗但需预防意外伤害。';
+  } else if (healthStars.includes('破军')) {
+    health += '破军在疾厄宫，需注意泌尿系统和情绪管理。水行属性的破军在疾厄宫，肾脏和膀胱系统较为敏感。情绪波动大易影响身体健康，需建立规律的生活习惯和良好的情绪管理机制。意外伤害风险较高，日常需多加小心。';
+  } else {
+    health += '疾厄宫无主星，说明命主的健康状况相对灵活，没有特别突出的先天疾病倾向。但这并不意味着可以忽视健康管理，反而需更加自律地保持良好的生活习惯，定期体检防患未然。';
+  }
+
+  const healthSiHua = Object.entries(jiEPalace.siHua);
+  if (healthSiHua.length > 0) {
+    health += '\n\n【疾厄宫四化之力】\n';
+    for (const [type, star] of healthSiHua) {
+      const siHuaLabels: Record<string, string> = { '禄': '能以财富换取优质医疗资源和保健条件，以禄解疾', '权': '面对疾病时有强大的意志力和恢复力，但需注意勿因逞强忽视身体警告', '科': '有较好的自我保健意识，善于通过学习和知识维护健康', '忌': '需特别关注身体健康，定期体检至关重要，但因此培养的健康意识反而能提前预防疾病' };
+      health += `${star}在疾厄宫化${type}：${siHuaLabels[type] || ''}。\n`;
+    }
+  }
+
+  health += '\n\n【五行养生建议】\n';
+  if (bureauElement2 === '金') {
+    health += '金行体质养生要点：金主肺，宜多做深呼吸和有氧运动如游泳跑步，增强肺活量。饮食上多吃白色食物如梨、百合、银耳、山药等润肺养肺之品。金行人性格刚硬，容易压抑情绪，建议通过冥想、瑜伽等方式放松身心。秋季为金旺之季，注意滋阴润燥防秋燥伤肺。骨骼和牙齿是金行对应部位，注意钙质补充和关节保护。';
+  } else if (bureauElement2 === '木') {
+    health += '木行体质养生要点：木主肝，肝喜条达而恶抑郁，宜保持心情舒畅，多接触大自然和绿色植物。饮食上多吃青色食物如菠菜、芹菜、绿豆等，有助于清肝明目。木行人精神消耗较大，容易用脑过度，建议合理安排工作休息时间。春季为木旺之季，注意养肝护肝，适当运动促进气血流通。神经系统较为敏感，养成规律作息习惯。';
+  } else if (bureauElement2 === '水') {
+    health += '水行体质养生要点：水主肾，肾为先天之本，宜注意腰腹部保暖，避免久坐湿地和过度劳累。饮食上多吃黑色食物如黑豆、黑芝麻、海带、木耳等，有助于补肾强身。泌尿系统和生殖系统较为敏感，多喝水促进新陈代谢。冬季为水旺之季，注意保暖防寒，适当进补。情绪丰富敏感，建议通过运动、音乐等方式调节心情。';
+  } else if (bureauElement2 === '火') {
+    health += '火行体质养生要点：火主心，心为君主之官，宜保持心态平和，避免过度激动和急躁。饮食上多吃红色食物如红枣、枸杞、红豆、番茄等，有助于养心安神。血液容易偏热，注意多喝水少食辛辣刺激性食物，戒烟限酒。夏季为火旺之季，注意防暑降温和心脏保养。眼睛容易疲劳干涩，长时间用眼后需适当休息。';
+  } else if (bureauElement2 === '土') {
+    health += '土行体质养生要点：土主脾，脾胃为后天之本，宜注意饮食规律和清洁卫生。饮食上多吃黄色食物如小米、南瓜、玉米、山药等，有助于健脾养胃。消化系统较为敏感，注意饮食有节，少食多餐，避免暴饮暴食和生冷食物。长夏（农历六月）为土旺之季，注意祛湿健脾。容易因压力过大而影响消化功能，建议适当放松。';
+  }
+
+  health += '\n\n【福德宫关联分析】\n';
+  const fdStars = fuDePalace.majorStars.map(s => s.name).join('、') || '无主星';
+  health += `福德宫主星为${fdStars}，福德宫代表精神生活和内心快乐程度，精神健康对身体有直接的影响。`;
+  if (fdStars.includes('天同') || fdStars.includes('天梁')) {
+    health += '福德宫有福寿之星，心态平和乐观，精神健康状态良好，这为身体健康提供了坚实的保障。保持积极乐观的心态是最好的养生之道。';
+  } else if (fdStars.includes('贪狼')) {
+    health += '福德宫有贪狼星，精神生活丰富多彩，但需注意不要过度放纵欲望，保持精神和身体的平衡。';
+  } else {
+    health += '保持积极乐观的心态，培养健康的兴趣爱好，对身心健康都有积极的促进作用。精神健康和身体健康是相辅相成的关系。';
+  }
+  health += '\n';
+
+  health += '\n【综合健康建议】\n无论命盘中的健康配置如何，良好的生活习惯是健康的基础。建议做到以下几点：第一，保持规律的作息，早睡早起，保证充足的睡眠时间；第二，均衡饮食，按时进餐，多食新鲜蔬果，少食油腻辛辣；第三，坚持适度运动，每周至少进行三次有氧运动，增强体质和免疫力；第四，保持乐观积极的心态，学会自我调节和释放压力；第五，定期进行健康体检，做到早发现、早预防、早治疗。健康是人生的第一财富，只有拥有健康的身体，才能更好地享受人生和追求事业。\n';
+
+  return {
+    palaceAnalysis: palAnalysis,
+    overview,
+    career,
+    marriage,
+    wealth,
+    health,
+  };
 }

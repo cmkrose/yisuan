@@ -15,8 +15,8 @@ const tabs: { key: TabKey; label: string; icon: string }[] = [
 ];
 
 const featureIcons: Record<string, string> = {
-  '八字命理':'☯','紫微斗数':'★','姓名学':'名','风水堪舆':'🏠','占卜预测':'爻',
-  '择日':'📆','AI命理':'🤖','六爻':'爻','梅花易数':'梅','小六壬':'☯','奇门遁甲':'门',
+  '八字命理':'☯','紫微斗数':'★','姓名学':'名','风水堪舆':'🏠',
+  '择日':'📆','奇门遁甲':'门','大六壬':'壬','知识库':'📚',
 };
 
 export default function AdminPage() {
@@ -242,16 +242,26 @@ export default function AdminPage() {
               {tab === 'features' && (
                 <div>
                   <h2 className="text-xl font-chinese font-bold text-xuan-gold mb-4">功能使用统计</h2>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {features.map((f: any, i: number) => (
-                      <div key={i} className="card-xuan-gold p-4 text-center">
-                        <span className="text-2xl">{featureIcons[f.name] || '📊'}</span>
-                        <div className="text-sm font-chinese font-bold text-xuan-gold mt-1">{f.name}</div>
-                        <div className="grid grid-cols-2 gap-2 mt-2 text-xs">
-                          <div className="p-1.5 bg-xuan-dark rounded"><span className="text-xuan-gold font-bold block">{f.charts}</span><span className="text-xuan-muted">命盘</span></div>
-                          <div className="p-1.5 bg-xuan-dark rounded"><span className="text-xuan-gold font-bold block">{f.analyses}</span><span className="text-xuan-muted">分析</span></div>
+                      <div key={i} className="card-xuan-gold p-4">
+                        <div className="flex items-center gap-3 mb-3">
+                          <span className="text-2xl">{featureIcons[f.type] || '📊'}</span>
+                          <div>
+                            <div className="text-sm font-chinese font-bold text-xuan-gold">{f.type}</div>
+                            <div className="text-xs text-xuan-muted">{f.total} 次使用 · {f.userCount} 人</div>
+                          </div>
                         </div>
-                        <div className="mt-2 text-base font-chinese font-bold text-xuan-gold">{f.total}</div>
+                        {f.users && f.users.length > 0 && (
+                          <div className="space-y-1">
+                            {f.users.map((u: any) => (
+                              <div key={u.userId} className="flex justify-between items-center text-xs bg-xuan-dark rounded p-2">
+                                <span className="text-xuan-silver font-chinese">{u.nickname}</span>
+                                <span className="text-xuan-gold">{u.count}次</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

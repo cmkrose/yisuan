@@ -9,7 +9,10 @@ export class AiConsultantController {
   analyze(@Body() req: {
     question: string;
     categories: ('bazi'|'ziwei'|'divination')[];
-    baziData?: any; ziweiData?: any; divinationData?: any;
+    baziData?: any;
+    ziweiData?: any;
+    divinationData?: any;
+    conversationHistory?: { role: 'user'; content: string }[];
   }) {
     return this.svc.analyze(req);
   }

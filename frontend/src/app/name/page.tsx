@@ -1,10 +1,25 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/layout/Header/Navbar';
 import Footer from '@/components/layout/Footer/Footer';
 import { api } from '@/lib/api/client';
+
+const analysisSections = [
+  { key: 'wuge', title: '五格分析', icon: '五' },
+  { key: 'sancai', title: '三才配置', icon: '三' },
+  { key: 'kangxi', title: '康熙笔画', icon: '笔' },
+  { key: 'wuxing', title: '五行属性', icon: '行' },
+  { key: 'yinlv', title: '音律分析', icon: '音' },
+  { key: 'ziyi', title: '字义分析', icon: '义' },
+  { key: 'proscons', title: '姓名优缺点', icon: '评' },
+  { key: 'xingge', title: '性格分析', icon: '性' },
+  { key: 'shiye', title: '事业分析', icon: '事' },
+  { key: 'caiyun', title: '财运分析', icon: '财' },
+  { key: 'hunyin', title: '婚姻分析', icon: '婚' },
+  { key: 'gainame', title: '改名建议', icon: '改' },
+];
 
 export default function NamePage() {
   const [form, setForm] = useState({ surname: '', givenName: '', gender: 'male' as 'male' | 'female' });
@@ -12,6 +27,8 @@ export default function NamePage() {
   const [loading, setLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [error, setError] = useState('');
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const reportRef = useRef<HTMLDivElement>(null);
 
   const handleAnalyze = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +64,32 @@ export default function NamePage() {
     } catch (err: any) { alert(err.response?.data?.message || '保存失败'); }
   };
 
-  const wugeOrder = ['tianGe','renGe','diGe','waiGe','zongGe'] as const;
+  const exportPDF = async () => {
+    const html2canvas = (await import('html2canvas')).default;
+    const { jsPDF } = await import('jspdf');
+    const el = reportRef.current;
+    if (!el) return;
+    const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#0a0a0f' });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+    let heightLeft = pdfHeight;
+    let position = 0;
+    pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+    heightLeft -= pdf.internal.pageSize.getHeight();
+    while (heightLeft > 0) {
+      position = heightLeft - pdfHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+      heightLeft -= pdf.internal.pageSize.getHeight();
+    }
+    pdf.save(`姓名分析_${form.surname}${form.givenName}.pdf`);
+  };
+
+  const toggleSection = (s: string) => setExpandedSection(expandedSection === s ? null : s);
+
+  const wugeOrder = ['tianGe', 'renGe', 'diGe', 'waiGe', 'zongGe'] as const;
 
   const genderBtn = (v: typeof form.gender, l: string) => (
     <button type="button" onClick={() => { setForm({ ...form, gender: v }); setResult(null); }}
@@ -55,6 +97,44 @@ export default function NamePage() {
         form.gender === v ? 'border-xuan-gold bg-xuan-gold/10 text-xuan-gold' : 'border-xuan-border text-xuan-muted hover:border-xuan-gold/30'
       }`}>{l}</button>
   );
+
+  const getSectionContent = (key: string): string => {
+    if (!result) return '';
+    const a = result.analysis || {};
+    const ev = result.evaluation || {};
+    switch (key) {
+      case 'wuge':
+        return wugeOrder.map(k => {
+          const g = (a.wuge || {})[k];
+          if (!g) return '';
+          return `【${g.name}】${g.strokes}画 · 五行属${g.wuxing}\n含义：${g.meaning}\n吉凶：${g.isAuspicious ? '吉' : '凶'}`;
+        }).filter(Boolean).join('\n\n') || '暂无数据';
+      case 'sancai':
+        return a.sancai ? `【三才配置】${a.sancai.config}\n天格:${a.sancai.heaven} · 人格:${a.sancai.person} · 地格:${a.sancai.earth}\n\n${a.sancai.meaning}` : '暂无数据';
+      case 'kangxi':
+        return `【康熙笔画】\n${(a.kangxiStrokes || []).map((ks: any) => `「${ks.char}」：${ks.strokes}画（五行${ks.wuxing}）`).join('\n') || '暂无数据'}`;
+      case 'wuxing':
+        return a.wuxing ? `【五行属性】\n${(a.wuxing.details || []).map((d: any) => `${d.grid}：${d.element}`).join('\n')}\n\n五行平衡：${a.wuxing.balance || '暂无数据'}` : '暂无数据';
+      case 'yinlv':
+        return `【音律分析】\n${a.yinlv || '暂无数据'}`;
+      case 'ziyi':
+        return `【字义分析】\n${a.ziyi?.overall || '暂无数据'}`;
+      case 'proscons':
+        return `【姓名优缺点】\n优点：\n${(ev.pros || []).map((p: string) => `✓ ${p}`).join('\n') || '暂无数据'}\n\n不足：\n${(ev.cons || []).map((c: string) => `✗ ${c}`).join('\n') || '暂无数据'}\n\n潜在问题：\n${(ev.potentialIssues || []).map((i: string) => `⚠ ${i}`).join('\n') || '暂无'}`;
+      case 'xingge':
+        return `【性格分析】\n综合五格三才和五行属性分析，${ev.overallScore ? `姓名总评分${ev.overallScore}分（${ev.rating}）。` : ''}${(ev.pros || []).slice(0, 3).join('；')}。`;
+      case 'shiye':
+        return `【事业分析】\n姓名数理对事业的影响主要体现在人格与外格的互动。${(ev.pros || []).find((p: string) => p.includes('事业') || p.includes('工作')) || '根据姓名综合分析，事业发展方向与个人的五行属性密切相关。'}`;
+      case 'caiyun':
+        return `【财运分析】\n姓名中的财富信息主要体现在总格与人格的关系上。${(ev.pros || []).find((p: string) => p.includes('财') || p.includes('富')) || '财运与个人的努力和机遇密切相关，姓名数理可以提供有益的参考。'}`;
+      case 'hunyin':
+        return `【婚姻分析】\n姓名对婚姻的影响主要体现在人格与地格的搭配。${(ev.pros || []).find((p: string) => p.includes('婚') || p.includes('感情')) || '婚姻幸福需要双方共同努力，姓名分析可以提供参考方向。'}`;
+      case 'gainame':
+        return result.suggestions?.length ? result.suggestions.map((s: any) => `【推荐】${s.name}\n建议原因：${s.reason}\n改善方面：${s.improvement}\n评分：${s.score}分`).join('\n\n') : '暂无改名建议';
+      default:
+        return '';
+    }
+  };
 
   return (
     <main className="min-h-screen bg-xuan-black">
@@ -87,7 +167,7 @@ export default function NamePage() {
               </div>
               <div>
                 <label className="block text-xs font-chinese text-xuan-muted mb-1.5">性别</label>
-                <div className="flex gap-2">{genderBtn('male','男')}{genderBtn('female','女')}</div>
+                <div className="flex gap-2">{genderBtn('male', '男')}{genderBtn('female', '女')}</div>
               </div>
               {error && <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-sm text-red-400 font-chinese">{error}</div>}
               <div className="flex gap-3">
@@ -96,6 +176,12 @@ export default function NamePage() {
                 </button>
                 <button type="button" onClick={handleSuggest}
                   className="btn-outline-gold px-6 py-4 text-sm font-chinese">改名建议</button>
+                {result && (
+                  <button type="button" onClick={exportPDF}
+                    className="px-6 py-4 border border-xuan-gold/30 text-xuan-gold rounded-lg hover:bg-xuan-gold/10 transition-all font-chinese text-sm">
+                    导出PDF
+                  </button>
+                )}
               </div>
             </form>
           </motion.div>
@@ -103,37 +189,35 @@ export default function NamePage() {
           <AnimatePresence>
             {result && (
               <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
-                className="space-y-6">
-                {/* Save button */}
+                className="space-y-6" ref={reportRef}>
                 <div className="flex justify-end">
                   <button onClick={handleSave} className="btn-outline-gold px-6 py-2.5 text-sm font-chinese">保存到我的命盘</button>
                 </div>
 
-                {/* Score Card */}
                 <div className="card-xuan-gold p-6 sm:p-8 text-center">
                   <div className={`text-6xl font-chinese font-bold mb-3 ${
-                    result.rating === '大吉' ? 'text-emerald-400' :
-                    result.rating === '吉' ? 'text-xuan-gold' :
-                    result.rating === '中吉' ? 'text-amber-400' : 'text-red-400'
-                  }`}>{result.overallScore}</div>
-                  <div className="text-xl font-chinese font-bold text-white mb-1">{result.rating}</div>
-                  <div className="text-sm text-xuan-muted font-chinese">{result.fullName} 综合评分</div>
+                    result.evaluation?.rating === '大吉' ? 'text-emerald-400' :
+                    result.evaluation?.rating === '吉' ? 'text-xuan-gold' :
+                    result.evaluation?.rating === '中吉' ? 'text-amber-400' : 'text-red-400'
+                  }`}>{result.evaluation?.overallScore}</div>
+                  <div className="text-xl font-chinese font-bold text-white mb-1">{result.evaluation?.rating}</div>
+                  <div className="text-sm text-xuan-muted font-chinese">{result.analysis?.fullName} 综合评分</div>
                   <div className="flex justify-center gap-3 mt-4">
-                    {result.lucky?.numbers?.map((n: number) => (
+                    {(result.evaluation?.lucky?.numbers || []).map((n: number) => (
                       <span key={n} className="px-3 py-1 text-xs font-chinese bg-xuan-gold/10 text-xuan-gold rounded-full">幸运数字 {n}</span>
                     ))}
-                    {result.lucky?.colors?.map((c: string) => (
+                    {(result.evaluation?.lucky?.colors || []).map((c: string) => (
                       <span key={c} className="px-3 py-1 text-xs font-chinese bg-xuan-gold/10 text-xuan-gold rounded-full">{c}</span>
                     ))}
                   </div>
                 </div>
 
-                {/* Five Grids */}
                 <div className="card-xuan-gold p-6 sm:p-8">
                   <h3 className="text-lg font-chinese font-bold text-xuan-gold mb-6">五格剖象</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                     {wugeOrder.map((key) => {
-                      const g = result.wuge[key];
+                      const g = (result.analysis?.wuge || {})[key];
+                      if (!g) return null;
                       return (
                         <div key={key} className={`p-4 rounded-lg border text-center transition-all ${
                           g.isAuspicious ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-red-500/30 bg-red-500/5'
@@ -152,14 +236,13 @@ export default function NamePage() {
                   </div>
                 </div>
 
-                {/* Sancai + Wuxing */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div className="card-xuan-gold p-6">
                     <h3 className="text-lg font-chinese font-bold text-xuan-gold mb-4">三才配置</h3>
                     <div className="flex items-center gap-3 mb-3">
-                      {['天','人','地'].map((label, i) => {
-                        const el = i === 0 ? result.sancai.heaven : i === 1 ? result.sancai.person : result.sancai.earth;
-                        const elColors: Record<string,string> = { 木:'text-emerald-400', 火:'text-red-400', 土:'text-amber-400', 金:'text-yellow-300', 水:'text-cyan-400' };
+                      {['天', '人', '地'].map((label, i) => {
+                        const el = i === 0 ? result.analysis?.sancai?.heaven : i === 1 ? result.analysis?.sancai?.person : result.analysis?.sancai?.earth;
+                        const elColors: Record<string, string> = { 木: 'text-emerald-400', 火: 'text-red-400', 土: 'text-amber-400', 金: 'text-yellow-300', 水: 'text-cyan-400' };
                         return (
                           <span key={label} className={`px-3 py-2 text-sm font-chinese border rounded-lg ${elColors[el] || 'text-xuan-gold'} border-current/30 bg-current/5`}>
                             {label}:{el}
@@ -167,17 +250,17 @@ export default function NamePage() {
                         );
                       })}
                     </div>
-                    <div className="text-sm font-chinese text-xuan-muted">{result.sancai.config}</div>
-                    <div className={`mt-2 text-sm font-chinese ${result.sancai.isAuspicious ? 'text-emerald-400' : 'text-red-400'}`}>
-                      {result.sancai.meaning}
+                    <div className="text-sm font-chinese text-xuan-muted">{result.analysis?.sancai?.config}</div>
+                    <div className={`mt-2 text-sm font-chinese ${result.analysis?.sancai?.isAuspicious ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {result.analysis?.sancai?.meaning}
                     </div>
                   </div>
 
                   <div className="card-xuan-gold p-6">
                     <h3 className="text-lg font-chinese font-bold text-xuan-gold mb-4">五行分析</h3>
-                    <div className="text-sm font-chinese text-xuan-silver mb-3">{result.wuxingAnalysis.balance}</div>
+                    <div className="text-sm font-chinese text-xuan-silver mb-3">{result.analysis?.wuxing?.balance}</div>
                     <div className="space-y-1.5">
-                      {result.wuxingAnalysis.details.map((d: any) => (
+                      {(result.analysis?.wuxing?.details || []).map((d: any) => (
                         <div key={d.grid} className="flex items-center justify-between text-xs font-chinese">
                           <span className="text-xuan-muted">{d.grid}</span>
                           <span className="text-xuan-gold">{d.element}</span>
@@ -187,23 +270,35 @@ export default function NamePage() {
                   </div>
                 </div>
 
-                {/* Suggestions */}
-                <div className="card-xuan-gold p-6">
-                  <h3 className="text-lg font-chinese font-bold text-xuan-gold mb-4">分析建议</h3>
-                  <div className="space-y-2">
-                    {result.suggestions.map((s: string, i: number) => (
-                      <div key={i} className="flex items-start gap-2">
-                        <span className="text-xuan-gold mt-0.5">•</span>
-                        <span className="text-sm font-chinese text-xuan-silver">{s}</span>
-                      </div>
-                    ))}
-                  </div>
+                <div className="space-y-3">
+                  {analysisSections.map((s) => (
+                    <div key={s.key} className="card-xuan-gold overflow-hidden">
+                      <button onClick={() => toggleSection(s.key)}
+                        className="w-full p-4 flex items-center justify-between hover:bg-xuan-gold/5 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-xuan-gold/10 text-xuan-gold font-chinese text-sm">{s.icon}</span>
+                          <h4 className="text-sm font-chinese font-bold text-xuan-gold">{s.title}</h4>
+                        </div>
+                        <svg className={`w-4 h-4 text-xuan-gold transition-transform ${expandedSection === s.key ? 'rotate-180' : ''}`}
+                          fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                      {expandedSection === s.key && (
+                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
+                          className="px-4 pb-4">
+                          <div className="text-sm font-chinese text-xuan-silver leading-relaxed whitespace-pre-wrap border-t border-xuan-border pt-3">
+                            {getSectionContent(s.key)}
+                          </div>
+                        </motion.div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Name Suggestions */}
           <AnimatePresence>
             {suggestions.length > 0 && (
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}

@@ -104,31 +104,44 @@ export class AdminService {
 
   // ============ 功能统计 ============
   async getFeatureStats() {
-    const chartStats = await this.prisma.chart.groupBy({ by: ['chartType'], _count: true });
-    const analysisStats = await this.prisma.analysisRecord.groupBy({ by: ['analysisType'], _count: true });
+    const charts = await this.prisma.chart.findMany({
+      select: { chartType: true, userId: true, user: { select: { nickname: true } } },
+    });
+    const analyses = await this.prisma.analysisRecord.findMany({
+      select: { analysisType: true, userId: true, user: { select: { nickname: true } } },
+    });
 
-    const allTypes = ['bazi','ziwei','name','fengshui','divination','zeri','ai','liuyao','meihua','xiaoliuren','qimen'];
+    const typeMap = new Map<string, { users: Map<string, { name: string; count: number; lastUsed: Date }>; total: number }>();
 
-    const merged = new Map<string, { charts: number; analyses: number }>();
-    for (const t of allTypes) merged.set(t, { charts: 0, analyses: 0 });
-    for (const s of chartStats) {
-      const m = merged.get(s.chartType) || { charts: 0, analyses: 0 };
-      m.charts = s._count;
-      merged.set(s.chartType, m);
+    for (const c of charts) {
+      const type = chartTypeLabel(c.chartType);
+      if (!typeMap.has(type)) typeMap.set(type, { users: new Map(), total: 0 });
+      const t = typeMap.get(type)!;
+      t.total++;
+      const uid = c.userId;
+      if (!t.users.has(uid)) t.users.set(uid, { name: c.user?.nickname || '未知', count: 0, lastUsed: new Date(0) });
+      t.users.get(uid)!.count++;
     }
-    for (const s of analysisStats) {
-      const m = merged.get(s.analysisType) || { charts: 0, analyses: 0 };
-      m.analyses = s._count;
-      merged.set(s.analysisType, m);
+
+    for (const a of analyses) {
+      const type = chartTypeLabel(a.analysisType);
+      if (!typeMap.has(type)) typeMap.set(type, { users: new Map(), total: 0 });
+      const t = typeMap.get(type)!;
+      t.total++;
+      const uid = a.userId;
+      if (!t.users.has(uid)) t.users.set(uid, { name: a.user?.nickname || '未知', count: 0, lastUsed: new Date(0) });
+      t.users.get(uid)!.count++;
     }
 
-    return Array.from(merged.entries())
-      .map(([type, counts]) => ({
-        type: chartTypeLabel(type),
-        key: type,
-        charts: counts.charts,
-        analyses: counts.analyses,
-        total: counts.charts + counts.analyses,
+    return Array.from(typeMap.entries())
+      .map(([type, data]) => ({
+        type,
+        total: data.total,
+        userCount: data.users.size,
+        users: Array.from(data.users.entries())
+          .map(([userId, u]) => ({ userId, nickname: u.name, count: u.count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 5),
       }))
       .sort((a, b) => b.total - a.total);
   }
@@ -160,15 +173,8 @@ export class AdminService {
   async healthCheck() {
     const checks: { name: string; status: 'ok' | 'error'; message: string }[] = [];
 
-    try { await this.prisma.$queryRaw`SELECT 1`; checks.push({ name: '数据库', status: 'ok', message: 'PostgreSQL 正常' }); }
-    catch { checks.push({ name: '数据库', status: 'error', message: 'PostgreSQL 连接失败' }); }
-
-    try {
-      const res = await fetch(process.env.LLM_BASE_URL + '/models', { headers: { Authorization: `Bearer ${process.env.LLM_API_KEY}` } });
-      checks.push({ name: 'AI接口', status: res.ok ? 'ok' : 'error', message: res.ok ? 'LLM API 正常' : `LLM API 状态码 ${res.status}` });
-    } catch {
-      checks.push({ name: 'AI接口', status: 'error', message: 'LLM API 未配置或不可达' });
-    }
+    try { await this.prisma.$queryRaw`SELECT 1`; checks.push({ name: '数据库', status: 'ok', message: 'SQLite 正常' }); }
+    catch { checks.push({ name: '数据库', status: 'error', message: '数据库连接失败' }); }
 
     const totalUsers = await this.prisma.user.count();
     const todayCharts = await this.prisma.chart.count({
@@ -183,9 +189,8 @@ export class AdminService {
 function chartTypeLabel(type: string): string {
   const map: Record<string, string> = {
     bazi:'八字命理', ziwei:'紫微斗数', name:'姓名学', fengshui:'风水堪舆',
-    divination:'占卜预测', zeri:'择日', ai:'AI命理', liuyao:'六爻',
-    meihua:'梅花易数', xiaoliuren:'小六壬', qimen:'奇门遁甲', sanshi:'三式',
-    analysis:'在线排盘',
+    zeri:'择日', qimen:'奇门遁甲', liuren:'大六壬', knowledge:'知识库',
+    divination:'占卜预测', analysis:'在线排盘',
   };
   return map[type] || type;
 }

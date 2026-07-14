@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { articles, KnowledgeArticle } from './core/articles';
+import { articles as rawArticles, KnowledgeArticle } from './core/articles';
+
+const articles: KnowledgeArticle[] = rawArticles.filter(a => a && a.id && a.title);
 
 @Injectable()
 export class KnowledgeBaseService {

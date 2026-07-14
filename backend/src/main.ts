@@ -6,20 +6,23 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: process.env.APP_URL || 'http://localhost:3000',
+    origin: [
+      process.env.APP_URL,
+      process.env.VERCEL_URL,
+      'http://localhost:3000',
+      'http://localhost:3001',
+    ].filter(Boolean),
     credentials: true,
   });
 
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
       transform: true,
     }),
   );
 
   const port = process.env.PORT || 3001;
-  await app.listen(port);
-  console.log(`易算 API server running on http://localhost:${port}`);
+  await app.listen(port, '0.0.0.0');
+  console.log(`易算 API server running on http://0.0.0.0:${port}`);
 }
 bootstrap();

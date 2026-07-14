@@ -11,8 +11,13 @@ export class BaziController {
   ) {}
 
   @Post('calculate')
-  calculate(@Body() input: BaziInput) {
-    return this.baziService.calculate(input);
+  calculate(@Body() input: any) {
+    try {
+      return this.baziService.calculate(input);
+    } catch (e: any) {
+      console.error('Bazi calculate error:', e.message, e.stack);
+      throw e;
+    }
   }
 
   @Post('save')

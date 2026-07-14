@@ -12,22 +12,37 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [method, setMethod] = useState<'email' | 'phone'>('email');
+  const [phoneError, setPhoneError] = useState('');
+  const [emailSuffix, setEmailSuffix] = useState('@qq.com');
+  const [emailPrefix, setEmailPrefix] = useState('');
+
+  const emailSuffixes = ['@qq.com', '@163.com', '@126.com', '@gmail.com', '@outlook.com', '@sina.com', '@sohu.com', '@139.com'];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setPhoneError('');
 
     if (form.password !== form.confirmPassword) {
       setError('两次密码输入不一致');
       return;
     }
-    if (method === 'email' && !form.email) {
-      setError('请输入邮箱');
-      return;
+    if (method === 'email') {
+      const fullEmail = emailPrefix + emailSuffix;
+      if (!emailPrefix) { setError('请输入邮箱'); return; }
+      form.email = fullEmail;
     }
-    if (method === 'phone' && !form.phone) {
-      setError('请输入手机号');
-      return;
+    if (method === 'phone') {
+      const phone = form.phone.replace(/\s/g, '');
+      if (!/^\d{11}$/.test(phone)) {
+        setPhoneError('手机号必须为11位数字');
+        return;
+      }
+      if (phone.length !== 11) {
+        setPhoneError('手机号必须为11位数字');
+        return;
+      }
+      form.phone = phone;
     }
 
     setLoading(true);
@@ -42,7 +57,12 @@ export default function RegisterPage() {
       localStorage.setItem('user', JSON.stringify(res.data.user));
       router.push('/dashboard');
     } catch (err: any) {
-      setError(err.response?.data?.message || '注册失败，请重试');
+      const msg = err.response?.data?.message || '注册失败，请重试';
+      if (msg.includes('已存在') || msg.includes('重复')) {
+        setError(msg);
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -99,38 +119,66 @@ export default function RegisterPage() {
             {method === 'email' && (
               <div>
                 <label className="block text-sm font-chinese text-xuan-silver mb-2">邮箱</label>
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="请输入邮箱"
-                  required
-                  className="w-full px-4 py-3 bg-xuan-dark border border-xuan-border rounded-lg text-white placeholder-xuan-muted focus:outline-none focus:border-xuan-gold/50 transition-colors"
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={emailPrefix}
+                    onChange={(e) => setEmailPrefix(e.target.value)}
+                    placeholder="输入邮箱名"
+                    className="flex-1 px-4 py-3 bg-xuan-dark border border-xuan-border rounded-lg text-white placeholder-xuan-muted focus:outline-none focus:border-xuan-gold/50 transition-colors"
+                  />
+                  <select
+                    value={emailSuffix}
+                    onChange={(e) => setEmailSuffix(e.target.value)}
+                    className="px-3 py-3 bg-xuan-dark border border-xuan-border rounded-lg text-white text-sm focus:outline-none focus:border-xuan-gold/50"
+                  >
+                    {emailSuffixes.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             )}
 
             {method === 'phone' && (
               <div>
                 <label className="block text-sm font-chinese text-xuan-silver mb-2">手机号</label>
-                <input
-                  type="tel"
-                  value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  placeholder="请输入手机号"
-                  required
-                  className="w-full px-4 py-3 bg-xuan-dark border border-xuan-border rounded-lg text-white placeholder-xuan-muted focus:outline-none focus:border-xuan-gold/50 transition-colors"
-                />
+                <div className="relative">
+                  <input
+                    type="tel"
+                    value={form.phone}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/\D/g, '').slice(0, 11);
+                      setForm({ ...form, phone: v });
+                      if (v.length > 0 && v.length !== 11) {
+                        setPhoneError('手机号必须为11位数字');
+                      } else if (v.length === 11) {
+                        setPhoneError('');
+                      } else {
+                        setPhoneError('');
+                      }
+                    }}
+                    placeholder="请输入11位手机号"
+                    maxLength={11}
+                    className={`w-full px-4 py-3 bg-xuan-dark border rounded-lg text-white placeholder-xuan-muted focus:outline-none transition-colors ${phoneError ? 'border-red-500/50 focus:border-red-500' : 'border-xuan-border focus:border-xuan-gold/50'}`}
+                  />
+                  {phoneError && (
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-red-400 font-chinese">
+                      {phoneError}
+                    </span>
+                  )}
+                </div>
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-chinese text-xuan-silver mb-2">昵称（选填）</label>
+              <label className="block text-sm font-chinese text-xuan-silver mb-2">昵称</label>
               <input
                 type="text"
                 value={form.nickname}
                 onChange={(e) => setForm({ ...form, nickname: e.target.value })}
-                placeholder="给自己取个名字"
+                placeholder="给自己取个名字（必填）"
+                required
                 className="w-full px-4 py-3 bg-xuan-dark border border-xuan-border rounded-lg text-white placeholder-xuan-muted focus:outline-none focus:border-xuan-gold/50 transition-colors"
               />
             </div>

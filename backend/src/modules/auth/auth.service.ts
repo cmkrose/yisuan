@@ -17,11 +17,22 @@ export class AuthService {
       throw new UnauthorizedException('邮箱或手机号至少填写一项');
     }
 
+    if (!nickname || !nickname.trim()) {
+      throw new UnauthorizedException('昵称不能为空');
+    }
+
     const existing = await this.prisma.user.findFirst({
       where: { OR: [{ email: email || undefined }, { phone: phone || undefined }] },
     });
     if (existing) {
       throw new ConflictException('该邮箱或手机号已注册');
+    }
+
+    const existingNickname = await this.prisma.user.findFirst({
+      where: { nickname: nickname.trim() },
+    });
+    if (existingNickname) {
+      throw new ConflictException('该昵称已被使用');
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);

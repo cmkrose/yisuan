@@ -22,4 +22,14 @@ export class FengshuiController {
   analyze(@Body() dto: { year: number; facing: string }) {
     return this.svc.analyze(dto);
   }
+
+  @Post('yang-house')
+  yangHouse(@Body() dto: { facing: string; year: number }) {
+    return this.svc.yangHouse(dto);
+  }
+
+  @Post('yin-house')
+  yinHouse(@Body() dto: { location: string; direction: string }) {
+    return this.svc.yinHouse(dto);
+  }
 }
