@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  output: 'standalone',
+  output: 'export',
 
   typescript: { ignoreBuildErrors: true },
   eslint: { ignoreDuringBuilds: true },
@@ -10,7 +10,7 @@ const nextConfig = {
   compress: true,
   generateEtags: true,
 
-  images: {
+  images: {unoptimized: true,
     remotePatterns: [
       { protocol: 'https', hostname: 'yisuan.com' },
     ],
