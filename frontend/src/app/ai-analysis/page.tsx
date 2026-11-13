@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/layout/Header/Navbar';
 import Footer from '@/components/layout/Footer/Footer';
 import { api } from '@/lib/api/client';
+import { aiAnalyze } from '@/lib/engines/ai-consultant/calculate';
+import { divLiuyao } from '@/lib/engines/divination/calculate';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -134,7 +136,7 @@ export default function AiConsultantPage() {
         try { const r = await api.get('/api/users/charts'); ziweiData = r.data.find((c: any) => c.chartType === 'ziwei')?.chartData; } catch (e) {}
       }
       if (token && catsToUse.includes('divination')) {
-        try { divData = (await api.post('/api/divination/liuyao')).data; } catch (e) {}
+        try { divData = divLiuyao(); } catch (e) {}
       }
 
       const conversationHistory = newMessages.filter(m => m.role === 'user').slice(0, -1).map(m => ({
@@ -142,7 +144,7 @@ export default function AiConsultantPage() {
         content: m.content,
       }));
 
-      const res = await api.post('/api/ai-consultant/analyze', {
+      const data = await aiAnalyze({
         question,
         categories: catsToUse,
         baziData,
@@ -151,7 +153,7 @@ export default function AiConsultantPage() {
         conversationHistory,
       });
 
-      const assistantMsg: Message = { role: 'assistant', content: '', report: res.data, timestamp: Date.now() };
+      const assistantMsg: Message = { role: 'assistant', content: '', report: data, timestamp: Date.now() };
       const updatedMessages = [...newMessages, assistantMsg];
       setMessages(updatedMessages);
       if (convId) {
@@ -192,7 +194,7 @@ export default function AiConsultantPage() {
         try { const r = await api.get('/api/users/charts'); ziweiData = r.data.find((c: any) => c.chartType === 'ziwei')?.chartData; } catch (e) {}
       }
       if (token && categories.includes('divination')) {
-        try { divData = (await api.post('/api/divination/liuyao')).data; } catch (e) {}
+        try { divData = divLiuyao(); } catch (e) {}
       }
 
       const conversationHistory = newMessages.filter(m => m.role === 'user').map(m => ({
@@ -200,7 +202,7 @@ export default function AiConsultantPage() {
         content: m.content,
       }));
 
-      const res = await api.post('/api/ai-consultant/analyze', {
+      const data = await aiAnalyze({
         question: userMsg.content,
         categories,
         baziData,
@@ -209,7 +211,7 @@ export default function AiConsultantPage() {
         conversationHistory,
       });
 
-      const assistantMsg: Message = { role: 'assistant', content: '', report: res.data, timestamp: Date.now() };
+      const assistantMsg: Message = { role: 'assistant', content: '', report: data, timestamp: Date.now() };
       const updatedMessages = [...newMessages, assistantMsg];
       setMessages(updatedMessages);
       if (convId) {
