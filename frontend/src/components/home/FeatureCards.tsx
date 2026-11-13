@@ -20,8 +20,8 @@ const categories = [
     ],
   },
   {
-    title: '三式绝学',
-    subtitle: '奇门遁甲',
+    title: '奇门六壬',
+    subtitle: '式占预测',
     icon: '门',
     href: '/divination/qimen',
     color: 'from-cyan-500/20 to-blue-500/20',
@@ -29,6 +29,19 @@ const categories = [
     items: [
       { name: '奇门遁甲', href: '/divination/qimen', icon: '门' },
       { name: '大六壬', href: '/divination/qimen', icon: '壬' },
+    ],
+  },
+  {
+    title: '占卜系统',
+    subtitle: '六爻梅花小六壬',
+    icon: '卜',
+    href: '/divination',
+    color: 'from-purple-500/20 to-pink-500/20',
+    borderColor: 'border-purple-500/30 hover:border-purple-500/60',
+    items: [
+      { name: '六爻', href: '/divination', icon: '爻' },
+      { name: '梅花易数', href: '/divination', icon: '梅' },
+      { name: '小六壬', href: '/divination', icon: '壬' },
     ],
   },
   {
@@ -71,7 +84,7 @@ export default function FeatureCards() {
     <section className="relative py-20 px-4 sm:px-6 lg:px-8">
       {/* Section Header */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 1, y: 0 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6 }}
@@ -81,7 +94,7 @@ export default function FeatureCards() {
           功能模块
         </span>
         <h2 className="text-3xl sm:text-4xl font-chinese font-bold text-gradient-gold mb-4">
-          三大核心系统
+          核心功能系统
         </h2>
         <p className="text-xuan-muted font-chinese max-w-xl mx-auto">
           融合传统智慧与现代科技，为您提供全方位的玄学分析服务
@@ -91,7 +104,7 @@ export default function FeatureCards() {
       {/* Cards Grid */}
       <motion.div
         variants={containerVariants}
-        initial="hidden"
+        initial="visible"
         whileInView="visible"
         viewport={{ once: true, margin: '-100px' }}
         className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6"

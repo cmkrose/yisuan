@@ -33,7 +33,7 @@ export default function LoginPage() {
     <main className="min-h-screen bg-xuan-black flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 1, y: 0 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="text-center mb-10"
@@ -44,7 +44,7 @@ export default function LoginPage() {
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 1, y: 0 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
           className="card-xuan-gold p-8"

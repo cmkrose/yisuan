@@ -7,6 +7,7 @@ import Footer from '@/components/layout/Footer/Footer';
 import { api } from '@/lib/api/client';
 import { calculateZiweiLocal } from '@/lib/engines/ziwei/calculate';
 import { yearRangeDesc } from '@/lib/utils/year';
+import { useRouter } from 'next/navigation';
 
 type TabKey = 'chart' | 'stars' | 'dayun' | 'detailed' | 'overview';
 
@@ -48,6 +49,7 @@ export default function ZiweiPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const reportRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   const tabs: { key: TabKey; label: string; icon: string }[] = [
     { key: 'chart', label: '命盘', icon: '☰' },
@@ -70,6 +72,11 @@ export default function ZiweiPage() {
       setActiveTab('detailed');
     } catch (err: any) { setError(err?.message || '排盘失败'); }
     finally { setLoading(false); }
+  };
+
+  const goAi = () => {
+    try { sessionStorage.setItem('ai_prefill', JSON.stringify({ categories: ['ziwei'], ziweiData: result })); } catch {}
+    router.push('/ai-analysis');
   };
 
   const handleSave = async () => {
@@ -166,13 +173,13 @@ export default function ZiweiPage() {
       <Navbar />
       <div className="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
+          <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
             <span className="inline-block text-xs tracking-[0.3em] text-purple-400/70 font-chinese mb-4">命理系统</span>
             <h1 className="text-3xl sm:text-4xl font-chinese font-bold text-gradient-gold mb-4">紫微斗数</h1>
             <p className="text-xuan-muted font-chinese">十二宫位 · 十四主星 · 辅曜煞曜 · 大限流年</p>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
             className="card-xuan-gold p-6 sm:p-8 mb-10">
             <form onSubmit={submit} className="space-y-4">
               <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
@@ -231,12 +238,13 @@ export default function ZiweiPage() {
 
           <AnimatePresence>
             {result && (
-              <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} className="space-y-6" ref={reportRef}>
+              <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} className="space-y-6" ref={reportRef}>
                 <div className="flex justify-end gap-3">
+                  <button onClick={goAi} className="btn-outline-gold px-6 py-2.5 text-sm font-chinese">综合解读</button>
                   <button onClick={handleSave} className="btn-outline-gold px-6 py-2.5 text-sm font-chinese">保存到我的命盘</button>
                 </div>
 
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
                   className="grid grid-cols-5 gap-3 mb-8">
                   {tabs.map((t) => (
                     <button key={t.key} onClick={() => setActiveTab(t.key)}
@@ -251,7 +259,7 @@ export default function ZiweiPage() {
 
                 <AnimatePresence mode="wait">
                   {activeTab === 'chart' && (
-                    <motion.div key="chart" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                    <motion.div key="chart" initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                       <div className="card-xuan-gold p-4 sm:p-6">
                         <div className="flex items-center justify-between mb-4">
                           <h2 className="text-lg font-chinese font-bold text-xuan-gold">紫微命盘</h2>
@@ -302,7 +310,7 @@ export default function ZiweiPage() {
                   )}
 
                   {activeTab === 'stars' && (
-                    <motion.div key="stars" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                    <motion.div key="stars" initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                       <div className="card-xuan-gold p-6">
                         <h3 className="text-lg font-chinese font-bold text-xuan-gold mb-4">星曜总览</h3>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -337,7 +345,7 @@ export default function ZiweiPage() {
                   )}
 
                   {activeTab === 'dayun' && (
-                    <motion.div key="dayun" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                    <motion.div key="dayun" initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                       <div className="card-xuan-gold p-6">
                         <h3 className="text-lg font-chinese font-bold text-xuan-gold mb-4">大限排盘</h3>
                         <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
@@ -357,7 +365,7 @@ export default function ZiweiPage() {
                   )}
 
                   {activeTab === 'detailed' && (
-                    <motion.div key="detailed" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                    <motion.div key="detailed" initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                       <div className="space-y-3">
                         {detailedSections.map((s: any) => (
                           <div key={s.key} className="card-xuan-gold p-4">
@@ -372,7 +380,7 @@ export default function ZiweiPage() {
                   )}
 
                   {activeTab === 'overview' && (
-                    <motion.div key="overview" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                    <motion.div key="overview" initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                       <div className="space-y-3">
                         {overviewData.overview && (
                           <div className="card-xuan-gold p-4">

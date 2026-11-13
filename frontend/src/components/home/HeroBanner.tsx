@@ -148,7 +148,7 @@ export default function HeroBanner() {
       <div className="relative z-10 text-center px-4 max-w-5xl mx-auto pt-20">
         {/* Subtitle */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 1, y: 0 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
           className="mb-6"
@@ -160,7 +160,7 @@ export default function HeroBanner() {
 
         {/* Main Title */}
         <motion.h1
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 1, y: 0 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.5 }}
           className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-chinese font-bold mb-6 leading-tight"
@@ -169,29 +169,29 @@ export default function HeroBanner() {
         </motion.h1>
 
         <motion.h2
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 1, y: 0 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.7 }}
           className="text-xl sm:text-2xl md:text-3xl font-chinese text-xuan-silver/80 mb-8"
         >
-          连接传统文化与现代AI
+          连接传统文化与现代科技
         </motion.h2>
 
         {/* Description */}
         <motion.p
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 1, y: 0 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.9 }}
           className="text-base sm:text-lg text-xuan-muted max-w-2xl mx-auto mb-12 font-chinese leading-relaxed"
         >
-          融合千年命理智慧与前沿人工智能技术，
+          融合千年命理智慧与现代计算技术，
           <br className="hidden sm:block" />
-          为您提供专业、精准的东方玄学分析服务
+          为您提供便捷、可靠的东方命理分析工具
         </motion.p>
 
         {/* CTA Buttons */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 1, y: 0 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 1.1 }}
           className="flex flex-col sm:flex-row items-center justify-center gap-4"
@@ -209,15 +209,15 @@ export default function HeroBanner() {
 
         {/* Stats */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 1, y: 0 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 1.3 }}
           className="mt-16 grid grid-cols-3 gap-8 max-w-lg mx-auto"
         >
           {[
-            { value: '10万+', label: '用户信赖' },
-            { value: '100万+', label: '分析次数' },
-            { value: '99.9%', label: '准确率' },
+            { value: '本地', label: '离线极速排盘' },
+            { value: '多系统', label: '命理分析' },
+            { value: '仅供参考', label: '模板化解读' },
           ].map((stat, index) => (
             <div key={index} className="text-center">
               <div className="text-2xl sm:text-3xl font-bold text-xuan-gold font-chinese">

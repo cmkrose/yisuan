@@ -116,13 +116,13 @@ export default function FengshuiPage() {
       <Navbar />
       <div className="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
+          <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
             <span className="inline-block text-xs tracking-[0.3em] text-xuan-jade/70 font-chinese mb-4">风水系统</span>
             <h1 className="text-3xl sm:text-4xl font-chinese font-bold text-gradient-gold mb-4">风水堪舆</h1>
             <p className="text-xuan-muted font-chinese">罗盘 · 八宅 · 飞星 · 阳宅 · 阴宅</p>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
             className="grid grid-cols-5 gap-3 mb-8">
             {tabs.map((t) => (
               <button key={t.key} onClick={() => { setTab(t.key); setResult(null); }}
@@ -137,7 +137,7 @@ export default function FengshuiPage() {
 
           <AnimatePresence mode="wait">
             {tab === 'compass' && (
-              <motion.div key="compass" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+              <motion.div key="compass" initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }}>
                 <div className="card-xuan-gold p-6 sm:p-8 flex flex-col items-center">
                   <h3 className="text-xl font-chinese font-bold text-xuan-gold mb-6">二十四山罗盘</h3>
                   <div
@@ -203,7 +203,7 @@ export default function FengshuiPage() {
             )}
 
             {tab === 'bazhai' && (
-              <motion.div key="bazhai" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+              <motion.div key="bazhai" initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }}>
                 <div className="card-xuan-gold p-6 sm:p-8 mb-6">
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <div>
@@ -271,7 +271,7 @@ export default function FengshuiPage() {
             )}
 
             {tab === 'feixing' && (
-              <motion.div key="feixing" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+              <motion.div key="feixing" initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }}>
                 <div className="card-xuan-gold p-6 sm:p-8 mb-6">
                   <div className="flex gap-4 mb-4 items-end">
                     <div className="flex-1">
@@ -324,7 +324,7 @@ export default function FengshuiPage() {
             )}
 
             {tab === 'yanghouse' && (
-              <motion.div key="yanghouse" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+              <motion.div key="yanghouse" initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }}>
                 <div className="card-xuan-gold p-6 sm:p-8 mb-6">
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <div>
@@ -370,7 +370,7 @@ export default function FengshuiPage() {
             )}
 
             {tab === 'yinhouse' && (
-              <motion.div key="yinhouse" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+              <motion.div key="yinhouse" initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }}>
                 <div className="card-xuan-gold p-6 sm:p-8 mb-6">
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <div>

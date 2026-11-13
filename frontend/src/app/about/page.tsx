@@ -25,7 +25,7 @@ export default function AboutPage() {
       <div className="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 1, y: 0 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-12"
           >
@@ -42,7 +42,7 @@ export default function AboutPage() {
 
           <motion.div
             variants={containerVariants}
-            initial="hidden"
+            initial="visible"
             animate="visible"
             className="space-y-8"
           >
@@ -72,7 +72,7 @@ export default function AboutPage() {
                   易算是一个开源的个人项目，旨在将中国传统命理学与现代计算机技术相结合，为广大命理爱好者和专业人士提供一个准确、便捷、美观的命理分析平台。
                 </p>
                 <p className="text-sm sm:text-base text-xuan-silver font-chinese leading-relaxed">
-                  平台集成了八字命理排盘、紫微斗数分析、姓名学解读、风水堪舆、奇门遁甲、六爻占卜、择日吉凶等核心功能，并融合了AI大语言模型技术，为用户提供智能化的命理解读。
+                  平台集成了八字命理排盘、紫微斗数分析、姓名学解读、风水堪舆、奇门遁甲、六爻占卜、择日吉凶等核心功能，并采用本地引擎计算与模板化解读，供学习参考。
                 </p>
                 <p className="text-sm sm:text-base text-xuan-silver font-chinese leading-relaxed">
                   易，变也，不变也。以不易之算法，解万变之命运。我们坚持开放源代码，欢迎每一位同道中人共同参与，让东方智慧的光芒照亮更多人的前行之路。

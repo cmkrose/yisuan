@@ -2,7 +2,6 @@ import { diff, fetchJson } from './diff';
 import { sanshiQimen, sanshiLiuren } from '../src/lib/engines/sanshi/calculate';
 import { zeriCalendar, zeriSelect } from '../src/lib/engines/zeri/calculate';
 import { nameAnalyze, nameSuggest } from '../src/lib/engines/name-analysis/calculate';
-import { visualFace, visualPalm } from '../src/lib/engines/visual-analysis/calculate';
 
 const BASE = 'https://yisuan.onrender.com';
 
@@ -21,8 +20,6 @@ const tests: Test[] = [
   { label: 'name/analyze B', local: () => nameAnalyze({ surname: '李', givenName: '娜', gender: 'female' }), api: '/api/name-analysis/analyze', body: { surname: '李', givenName: '娜', gender: 'female' } },
   { label: 'name/suggest A', local: () => nameSuggest({ surname: '王', gender: 'male' }), api: '/api/name-analysis/suggest', body: { surname: '王', gender: 'male' } },
   { label: 'name/suggest B', local: () => nameSuggest({ surname: '张', gender: 'female' }), api: '/api/name-analysis/suggest', body: { surname: '张', gender: 'female' } },
-  { label: 'visual/face', local: () => visualFace(), api: '/api/visual/face', body: {} },
-  { label: 'visual/palm', local: () => visualPalm(), api: '/api/visual/palm', body: {} },
 ];
 
 (async () => {

@@ -9,7 +9,7 @@ export default function UserCenterEntry() {
     <section className="relative py-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 1, y: 0 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
@@ -70,7 +70,7 @@ export default function UserCenterEntry() {
               ].map((feature, index) => (
                 <motion.div
                   key={feature.label}
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 1, y: 0 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: 0.4 + index * 0.1 }}

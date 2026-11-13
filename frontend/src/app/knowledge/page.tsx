@@ -68,6 +68,7 @@ function extractHeadings(content: string): { id: string; text: string; level: nu
 
 export default function KnowledgeBasePage() {
   const [articles, setArticles] = useState<Article[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [categories, setCategories] = useState<any[]>([]);
   const [tags, setTags] = useState<any[]>([]);
   const [search, setSearch] = useState('');
@@ -93,7 +94,9 @@ export default function KnowledgeBasePage() {
         const [cats, tgs, all] = await Promise.all([kbCategories(), kbTags(), kbAll()]);
         setCategories(cats);
         setTags(tgs);
-        setArticles((all || []).filter((a: any) => a && a.id));
+        const list = (all || []).filter((a: any) => a && a.id);
+        setArticles(list);
+        setTotalCount(list.length);
       } catch {
         /* ignore */
       } finally {
@@ -220,14 +223,14 @@ export default function KnowledgeBasePage() {
       <Navbar />
       <div className="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
+          <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
             <span className="inline-block text-xs tracking-[0.3em] text-xuan-gold/70 font-chinese mb-4">学习中心</span>
             <h1 className="text-3xl sm:text-4xl font-chinese font-bold text-gradient-gold mb-4">传统文化知识库</h1>
             <p className="text-xuan-muted font-chinese">系统学习八字·五行·干支·六十四卦·紫微·风水·择日</p>
           </motion.div>
 
           {viewArticle ? (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} key="detail">
+            <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} key="detail">
               <button onClick={() => setViewArticle(null)}
                 className="mb-6 text-sm font-chinese text-xuan-gold hover:text-xuan-gold-light transition-colors flex items-center gap-1">
                 <span>←</span> 返回知识库
@@ -338,7 +341,7 @@ export default function KnowledgeBasePage() {
                   className={`p-4 rounded-xl border text-center transition-all ${!selectedCat && !showFavOnly ? 'border-xuan-gold bg-xuan-gold/10 text-xuan-gold' : 'card-xuan text-xuan-muted hover:border-xuan-gold/30'}`}>
                   <span className="text-xl block mb-1">📚</span>
                   <span className="text-xs font-chinese">全部</span>
-                  <span className="text-[10px] text-xuan-muted block">{articles.length}篇</span>
+                  <span className="text-[10px] text-xuan-muted block">{totalCount}篇</span>
                 </button>
                 <button onClick={() => { setShowFavOnly(true); setSelectedCat(''); setSearch(''); }}
                   className={`p-4 rounded-xl border text-center transition-all ${showFavOnly ? 'border-xuan-gold bg-xuan-gold/10 text-xuan-gold' : 'card-xuan text-xuan-muted hover:border-xuan-gold/30'}`}>

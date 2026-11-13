@@ -6,6 +6,7 @@ import Navbar from '@/components/layout/Header/Navbar';
 import Footer from '@/components/layout/Footer/Footer';
 import { calculateBazi } from '@/lib/engines/bazi/calculate';
 import { yearRangeDesc } from '@/lib/utils/year';
+import { useRouter } from 'next/navigation';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
 
 type TabKey = 'pillars' | 'analysis' | 'charts' | 'dayun';
@@ -19,11 +20,17 @@ export default function BaziPage() {
   const [error, setError] = useState('');
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const reportRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   const [form, setForm] = useState({
     name: '', gender: 'male' as 'male' | 'female',
     birthYear: 1995, birthMonth: 8, birthDay: 22, birthHour: 6,
     birthPlace: '',  });
+
+  const goAi = () => {
+    try { sessionStorage.setItem('ai_prefill', JSON.stringify({ categories: ['bazi'], baziData: result })); } catch {}
+    router.push('/ai-analysis');
+  };
 
   const calculate = () => {
     setLoading(true);
@@ -99,14 +106,14 @@ export default function BaziPage() {
       <Navbar />
       <div className="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
+          <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
             <span className="inline-block text-xs tracking-[0.3em] text-xuan-cyan/70 font-chinese mb-4">八字命理系统</span>
             <h1 className="text-3xl sm:text-4xl font-chinese font-bold text-gradient-gold mb-4">专业八字排盘 V2</h1>
             <p className="text-xuan-muted font-chinese">四柱八字 · 五行分析 · 命运解读</p>
           </motion.div>
 
           {/* Input Form */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
             className="card-xuan-gold p-6 sm:p-8 mb-8">
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4">
               <div>
@@ -158,10 +165,16 @@ export default function BaziPage() {
                 {loading ? '排盘中...' : '开始排盘'}
               </button>
               {result && !error && (
-                <button onClick={exportPDF}
-                  className="px-6 py-4 border border-xuan-gold/30 text-xuan-gold rounded-lg hover:bg-xuan-gold/10 transition-all font-chinese text-sm">
-                  导出PDF
-                </button>
+                <>
+                  <button onClick={exportPDF}
+                    className="px-6 py-4 border border-xuan-gold/30 text-xuan-gold rounded-lg hover:bg-xuan-gold/10 transition-all font-chinese text-sm">
+                    导出PDF
+                  </button>
+                  <button onClick={goAi}
+                    className="px-6 py-4 border border-xuan-gold/30 text-xuan-gold rounded-lg hover:bg-xuan-gold/10 transition-all font-chinese text-sm">
+                    综合解读
+                  </button>
+                </>
               )}
             </div>
             {error && (
@@ -174,7 +187,7 @@ export default function BaziPage() {
           {result && (
             <div ref={reportRef}>
               {/* Tabs */}
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+              <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
                 className="grid grid-cols-4 gap-3 mb-8">
                 {tabs.map((t) => (
                   <button key={t.key} onClick={() => setActiveTab(t.key)}
@@ -190,7 +203,7 @@ export default function BaziPage() {
               <AnimatePresence mode="wait">
                 {/* PILLARS TAB */}
                 {activeTab === 'pillars' && (
-                  <motion.div key="pillars" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                  <motion.div key="pillars" initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                     <div className="card-xuan-gold p-6 mb-6">
                       <h3 className="text-lg font-chinese font-bold text-xuan-gold mb-2 text-center">四柱排盘</h3>
                       <p className="text-xs text-xuan-muted text-center mb-4">日主：{result.bazi.dayMaster}（{result.bazi.dayMasterElement}）· {result.analysis.dayMasterAnalysis.strength}</p>
@@ -230,7 +243,7 @@ export default function BaziPage() {
 
                 {/* ANALYSIS TAB */}
                 {activeTab === 'analysis' && (
-                  <motion.div key="analysis" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                  <motion.div key="analysis" initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                     <div className="space-y-6">
                       {sections.map((s) => (
                         <div key={s.key} className="card-xuan-gold p-5">
@@ -250,7 +263,7 @@ export default function BaziPage() {
 
                 {/* CHARTS TAB */}
                 {activeTab === 'charts' && (
-                  <motion.div key="charts" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                  <motion.div key="charts" initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       {/* Pie Chart - Element Distribution */}
                       <div className="card-xuan-gold p-6">
@@ -320,7 +333,7 @@ export default function BaziPage() {
 
                 {/* DAYUN TAB */}
                 {activeTab === 'dayun' && (
-                  <motion.div key="dayun" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                  <motion.div key="dayun" initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                     <div className="space-y-4">
                       {/* DaYun Grid */}
                       {result.analysis.dayun.map((decade: any[], idx: number) => (

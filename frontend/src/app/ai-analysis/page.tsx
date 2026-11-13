@@ -35,16 +35,26 @@ export default function AiConsultantPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConvId, setCurrentConvId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: '你好！我是易算AI命理助手。我可以结合八字、紫微、占卜等多维度数据为你做综合命理分析。请输入你的问题，或点击下方快捷提问。', timestamp: Date.now() },
+    { role: 'assistant', content: '你好！本页基于命理模板为你生成结构化解读（仅供参考）。可结合八字、紫微、占卜等命盘数据提问，或点击下方快捷提问。', timestamp: Date.now() },
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<('bazi' | 'ziwei' | 'divination')[]>(['bazi', 'ziwei']);
+  const [prefill, setPrefill] = useState<any>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem('ai_prefill');
+      if (raw) {
+        const p = JSON.parse(raw);
+        setPrefill(p);
+        if (Array.isArray(p.categories) && p.categories.length) setCategories(p.categories);
+        sessionStorage.removeItem('ai_prefill');
+      }
+    } catch (e) {}
     const saved = localStorage.getItem('ai-conversations');
     if (saved) {
       try {
@@ -70,7 +80,7 @@ export default function AiConsultantPage() {
     const newConv: Conversation = {
       id: `conv-${Date.now()}`,
       title: '新对话',
-      messages: [{ role: 'assistant', content: '你好！我是易算AI命理助手。我可以结合八字、紫微、占卜等多维度数据为你做综合命理分析。请输入你的问题，或点击下方快捷提问。', timestamp: Date.now() }],
+      messages: [{ role: 'assistant', content: '你好！本页基于命理模板为你生成结构化解读（仅供参考）。可结合八字、紫微、占卜等命盘数据提问，或点击下方快捷提问。', timestamp: Date.now() }],
       createdAt: Date.now(),
     };
     setConversations(prev => [newConv, ...prev]);
@@ -127,16 +137,18 @@ export default function AiConsultantPage() {
 
     try {
       const token = localStorage.getItem('token');
-      let baziData = null, ziweiData = null, divData = null;
+      let baziData = prefill?.baziData ?? null;
+      let ziweiData = prefill?.ziweiData ?? null;
+      let divData = null;
 
-      if (token && catsToUse.includes('bazi')) {
+      if (!baziData && token && catsToUse.includes('bazi')) {
         try { const r = await api.get('/api/users/charts'); baziData = r.data.find((c: any) => c.chartType === 'bazi')?.chartData; } catch (e) {}
       }
-      if (token && catsToUse.includes('ziwei')) {
+      if (!ziweiData && token && catsToUse.includes('ziwei')) {
         try { const r = await api.get('/api/users/charts'); ziweiData = r.data.find((c: any) => c.chartType === 'ziwei')?.chartData; } catch (e) {}
       }
-      if (token && catsToUse.includes('divination')) {
-        try { divData = divLiuyao(); } catch (e) {}
+      if (catsToUse.includes('divination')) {
+        try { divData = prefill?.divinationData ?? divLiuyao(); } catch (e) {}
       }
 
       const conversationHistory = newMessages.filter(m => m.role === 'user').slice(0, -1).map(m => ({
@@ -185,16 +197,18 @@ export default function AiConsultantPage() {
 
     try {
       const token = localStorage.getItem('token');
-      let baziData = null, ziweiData = null, divData = null;
+      let baziData = prefill?.baziData ?? null;
+      let ziweiData = prefill?.ziweiData ?? null;
+      let divData = null;
 
-      if (token && categories.includes('bazi')) {
+      if (!baziData && token && categories.includes('bazi')) {
         try { const r = await api.get('/api/users/charts'); baziData = r.data.find((c: any) => c.chartType === 'bazi')?.chartData; } catch (e) {}
       }
-      if (token && categories.includes('ziwei')) {
+      if (!ziweiData && token && categories.includes('ziwei')) {
         try { const r = await api.get('/api/users/charts'); ziweiData = r.data.find((c: any) => c.chartType === 'ziwei')?.chartData; } catch (e) {}
       }
-      if (token && categories.includes('divination')) {
-        try { divData = divLiuyao(); } catch (e) {}
+      if (categories.includes('divination')) {
+        try { divData = prefill?.divinationData ?? divLiuyao(); } catch (e) {}
       }
 
       const conversationHistory = newMessages.filter(m => m.role === 'user').map(m => ({
@@ -342,10 +356,10 @@ export default function AiConsultantPage() {
       <Navbar />
       <div className="flex-1 pt-20 pb-4 px-4 sm:px-6 lg:px-8 flex flex-col">
         <div className="max-w-6xl mx-auto w-full flex-1 flex">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-6 w-full">
-            <span className="inline-block px-3 py-1 text-xs tracking-widest text-purple-400/70 font-chinese mb-4 border border-purple-400/20 rounded-full">AI驱动</span>
-            <h1 className="text-2xl sm:text-3xl font-chinese font-bold text-gradient-gold mb-2">AI命理助手</h1>
-            <p className="text-sm text-xuan-muted font-chinese">多维度命理数据 + 大语言模型 = 智能解读</p>
+          <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-6 w-full">
+            <span className="inline-block px-3 py-1 text-xs tracking-widest text-purple-400/70 font-chinese mb-4 border border-purple-400/20 rounded-full">模板解读</span>
+            <h1 className="text-2xl sm:text-3xl font-chinese font-bold text-gradient-gold mb-2">命理综合解读</h1>
+            <p className="text-sm text-xuan-muted font-chinese">结合八字 / 紫微等命盘数据，模板化生成解读，仅供参考</p>
           </motion.div>
         </div>
 
@@ -399,7 +413,7 @@ export default function AiConsultantPage() {
 
             <div className="flex-1 overflow-y-auto space-y-4 mb-4 p-4 card-xuan-gold min-h-0">
               {messages.map((m, i) => (
-                <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                <motion.div key={i} initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }}
                   className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[85%] sm:max-w-[75%] rounded-2xl p-4 ${
                     m.role === 'user' ? 'bg-xuan-gold/10 border border-xuan-gold/30' : 'card-xuan'
@@ -441,7 +455,7 @@ export default function AiConsultantPage() {
                       <span className="animate-pulse text-purple-400">●</span>
                       <span className="animate-pulse" style={{ animationDelay: '0.2s' }}>●</span>
                       <span className="animate-pulse" style={{ animationDelay: '0.4s' }}>●</span>
-                      <span>AI分析中...</span>
+                      <span>生成中...</span>
                     </div>
                   </div>
                 </div>
@@ -463,7 +477,7 @@ export default function AiConsultantPage() {
             <div className="flex gap-2">
               <input ref={inputRef} type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown}
                 disabled={loading}
-                placeholder="输入你的问题，AI将从命理角度为你解答..."
+                placeholder="输入你的问题，将基于命盘模板为你解读..."
                 className="flex-1 px-4 py-3 bg-xuan-dark border border-xuan-border rounded-xl text-sm text-white placeholder-xuan-muted focus:outline-none focus:border-purple-400/50 disabled:opacity-50" />
               <button onClick={() => sendMessage(input)} disabled={loading || !input.trim()}
                 className="px-5 py-3 bg-purple-500/20 border border-purple-400/40 text-purple-400 rounded-xl hover:bg-purple-500/30 disabled:opacity-30 transition-all font-chinese text-sm">

@@ -11,6 +11,7 @@ const navItems = [
   { name: '紫微斗数', href: '/ziwei' },
   { name: '姓名学', href: '/name' },
   { name: '奇门遁甲', href: '/divination/qimen' },
+  { name: '占卜', href: '/divination' },
   { name: '风水堪舆', href: '/fengshui' },
   { name: '择日', href: '/zeri' },
   { name: '知识库', href: '/knowledge' },

@@ -113,7 +113,7 @@ export default function DashboardPage() {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         {/* User Info Header */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 1, y: 0 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
@@ -148,7 +148,7 @@ export default function DashboardPage() {
           {activeTab === 'profile' && (
             <motion.div
               key="profile"
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 1, y: 0 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               className="grid grid-cols-1 lg:grid-cols-2 gap-6"
@@ -270,7 +270,7 @@ export default function DashboardPage() {
           {(activeTab === 'bazi' || activeTab === 'ziwei') && (
             <motion.div
               key="charts"
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 1, y: 0 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
             >
@@ -327,7 +327,7 @@ export default function DashboardPage() {
           {activeTab === 'history' && (
             <motion.div
               key="history"
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 1, y: 0 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
             >

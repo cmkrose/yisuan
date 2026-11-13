@@ -11,7 +11,7 @@ export default function AnalysisReport({ analysis, bazi }: { analysis: any; bazi
     <div className="space-y-6">
       {/* Summary */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 1, y: 0 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
         className="card-xuan-gold p-6 sm:p-8"
@@ -24,7 +24,7 @@ export default function AnalysisReport({ analysis, bazi }: { analysis: any; bazi
 
       {/* Day Master + Pattern + Gods */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 1, y: 0 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.25 }}
         className="grid grid-cols-1 sm:grid-cols-2 gap-6"
@@ -68,7 +68,7 @@ export default function AnalysisReport({ analysis, bazi }: { analysis: any; bazi
 
       {/* Dayun */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 1, y: 0 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
         className="card-xuan-gold p-6 sm:p-8"
@@ -120,7 +120,7 @@ export default function AnalysisReport({ analysis, bazi }: { analysis: any; bazi
 
       {/* Liunian */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 1, y: 0 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.35 }}
         className="card-xuan-gold p-6 sm:p-8"

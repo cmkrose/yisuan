@@ -75,14 +75,14 @@ export default function DivinationPage() {
       <div className="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
+          <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
             <span className="inline-block text-xs tracking-[0.3em] text-xuan-cyan/70 font-chinese mb-4">占卜系统</span>
             <h1 className="text-3xl sm:text-4xl font-chinese font-bold text-gradient-gold mb-4">传统占卜</h1>
             <p className="text-xuan-muted font-chinese">古老占卜技艺，为您揭示未来趋势</p>
           </motion.div>
 
           {/* Tab Selector */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
             className="grid grid-cols-3 gap-3 mb-8">
             {tabs.map((tab) => (
               <button key={tab.key} onClick={() => { setActiveTab(tab.key); setResult(null); }}
@@ -103,7 +103,7 @@ export default function DivinationPage() {
           <AnimatePresence mode="wait">
             {/* ========== LIUYAO ========== */}
             {activeTab === 'liuyao' && (
-              <motion.div key="liuyao" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              <motion.div key="liuyao" initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                 <div className="card-xuan-gold p-6 sm:p-8 text-center">
                   <div className="text-6xl font-chinese mb-4">☰</div>
                   <h3 className="text-xl font-chinese font-bold text-xuan-gold mb-2">六爻纳甲起卦</h3>
@@ -115,7 +115,7 @@ export default function DivinationPage() {
                 </div>
 
                 {result?.type === 'liuyao' && (
-                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                  <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }}
                     className="mt-6 card-xuan-gold p-6">
                     <div className="text-center mb-4">
                       <span className="text-4xl font-chinese">{result.data.symbol}</span>
@@ -163,7 +163,7 @@ export default function DivinationPage() {
 
             {/* ========== MEIHUA ========== */}
             {activeTab === 'meihua' && (
-              <motion.div key="meihua" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              <motion.div key="meihua" initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                 <div className="card-xuan-gold p-6 sm:p-8">
                   <div className="flex gap-2 mb-6">
                     {[{ v:'time',l:'时间起卦' },{ v:'number',l:'数字起卦' },{ v:'name',l:'姓名起卦' }].map((m) => (
@@ -194,7 +194,7 @@ export default function DivinationPage() {
                 </div>
 
                 {result?.type === 'meihua' && (
-                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                  <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }}
                     className="mt-6 space-y-4">
                     <div className="card-xuan-gold p-6 text-center">
                       <span className="text-4xl font-chinese block mb-2">{result.data.symbol}</span>
@@ -230,7 +230,7 @@ export default function DivinationPage() {
 
             {/* ========== XIAOLIUREN ========== */}
             {activeTab === 'xiaoliuren' && (
-              <motion.div key="xiaoliuren" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              <motion.div key="xiaoliuren" initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                 <div className="card-xuan-gold p-6 sm:p-8">
                   <div className="flex gap-2 mb-6">
                     {[{ v:'time',l:'时辰推算' },{ v:'random',l:'随机占卜' }].map((m) => (
@@ -272,7 +272,7 @@ export default function DivinationPage() {
                 </div>
 
                 {result?.type === 'xiaoliuren' && (
-                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                  <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }}
                     className="mt-6 space-y-4">
                     {/* 6 Positions */}
                     <div className="grid grid-cols-6 gap-1.5">

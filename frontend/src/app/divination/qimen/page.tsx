@@ -8,12 +8,11 @@ import { api } from '@/lib/api/client';
 import { sanshiQimen, sanshiLiuren } from '@/lib/engines/sanshi/calculate';
 import { yearRangeDesc } from '@/lib/utils/year';
 
-type TabKey = 'qimen' | 'liuren' | 'taiyi';
+type TabKey = 'qimen' | 'liuren';
 
 const tabs: { key: TabKey; label: string; icon: string; desc: string }[] = [
   { key: 'qimen', label: '奇门遁甲', icon: '门', desc: '九宫八门 · 九星八神 · 天地人三盘' },
   { key: 'liuren', label: '大六壬', icon: '壬', desc: '四课三传 · 十二天将 · 六亲' },
-  { key: 'taiyi', label: '太乙神数', icon: '乙', desc: '太乙巡宫 · 君基臣基 · 计神' },
 ];
 
 const directionLabels: Record<string, string> = {
@@ -104,19 +103,18 @@ export default function SanshiPage() {
       <Navbar />
       <div className="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
+          <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
             <span className="inline-block text-xs tracking-[0.3em] text-purple-400/70 font-chinese mb-4">高级预测</span>
-            <h1 className="text-3xl sm:text-4xl font-chinese font-bold text-gradient-gold mb-4">三式预测</h1>
-            <p className="text-xuan-muted font-chinese">太乙神数 · 奇门遁甲 · 大六壬 · 古老帝王三式</p>
+            <h1 className="text-3xl sm:text-4xl font-chinese font-bold text-gradient-gold mb-4">奇门六壬</h1>
+            <p className="text-xuan-muted font-chinese">奇门遁甲 · 大六壬 · 式占预测</p>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-            className="grid grid-cols-3 gap-3 mb-8">
+          <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+            className="grid grid-cols-2 gap-3 mb-8">
             {tabs.map((t) => (
               <button key={t.key} onClick={() => { setTab(t.key); setResult(null); }}
                 className={`p-4 sm:p-6 rounded-xl border text-center transition-all ${
-                  tab === t.key ? 'border-purple-400 bg-purple-500/10 shadow-lg shadow-purple-500/10' :
-                  t.key === 'taiyi' ? 'card-xuan opacity-50 cursor-not-allowed' : 'card-xuan hover:border-purple-400/30'
+                  tab === t.key ? 'border-purple-400 bg-purple-500/10 shadow-lg shadow-purple-500/10' : 'card-xuan hover:border-purple-400/30'
                   }`}>
                 <span className="text-3xl sm:text-4xl block mb-2">{t.icon}</span>
                 <h3 className={`text-sm sm:text-base font-chinese font-bold mb-1 ${tab === t.key ? 'text-purple-400' : 'text-xuan-silver'}`}>
@@ -129,7 +127,7 @@ export default function SanshiPage() {
 
           <AnimatePresence mode="wait">
             {tab === 'qimen' && (
-              <motion.div key="qimen" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+              <motion.div key="qimen" initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }}>
                 <div className="card-xuan-gold p-6 sm:p-8 mb-8">
                   <h3 className="text-sm font-chinese font-bold text-xuan-gold mb-4">排盘时间</h3>
                   <div className="grid grid-cols-4 gap-3 mb-6">
@@ -246,7 +244,7 @@ export default function SanshiPage() {
             )}
 
             {tab === 'liuren' && (
-              <motion.div key="liuren" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+              <motion.div key="liuren" initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }}>
                 <div className="card-xuan-gold p-6 sm:p-8 mb-8">
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <div><label className="text-xs text-xuan-muted font-chinese mb-1 block">月份</label>
@@ -329,18 +327,6 @@ export default function SanshiPage() {
               </motion.div>
             )}
 
-            {tab === 'taiyi' && (
-              <motion.div key="taiyi" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                <div className="card-xuan-gold p-12 text-center">
-                  <div className="text-6xl font-chinese font-bold text-xuan-muted mb-4">太乙</div>
-                  <h3 className="text-xl font-chinese font-bold text-xuan-gold mb-2">太乙神数</h3>
-                  <p className="text-xuan-muted font-chinese">太乙巡宫 · 君基臣基 · 计神 · 文昌 · 始击</p>
-                  <div className="mt-6 p-4 bg-xuan-dark rounded-lg inline-block">
-                    <span className="text-sm text-xuan-muted font-chinese">模块开发中，敬请期待...</span>
-                  </div>
-                </div>
-              </motion.div>
-            )}
           </AnimatePresence>
         </div>
       </div>

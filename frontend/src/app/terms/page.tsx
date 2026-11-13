@@ -25,7 +25,7 @@ export default function TermsPage() {
       <div className="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 1, y: 0 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-12"
           >
@@ -42,7 +42,7 @@ export default function TermsPage() {
 
           <motion.div
             variants={containerVariants}
-            initial="hidden"
+            initial="visible"
             animate="visible"
             className="space-y-6"
           >

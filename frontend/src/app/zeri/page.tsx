@@ -797,7 +797,7 @@ export default function ZeriPage() {
       <div className="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
+          <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
             <span className="inline-block text-xs tracking-[0.3em] text-xuan-red/70 font-chinese mb-4">择日系统</span>
             <h1 className="text-3xl sm:text-4xl font-chinese font-bold text-gradient-gold mb-4">黄道择日</h1>
             <p className="text-xuan-muted font-chinese">黄道吉日 · 建除十二神 · 二十八宿 · 冲煞宜忌</p>
@@ -938,7 +938,7 @@ export default function ZeriPage() {
             </div>
             <div className="card-xuan-gold p-6" ref={reportRef}>
               <AnimatePresence mode="wait">
-                <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                <motion.div key={activeTab} initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}>
                   {renderActiveTab()}
                 </motion.div>

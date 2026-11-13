@@ -72,7 +72,7 @@ export default function AdminPage() {
   if (!loggedIn) {
     return (
       <main className="min-h-screen bg-xuan-black flex items-center justify-center px-4">
-        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-sm">
+        <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-sm">
           <div className="text-center mb-8">
             <span className="text-3xl font-chinese font-bold text-gradient-gold">易算</span>
             <p className="text-xs text-xuan-muted font-chinese mt-2">开发者后台</p>
@@ -128,7 +128,7 @@ export default function AdminPage() {
         {/* Content */}
         <div className="flex-1 p-4 sm:p-8">
           <AnimatePresence mode="wait">
-            <motion.div key={tab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-5xl">
+            <motion.div key={tab} initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} className="max-w-5xl">
               {loading && <div className="text-sm text-xuan-muted font-chinese">加载中...</div>}
 
               {/* ===== DASHBOARD ===== */}
@@ -213,7 +213,7 @@ export default function AdminPage() {
                   )}
 
                   {userDetail && (
-                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-4 card-xuan-gold p-4">
+                    <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} className="mt-4 card-xuan-gold p-4">
                       <div className="flex items-center justify-between mb-3">
                         <h3 className="text-sm font-chinese font-bold text-xuan-gold">用户详情: {userDetail.user?.nickname}</h3>
                         <button onClick={() => setUserDetail(null)} className="text-xs text-xuan-muted">✕</button>

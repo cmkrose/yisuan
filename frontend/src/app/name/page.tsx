@@ -140,14 +140,14 @@ export default function NamePage() {
       <Navbar />
       <div className="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
+          <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
             className="text-center mb-10">
             <span className="inline-block text-xs tracking-[0.3em] text-xuan-gold/70 font-chinese mb-4">姓名学</span>
             <h1 className="text-3xl sm:text-4xl font-chinese font-bold text-gradient-gold mb-4">姓名分析</h1>
             <p className="text-xuan-muted font-chinese">五格剖象法 · 三才配置 · 五行分析 · 综合评分</p>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
             className="card-xuan-gold p-6 sm:p-8 mb-10">
             <form onSubmit={handleAnalyze} className="space-y-5">
               <div className="grid grid-cols-2 gap-4">
@@ -187,7 +187,7 @@ export default function NamePage() {
 
           <AnimatePresence>
             {result && (
-              <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
+              <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
                 className="space-y-6" ref={reportRef}>
                 <div className="flex justify-end">
                   <button onClick={handleSave} className="btn-outline-gold px-6 py-2.5 text-sm font-chinese">保存到我的命盘</button>
@@ -300,7 +300,7 @@ export default function NamePage() {
 
           <AnimatePresence>
             {suggestions.length > 0 && (
-              <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
+              <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }}
                 className="mt-8 card-xuan-gold p-6">
                 <h3 className="text-lg font-chinese font-bold text-xuan-gold mb-4">改名建议</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
