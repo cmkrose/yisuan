@@ -6,8 +6,6 @@ const nextConfig = {
   typescript: { ignoreBuildErrors: true },
   eslint: { ignoreDuringBuilds: true },
 
-  images: { unoptimized: true },
-
   poweredByHeader: false,
   compress: true,
   generateEtags: true,
