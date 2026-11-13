@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import '../styles/globals.css';
+import Warmup from '@/components/system/Warmup';
 
 const APP_NAME = '易算';
 const APP_DESCRIPTION = '集八字命理、姓名学、紫微斗数、风水、占卜、择日、AI分析于一体的东方智慧智能分析平台';
@@ -75,6 +76,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="bg-xuan-black text-white antialiased">
+        <Warmup />
         {children}
       </body>
     </html>
