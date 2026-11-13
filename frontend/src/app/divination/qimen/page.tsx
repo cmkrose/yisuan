@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/layout/Header/Navbar';
 import Footer from '@/components/layout/Footer/Footer';
 import { api } from '@/lib/api/client';
+import { sanshiQimen, sanshiLiuren } from '@/lib/engines/sanshi/calculate';
 
 type TabKey = 'qimen' | 'liuren' | 'taiyi';
 
@@ -48,7 +49,7 @@ export default function SanshiPage() {
 
   const runQimen = async () => { setLoading(true);
     try {
-      const r = await api.post('/api/sanshi/qimen', {
+      const data = sanshiQimen({
         year: Number(qm.year), month: Number(qm.month), day: Number(qm.day), hour: Number(qm.hour),
         birthYear: Number(qmBirth.birthYear), birthMonth: Number(qmBirth.birthMonth),
         birthDay: Number(qmBirth.birthDay), birthHour: Number(qmBirth.birthHour),
@@ -56,15 +57,15 @@ export default function SanshiPage() {
         location: qmLocation,
         purpose: qmPurpose,
       });
-      setResult({ type: 'qimen', data: r.data });
+      setResult({ type: 'qimen', data });
     } catch(e){} finally { setLoading(false); }
   };
 
   const [lr, setLr] = useState({ month: now.getMonth() + 1, hour: now.getHours() });
 
   const runLiuren = async () => { setLoading(true);
-    try { const r = await api.post('/api/sanshi/liuren', { month: Number(lr.month), hour: Number(lr.hour) });
-      setResult({ type: 'liuren', data: r.data }); } catch(e){} finally { setLoading(false); }
+    try { const data = sanshiLiuren({ month: Number(lr.month), hour: Number(lr.hour) });
+      setResult({ type: 'liuren', data }); } catch(e){} finally { setLoading(false); }
   };
 
   const renderQimenPalace = (p: any, idx: number) => {

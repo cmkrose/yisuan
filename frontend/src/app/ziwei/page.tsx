@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/layout/Header/Navbar';
 import Footer from '@/components/layout/Footer/Footer';
 import { api } from '@/lib/api/client';
+import { calculateZiweiLocal } from '@/lib/engines/ziwei/calculate';
 
 type TabKey = 'chart' | 'stars' | 'dayun' | 'detailed' | 'overview';
 
@@ -58,15 +59,15 @@ export default function ZiweiPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setError(''); setLoading(true);
     try {
-      const res = await api.post('/api/ziwei/calculate', {
+      const data = calculateZiweiLocal({
         birthYear: Number(form.birthYear), birthMonth: Number(form.birthMonth),
         birthDay: Number(form.birthDay), birthHour: Number(form.birthHour),
         gender: form.gender,
       });
-      if (res.data?.error) { setError('排盘失败：' + res.data.error); return; }
-      setResult(res.data);
+      if (data?.error) { setError('排盘失败：' + data.error); return; }
+      setResult(data);
       setActiveTab('detailed');
-    } catch (err: any) { setError(err.response?.data?.message || '排盘失败'); }
+    } catch (err: any) { setError(err?.message || '排盘失败'); }
     finally { setLoading(false); }
   };
 

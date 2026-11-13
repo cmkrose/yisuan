@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/layout/Header/Navbar';
 import Footer from '@/components/layout/Footer/Footer';
 import { api } from '@/lib/api/client';
+import { nameAnalyze, nameSuggest } from '@/lib/engines/name-analysis/calculate';
 
 const analysisSections = [
   { key: 'wuge', title: '五格分析', icon: '五' },
@@ -36,10 +37,9 @@ export default function NamePage() {
     setError('');
     setLoading(true);
     try {
-      const res = await api.post('/api/name-analysis/analyze', form);
-      setResult(res.data);
+      setResult(nameAnalyze(form));
     } catch (err: any) {
-      setError(err.response?.data?.message || '分析失败');
+      setError(err?.message || '分析失败');
     } finally {
       setLoading(false);
     }
@@ -48,10 +48,9 @@ export default function NamePage() {
   const handleSuggest = async () => {
     if (!form.surname) { setError('请输入姓氏'); return; }
     try {
-      const res = await api.post('/api/name-analysis/suggest', { surname: form.surname, gender: form.gender });
-      setSuggestions(res.data);
+      setSuggestions(nameSuggest({ surname: form.surname, gender: form.gender }));
     } catch (err: any) {
-      setError(err.response?.data?.message || '获取建议失败');
+      setError(err?.message || '获取建议失败');
     }
   };
 

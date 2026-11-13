@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/layout/Header/Navbar';
 import Footer from '@/components/layout/Footer/Footer';
 import { api } from '@/lib/api/client';
+import { zeriCalendar, zeriSelect } from '@/lib/engines/zeri/calculate';
 
 type Purpose = 'wedding' | 'business' | 'moving' | 'construction';
 
@@ -340,8 +341,8 @@ export default function ZeriPage() {
   const loadCalendar = async () => {
     setLoading(true);
     try {
-      const r = await api.post('/api/zeri/calendar', { year, month });
-      const arr = Array.isArray(r.data) ? r.data : (r.data?.days || []);
+      const data: any = zeriCalendar(year, month);
+      const arr = Array.isArray(data) ? data : (data?.days || []);
       setDays(arr);
     } catch (e) { setDays([]); } finally { setLoading(false); }
   };
@@ -349,8 +350,8 @@ export default function ZeriPage() {
   const loadSelect = async () => {
     setLoading(true);
     try {
-      const r = await api.post('/api/zeri/select', { year, month, purpose });
-      const arr = Array.isArray(r.data) ? r.data : (r.data?.days || []);
+      const data: any = zeriSelect(year, month, purpose as any);
+      const arr = Array.isArray(data) ? data : (data?.days || []);
       setSelectedDays(arr);
     } catch (e) { setSelectedDays([]); } finally { setLoading(false); }
   };

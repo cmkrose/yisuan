@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/layout/Header/Navbar';
 import Footer from '@/components/layout/Footer/Footer';
 import { api } from '@/lib/api/client';
+import { visualFace, visualPalm } from '@/lib/engines/visual-analysis/calculate';
 
 export default function VisualAnalysisPage() {
   const [tab, setTab] = useState<'face'|'palm'>('face');
@@ -24,9 +25,8 @@ export default function VisualAnalysisPage() {
   const runAnalysis = async () => {
     setLoading(true);
     try {
-      const endpoint = tab === 'face' ? '/api/visual/face' : '/api/visual/palm';
-      const res = await api.post(endpoint);
-      setResult(res.data);
+      const data = tab === 'face' ? visualFace() : visualPalm();
+      setResult(data);
     } catch(e){} finally { setLoading(false); }
   };
 

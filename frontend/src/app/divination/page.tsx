@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/layout/Header/Navbar';
 import Footer from '@/components/layout/Footer/Footer';
 import { api } from '@/lib/api/client';
+import { divLiuyao, divMeihuaTime, divMeihuaNumber, divMeihuaName, divXiaoLiuRen, divXiaoLiuRenRandom } from '@/lib/engines/divination/calculate';
 
 type TabKey = 'liuyao' | 'meihua' | 'xiaoliuren';
 
@@ -21,7 +22,7 @@ export default function DivinationPage() {
 
   // Six Yao
   const castLiuyao = async () => { setLoading(true);
-    const res = await api.post('/api/divination/liuyao'); setResult({ type:'liuyao', data: res.data }); setLoading(false); };
+    const data = divLiuyao(); setResult({ type:'liuyao', data }); setLoading(false); };
 
   // Meihua
   const [meihuaMethod, setMeihuaMethod] = useState<'time' | 'number' | 'name'>('time');
@@ -31,15 +32,15 @@ export default function DivinationPage() {
   const castMeihua = async () => {
     setLoading(true);
     try {
-      let res;
-      if (meihuaMethod === 'time') res = await api.post('/api/divination/meihua/time');
+      let data;
+      if (meihuaMethod === 'time') data = divMeihuaTime();
       else if (meihuaMethod === 'number') {
         const nums = meihuaNums.split(',').map(Number).filter(n => !isNaN(n));
-        res = await api.post('/api/divination/meihua/number', { numbers: nums });
+        data = divMeihuaNumber(nums);
       } else {
-        res = await api.post('/api/divination/meihua/name', { name: meihuaName || '易' });
+        data = divMeihuaName(meihuaName || '易');
       }
-      setResult({ type: 'meihua', data: res.data });
+      setResult({ type: 'meihua', data });
     } catch (e) {} finally { setLoading(false); }
   };
 
@@ -52,10 +53,10 @@ export default function DivinationPage() {
   const castXiaoliuren = async () => {
     setLoading(true);
     try {
-      let res;
-      if (xlrMode === 'time') res = await api.post('/api/divination/xiaoliuren', { month: xlrMonth, day: xlrDay, hour: xlrHour });
-      else res = await api.post('/api/divination/xiaoliuren/random');
-      setResult({ type: 'xiaoliuren', data: res.data });
+      let data;
+      if (xlrMode === 'time') data = divXiaoLiuRen(xlrMonth, xlrDay, xlrHour);
+      else data = divXiaoLiuRenRandom();
+      setResult({ type: 'xiaoliuren', data });
     } catch (e) {} finally { setLoading(false); }
   };
 

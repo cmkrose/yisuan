@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/layout/Header/Navbar';
 import Footer from '@/components/layout/Footer/Footer';
 import { api } from '@/lib/api/client';
+import { fengshuiCompass, fengshuiEightMansion, fengshuiFlyingStars, fengshuiYangHouse, fengshuiYinHouse } from '@/lib/engines/fengshui/calculate';
 import { STAR_NAMES } from '@/lib/constants/fengshui';
 
 type TabKey = 'compass' | 'bazhai' | 'feixing' | 'yanghouse' | 'yinhouse';
@@ -42,7 +43,7 @@ export default function FengshuiPage() {
   const startRotationRef = useRef(0);
   const compassContainerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { api.get('/api/fengshui/compass').then(r => setCompassData(r.data.mountains)).catch(() => {}); }, []);
+  useEffect(() => { try { const data: any = fengshuiCompass(); setCompassData(data?.mountains); } catch {} }, []);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -84,25 +85,25 @@ export default function FengshuiPage() {
 
   const [bazhai, setBazhai] = useState({ birthYear: 1990, gender: 'male' as 'male' | 'female' });
   const runBazhai = async () => { setLoading(true);
-    try { const r = await api.post('/api/fengshui/eight-mansion', bazhai); setResult({ type:'bazhai', data: r.data }); }
+    try { const data = fengshuiEightMansion(bazhai); setResult({ type:'bazhai', data }); }
     catch(e){} finally { setLoading(false); }
   };
 
   const [fsYear, setFsYear] = useState(new Date().getFullYear());
   const runFeixing = async () => { setLoading(true);
-    try { const r = await api.post('/api/fengshui/flying-stars', { year: Number(fsYear) }); setResult({ type:'feixing', data: r.data }); }
+    try { const data = fengshuiFlyingStars({ year: Number(fsYear) }); setResult({ type:'feixing', data }); }
     catch(e){} finally { setLoading(false); }
   };
 
   const [yangHouse, setYangHouse] = useState({ facing: '子', year: new Date().getFullYear() });
   const runYangHouse = async () => { setLoading(true);
-    try { const r = await api.post('/api/fengshui/yang-house', { facing: yangHouse.facing, year: Number(yangHouse.year) }); setResult({ type:'yanghouse', data: r.data }); }
+    try { const data = fengshuiYangHouse({ facing: yangHouse.facing, year: Number(yangHouse.year) }); setResult({ type:'yanghouse', data }); }
     catch(e){} finally { setLoading(false); }
   };
 
   const [yinHouse, setYinHouse] = useState({ location: '山区', direction: '坐北朝南' });
   const runYinHouse = async () => { setLoading(true);
-    try { const r = await api.post('/api/fengshui/yin-house', { location: yinHouse.location, direction: yinHouse.direction }); setResult({ type:'yinhouse', data: r.data }); }
+    try { const data = fengshuiYinHouse({ location: yinHouse.location, direction: yinHouse.direction }); setResult({ type:'yinhouse', data }); }
     catch(e){} finally { setLoading(false); }
   };
 
