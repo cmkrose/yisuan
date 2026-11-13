@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/layout/Header/Navbar';
 import Footer from '@/components/layout/Footer/Footer';
-import { api } from '@/lib/api/client';
+import { calculateBazi } from '@/lib/engines/bazi/calculate';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
 
 type TabKey = 'pillars' | 'analysis' | 'charts' | 'dayun';
@@ -24,32 +24,23 @@ export default function BaziPage() {
     birthYear: 1995, birthMonth: 8, birthDay: 22, birthHour: 6,
     birthPlace: '',  });
 
-  useEffect(() => {
-    api.post('/api/bazi/calculate', {
-      gender: 'male', birthYear: 2000, birthMonth: 1, birthDay: 1, birthHour: 1,
-    }).catch(() => {});
-  }, []);
-
-  const calculate = async () => {
+  const calculate = () => {
     setLoading(true);
     setError('');
     setResult(null);
     try {
-      const res = await api.post('/api/bazi/calculate', form);
-      if (res.data?.error) {
-        setError('排盘失败：' + res.data.error);
+      const data = calculateBazi(form);
+      if (data?.error) {
+        setError('排盘失败：' + data.error);
         return;
       }
-      setResult(res.data);
+      setResult(data);
       setActiveTab('analysis');
     } catch (e: any) {
-      if (e.code === 'ECONNABORTED' || e.message?.includes('timeout') || e.message === 'Network Error') {
-        setError('服务器唤醒中，请稍等30秒后再次点击「开始排盘」');
-      } else {
-        setError('请求失败：' + (e.message || '未知错误'));
-      }
+      setError('排盘失败：' + (e?.message || '未知错误'));
+    } finally {
+      setLoading(false);
     }
-    finally { setLoading(false); }
   };
 
   const exportPDF = async () => {
