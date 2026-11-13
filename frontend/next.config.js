@@ -12,7 +12,7 @@ const nextConfig = {
   compress: true,
   generateEtags: true,
 
-  images: {
+  images: {unoptimized: true,
     remotePatterns: [
       { protocol: 'https', hostname: 'yisuan.com' },
     ],
