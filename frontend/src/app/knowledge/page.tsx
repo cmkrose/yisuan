@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/layout/Header/Navbar';
 import Footer from '@/components/layout/Footer/Footer';
-import { api } from '@/lib/api/client';
+import { kbCategories, kbTags, kbAll, kbSearch, kbByCategory } from '@/lib/data/knowledge';
 
 interface Article {
   id: string; title: string; category: string; summary: string;
@@ -88,11 +88,18 @@ export default function KnowledgeBasePage() {
   }, []);
 
   useEffect(() => {
-    Promise.all([
-      api.get('/api/knowledge/categories').then(r => setCategories(r.data)),
-      api.get('/api/knowledge/tags').then(r => setTags(r.data)),
-      api.get('/api/knowledge/all').then(r => setArticles((r.data || []).filter((a: any) => a && a.id))),
-    ]).finally(() => setLoading(false));
+    (async () => {
+      try {
+        const [cats, tgs, all] = await Promise.all([kbCategories(), kbTags(), kbAll()]);
+        setCategories(cats);
+        setTags(tgs);
+        setArticles((all || []).filter((a: any) => a && a.id));
+      } catch {
+        /* ignore */
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
   useEffect(() => {
@@ -133,16 +140,14 @@ export default function KnowledgeBasePage() {
 
   const handleSearch = async (q: string) => {
     setSearch(q); setSelectedCat(''); setShowFavOnly(false);
-    const r = q.trim()
-      ? await api.get(`/api/knowledge/search?q=${encodeURIComponent(q)}`)
-      : await api.get('/api/knowledge/all');
-    setArticles(r.data);
+    const data = q.trim() ? await kbSearch(q) : await kbAll();
+    setArticles(data);
   };
 
   const handleCategory = async (cat: string) => {
     setSelectedCat(cat); setSearch(''); setShowFavOnly(false);
-    const r = await api.get(`/api/knowledge/category/${encodeURIComponent(cat)}`);
-    setArticles(r.data);
+    const data = await kbByCategory(cat);
+    setArticles(data);
   };
 
   const toggleFavorite = useCallback((id: string) => {
