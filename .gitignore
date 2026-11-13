@@ -46,3 +46,7 @@ docker-compose.override.yml
 *.pem
 *.key
 *.cert
+
+# Secrets & local data (do not commit)
+.env.production
+*.db
