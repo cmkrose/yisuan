@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/layout/Header/Navbar';
 import Footer from '@/components/layout/Footer/Footer';
@@ -22,8 +22,13 @@ export default function BaziPage() {
   const [form, setForm] = useState({
     name: '', gender: 'male' as 'male' | 'female',
     birthYear: 1995, birthMonth: 8, birthDay: 22, birthHour: 6,
-    birthPlace: '',
-  });
+    birthPlace: '',  });
+
+  useEffect(() => {
+    api.post('/api/bazi/calculate', {
+      gender: 'male', birthYear: 2000, birthMonth: 1, birthDay: 1, birthHour: 1,
+    }).catch(() => {});
+  }, []);
 
   const calculate = async () => {
     setLoading(true);
@@ -37,7 +42,13 @@ export default function BaziPage() {
       }
       setResult(res.data);
       setActiveTab('analysis');
-    } catch (e: any) { setError('请求失败：' + (e.message || '未知错误')); }
+    } catch (e: any) {
+      if (e.code === 'ECONNABORTED' || e.message?.includes('timeout') || e.message === 'Network Error') {
+        setError('服务器唤醒中，请稍等30秒后再次点击「开始排盘」');
+      } else {
+        setError('请求失败：' + (e.message || '未知错误'));
+      }
+    }
     finally { setLoading(false); }
   };
 
