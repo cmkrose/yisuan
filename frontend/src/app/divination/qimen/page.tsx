@@ -6,6 +6,7 @@ import Navbar from '@/components/layout/Header/Navbar';
 import Footer from '@/components/layout/Footer/Footer';
 import { api } from '@/lib/api/client';
 import { sanshiQimen, sanshiLiuren } from '@/lib/engines/sanshi/calculate';
+import { yearRangeDesc } from '@/lib/utils/year';
 
 type TabKey = 'qimen' | 'liuren' | 'taiyi';
 
@@ -135,7 +136,7 @@ export default function SanshiPage() {
                     <div><label className="text-xs text-xuan-muted font-chinese mb-1 block">年</label>
                       <select value={qm.year} onChange={(e) => setQm({...qm, year: Number(e.target.value)})}
                         className="w-full px-2 py-2.5 bg-xuan-dark border border-xuan-border rounded-lg text-sm text-white">
-                        {Array.from({ length: 30 }, (_, i) => 2024 - i + 5).map(y => <option key={y} value={y}>{y}</option>)}
+                        {yearRangeDesc().map(y => <option key={y} value={y}>{y}</option>)}
                       </select></div>
                     <div><label className="text-xs text-xuan-muted font-chinese mb-1 block">月</label>
                       <select value={qm.month} onChange={(e) => setQm({...qm, month: Number(e.target.value)})}

@@ -203,7 +203,9 @@ export function dayMasterStrength(bazi: BaziResult): DayMasterAnalysis {
 
   const ecDisplay: Record<string, number> = {};
   for (const el of Object.keys(em) as WuXing[]) {
-    ecDisplay[el] = Math.round(em[el].count * 100) / 100;
+    // 展示口径：五行力量允许因节令“被克扣减”出现负值，展示层统一截断到 >=0；
+    // 内部 em 原始值仍用于日主强弱与喜用神判定，确保判定结果不变。
+    ecDisplay[el] = Math.max(0, Math.round(em[el].count * 100) / 100);
   }
 
   const detailedAnalysis = generateDayMasterAnalysisText(dm, dmE, strength, adjRatio, isStrong, favorable, unfavorable);
@@ -397,7 +399,7 @@ function generateDayMasterAnalysisText(dm: TianGan, dmE: WuXing, strength: strin
     strengthDesc = `日主${dm}属${dmE}，日主力量偏弱。日主偏弱之人，一般性格较为温和，善于接纳他人意见，有良好的团队合作精神，但也可能在关键决策时缺乏自信和决断力，容易受到外界环境和他人意见的左右。此类人需要通过增强喜用神的力量来弥补日主的不足，例如借助比劫帮身、印星生身来强化自身根基。在日常生活中，日主偏弱的人适合与日主强旺的人合作，借力打力，实现互补共赢。同时也要注重自我信心的培养，从小目标开始逐步建立成就感。日主偏弱并不代表命运不好，许多成功人士恰恰因为日主偏弱而更懂得借力与合作，成就了更大的事业。`;
   }
 
-  return `【日主分析】\n\n日主天干为${dm}，五行属${dmE}，日主强弱判定为「${strength}」（得分${score}%）。\n\n${strengthDesc}\n\n喜用五行：${favorStr}——这些五行对日主有利，可以在姓名、方位、颜色等方面加以利用。喜用五行是命主一生的"幸运符"，在日常生活中尽可能多地接触和使用喜用五行，能够增强自身的运气和能量场。例如在家居布置、着装搭配、事业发展方向选择上，都可以将喜用五行作为重要的参考依据。\n\n忌讳五行：${unfavorStr}——这些五行对日主不利，应尽量避免。忌讳五行过旺时容易引发不利事件，在生活中要尽量减少接触，例如选择行业时避开忌讳五行相关的领域，在交往中注意识别忌讳五行特质过强的人。\n\n日主${dm}之人，${getStemPersonality(dm)}。在日常生活中，宜充分发挥自身天赋优势，将日主元素的正能量最大化，同时注意弥补不足之处。命理学讲究"一命二运三风水四积德五读书"，后天的努力和修为同样至关重要。`;
+  return `【日主分析】\n\n日主天干为${dm}，五行属${dmE}，日主强弱判定为「${strength}」（得分${Math.round(score * 10) / 10}%）。\n\n${strengthDesc}\n\n喜用五行：${favorStr}——这些五行对日主有利，可以在姓名、方位、颜色等方面加以利用。喜用五行是命主一生的"幸运符"，在日常生活中尽可能多地接触和使用喜用五行，能够增强自身的运气和能量场。例如在家居布置、着装搭配、事业发展方向选择上，都可以将喜用五行作为重要的参考依据。\n\n忌讳五行：${unfavorStr}——这些五行对日主不利，应尽量避免。忌讳五行过旺时容易引发不利事件，在生活中要尽量减少接触，例如选择行业时避开忌讳五行相关的领域，在交往中注意识别忌讳五行特质过强的人。\n\n日主${dm}之人，${getStemPersonality(dm)}。在日常生活中，宜充分发挥自身天赋优势，将日主元素的正能量最大化，同时注意弥补不足之处。命理学讲究"一命二运三风水四积德五读书"，后天的努力和修为同样至关重要。`;
 }
 
 function getStemPersonality(stem: TianGan): string {

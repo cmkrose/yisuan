@@ -381,8 +381,8 @@ export default function ZeriPage() {
     const lunarMonthIdx = ((month - 1 + 12) % 12);
     const solarTerm = solarTerms.find((st) => st.month === month && Math.abs(st.day - new Date(day.date).getDate()) <= 1);
 
-    const yiList = (day.yi && day.yi.length > 0) ? day.yi : ['祭祀','祈福','出行','嫁娶','入宅'];
-    const jiList = (day.ji && day.ji.length > 0) ? day.ji : ['动土','安葬','破土','诉讼','伐木'];
+    const yiList = day.yi || [];
+    const jiList = day.ji || [];
 
     const recHead = day.isHuangdao
       ? `今日为${day.dayType}，建除值${day.jianchu}日，二十八宿${day.ershiba}值日，日干支${day.dayStem}${day.dayBranch}。`

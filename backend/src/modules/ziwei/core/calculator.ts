@@ -5,6 +5,31 @@ export type TianGan = typeof HEAVENLY_STEMS[number];
 export type DiZhi = typeof EARTHLY_BRANCHES[number];
 export type PalaceName = typeof PALACES[number];
 
+export type Brightness = '庙' | '旺' | '得' | '利' | '平' | '不' | '陷';
+// 十四主星庙旺利陷表（地支顺序 子..亥）。口径：紫微斗数通行星曜庙旺表（庙>旺>得>利>平>不>陷）。
+const BRANCH_ORDER: string[] = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+const MAJOR_BRIGHTNESS: Record<string, Brightness[]> = {
+  紫微: ['平','庙','庙','旺','得','旺','庙','庙','旺','平','得','旺'],
+  天机: ['庙','陷','得','旺','利','平','庙','陷','得','旺','利','平'],
+  太阳: ['陷','陷','旺','庙','旺','旺','庙','得','得','平','庙','陷'],
+  武曲: ['旺','庙','得','利','庙','平','旺','庙','得','利','庙','平'],
+  天同: ['旺','不','利','庙','平','庙','陷','不','利','庙','平','庙'],
+  廉贞: ['平','利','庙','平','利','陷','平','利','庙','平','利','陷'],
+  天府: ['庙','庙','庙','得','庙','得','庙','庙','得','旺','庙','得'],
+  太阴: ['庙','庙','利','陷','陷','陷','陷','不','利','庙','庙','庙'],
+  贪狼: ['旺','庙','平','利','庙','陷','旺','庙','平','利','庙','陷'],
+  巨门: ['旺','不','庙','庙','陷','旺','旺','不','庙','庙','陷','旺'],
+  天相: ['庙','庙','庙','陷','得','得','庙','庙','得','陷','得','得'],
+  天梁: ['庙','旺','庙','庙','庙','陷','庙','旺','陷','得','庙','陷'],
+  七杀: ['旺','庙','庙','陷','庙','平','旺','庙','庙','陷','庙','平'],
+  破军: ['庙','旺','得','陷','旺','平','庙','旺','得','陷','旺','平'],
+};
+function getMajorBrightness(star: string, branch: string): Brightness {
+  const arr = MAJOR_BRIGHTNESS[star];
+  const i = BRANCH_ORDER.indexOf(branch);
+  return arr && i >= 0 ? arr[i] : '平';
+}
+
 const wuxingJuTable: Record<string, string> = {
   '甲子':'金四局','乙丑':'金四局','丙寅':'火六局','丁卯':'火六局','戊辰':'木三局','己巳':'木三局',
   '庚午':'土五局','辛未':'土五局','壬申':'金四局','癸酉':'金四局','甲戌':'火六局','乙亥':'火六局',
@@ -164,7 +189,7 @@ export function calculateZiwei(year: number, month: number, day: number, hour: n
   for (let j = 0; j < ziweiStars.length; j++) {
     if (!ziweiStars[j]) continue;
     const pi = ((zwIdx + ziweiOffsets[j]) % 12 + 12) % 12;
-    tempPalaces[pi].majorStars.push({ name: ziweiStars[j], brightness: '平', isMajor: true });
+    tempPalaces[pi].majorStars.push({ name: ziweiStars[j], brightness: getMajorBrightness(ziweiStars[j], tempPalaces[pi].branch), isMajor: true });
   }
 
   // Tianfu at 4 positions after Ziwei  
@@ -175,7 +200,7 @@ export function calculateZiwei(year: number, month: number, day: number, hour: n
   for (let j = 0; j < tfStars.length; j++) {
     if (!tfStars[j]) continue;
     const pi = ((tfIdx + tfOffsets[j]) % 12 + 12) % 12;
-    tempPalaces[pi].majorStars.push({ name: tfStars[j], brightness: '平', isMajor: true });
+    tempPalaces[pi].majorStars.push({ name: tfStars[j], brightness: getMajorBrightness(tfStars[j], tempPalaces[pi].branch), isMajor: true });
   }
 
   // Simple auxiliary stars

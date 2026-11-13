@@ -1,6 +1,6 @@
 import {
   HEAVENLY_STEMS, EARTHLY_BRANCHES, JIANCHU, ER_SHI_BA_XIU,
-  SHENG_XIAO, YI_JI_TEMPLATES, DayResult,
+  SHENG_XIAO, YI_JI_TEMPLATES, JIANCHU_YI_JI, DayResult,
 } from './constants';
 
 const HUANGDAO_JIANCHU = new Set([1,2,5,6,9,10]);
@@ -42,6 +42,11 @@ export function getDayInfo(year: number, month: number, day: number): DayResult 
   const chongAnimal = SHENG_XIAO[conflictBranchIdx];
   const sha = `煞${shaDirections[conflictBranchIdx]}`;
 
+  // 宜忌单一口径：按建除十二神查表，保证宜非空且宜∩忌=∅
+  const yiji = JIANCHU_YI_JI[jianchu] || { yi: ['祭祀','祈福'], ji: ['动土'] };
+  const yi = [...yiji.yi];
+  const ji = yiji.ji.filter((x) => !yi.includes(x));
+
   return {
     date: `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`,
     yearStem: ys, yearBranch: yb, monthStem: ms, monthBranch: mb,
@@ -54,8 +59,8 @@ export function getDayInfo(year: number, month: number, day: number): DayResult 
     xiuFortune: xiu.fortune,
     chongAnimal,
     sha,
-    yi: isHuangdao ? ['嫁娶','出行','开业','交易','入宅','迁移'] : [],
-    ji: isHuangdao ? [] : ['嫁娶','开业','入宅','动土','出行'],
+    yi,
+    ji,
   };
 }
 
@@ -69,8 +74,12 @@ export function selectDates(
   for (let d = 1; d <= daysInMonth; d++) {
     const dayInfo = getDayInfo(year, month, d);
     if (dayInfo.isHuangdao && dayInfo.xiuFortune === '吉') {
-      dayInfo.yi = [...tmpl.yi, ...dayInfo.yi.slice(0, 3)];
-      dayInfo.ji = tmpl.ji;
+      const yiMerged = Array.from(new Set([...tmpl.yi, ...dayInfo.yi.slice(0, 3)]))
+        .filter((x) => !tmpl.ji.includes(x) && !dayInfo.ji.includes(x));
+      const jiMerged = Array.from(new Set([...tmpl.ji, ...dayInfo.ji]))
+        .filter((x) => !yiMerged.includes(x));
+      dayInfo.yi = yiMerged;
+      dayInfo.ji = jiMerged;
       results.push(dayInfo);
     }
   }

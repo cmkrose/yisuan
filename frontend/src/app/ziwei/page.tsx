@@ -6,6 +6,7 @@ import Navbar from '@/components/layout/Header/Navbar';
 import Footer from '@/components/layout/Footer/Footer';
 import { api } from '@/lib/api/client';
 import { calculateZiweiLocal } from '@/lib/engines/ziwei/calculate';
+import { yearRangeDesc } from '@/lib/utils/year';
 
 type TabKey = 'chart' | 'stars' | 'dayun' | 'detailed' | 'overview';
 
@@ -179,7 +180,7 @@ export default function ZiweiPage() {
                   <label className="block text-xs font-chinese text-xuan-muted mb-1">年</label>
                   <select value={form.birthYear} onChange={(e) => setForm({ ...form, birthYear: Number(e.target.value) })}
                     className="w-full px-2 py-2.5 bg-xuan-dark border border-xuan-border rounded-lg text-sm text-white focus:border-purple-400/50">
-                    {Array.from({ length: 100 }, (_, i) => 2024 - i).map(y => <option key={y} value={y}>{y}</option>)}
+                    {yearRangeDesc().map(y => <option key={y} value={y}>{y}</option>)}
                   </select>
                 </div>
                 <div>

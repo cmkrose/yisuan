@@ -35,7 +35,7 @@ export default function WuxingChart({ analysis }: { analysis: any }) {
       <div className="space-y-4">
         {sorted.map(({ element, count }, index) => {
           const meta = elementMeta[element] || { color: 'bg-gray-500', icon: '?', label: element };
-          const pct = Math.round((count / total) * 100);
+          const pct = ((count / total) * 100).toFixed(1);
           return (
             <motion.div
               key={element}
@@ -66,7 +66,7 @@ export default function WuxingChart({ analysis }: { analysis: any }) {
       <div className="mt-4 h-2 bg-xuan-dark rounded-full overflow-hidden flex">
         {sorted.map(({ element, count }) => {
           const meta = elementMeta[element] || { color: 'bg-gray-500', icon: '?', label: element };
-          const pct = Math.round((count / total) * 100);
+          const pct = ((count / total) * 100).toFixed(1);
           return (
             <motion.div
               key={`t-${element}`}

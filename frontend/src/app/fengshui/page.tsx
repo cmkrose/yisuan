@@ -6,6 +6,7 @@ import Navbar from '@/components/layout/Header/Navbar';
 import Footer from '@/components/layout/Footer/Footer';
 import { api } from '@/lib/api/client';
 import { fengshuiCompass, fengshuiEightMansion, fengshuiFlyingStars, fengshuiYangHouse, fengshuiYinHouse } from '@/lib/engines/fengshui/calculate';
+import { yearRangeDesc } from '@/lib/utils/year';
 import { STAR_NAMES } from '@/lib/constants/fengshui';
 
 type TabKey = 'compass' | 'bazhai' | 'feixing' | 'yanghouse' | 'yinhouse';
@@ -209,7 +210,7 @@ export default function FengshuiPage() {
                       <label className="text-xs text-xuan-muted font-chinese mb-1 block">出生年份</label>
                       <select value={bazhai.birthYear} onChange={e => setBazhai({...bazhai, birthYear: Number(e.target.value)})}
                         className="w-full px-3 py-3 bg-xuan-dark border border-xuan-border rounded-lg text-sm text-white">
-                        {Array.from({length:100},(_,i)=>2024-i).map(y=><option key={y} value={y}>{y}</option>)}
+                        {yearRangeDesc().map(y=><option key={y} value={y}>{y}</option>)}
                       </select>
                     </div>
                     <div>
@@ -277,7 +278,7 @@ export default function FengshuiPage() {
                       <label className="text-xs text-xuan-muted font-chinese mb-1 block">年份</label>
                       <select value={fsYear} onChange={e => setFsYear(Number(e.target.value))}
                         className="w-full px-3 py-3 bg-xuan-dark border border-xuan-border rounded-lg text-sm text-white">
-                        {Array.from({length:30},(_,i)=>2024+i-5).map(y=><option key={y} value={y}>{y}年</option>)}
+                        {yearRangeDesc().map(y=><option key={y} value={y}>{y}年</option>)}
                       </select>
                     </div>
                     <button onClick={runFeixing} disabled={loading} className="btn-gold px-6 py-3 font-chinese disabled:opacity-50">
@@ -337,7 +338,7 @@ export default function FengshuiPage() {
                       <label className="text-xs text-xuan-muted font-chinese mb-1 block">入住年份</label>
                       <select value={yangHouse.year} onChange={e => setYangHouse({...yangHouse, year: Number(e.target.value)})}
                         className="w-full px-3 py-3 bg-xuan-dark border border-xuan-border rounded-lg text-sm text-white">
-                        {Array.from({length:40},(_,i)=>2024-i).map(y=><option key={y} value={y}>{y}年</option>)}
+                        {yearRangeDesc().map(y=><option key={y} value={y}>{y}年</option>)}
                       </select>
                     </div>
                   </div>

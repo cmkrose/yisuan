@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/layout/Header/Navbar';
 import Footer from '@/components/layout/Footer/Footer';
 import { calculateBazi } from '@/lib/engines/bazi/calculate';
+import { yearRangeDesc } from '@/lib/utils/year';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
 
 type TabKey = 'pillars' | 'analysis' | 'charts' | 'dayun';
@@ -126,7 +127,7 @@ export default function BaziPage() {
                 <label className="text-xs text-xuan-muted font-chinese mb-1 block">年份</label>
                 <select value={form.birthYear} onChange={e => setForm({...form, birthYear: Number(e.target.value)})}
                   className="w-full px-3 py-3 bg-xuan-dark border border-xuan-border rounded-lg text-sm text-white">
-                  {Array.from({length:100},(_,i)=>2024-i).map(y=><option key={y} value={y}>{y}</option>)}
+                  {yearRangeDesc().map(y=><option key={y} value={y}>{y}</option>)}
                 </select>
               </div>
               <div>
@@ -257,7 +258,7 @@ export default function BaziPage() {
                         <ResponsiveContainer width="100%" height={250}>
                           <PieChart>
                             <Pie data={result.analysis.chartData.elementDistribution} dataKey="value" nameKey="name"
-                              cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                              cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(1)}%`}>
                               {result.analysis.chartData.elementDistribution.map((entry: any, i: number) => (
                                 <Cell key={i} fill={entry.fill} />
                               ))}
