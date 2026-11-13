@@ -214,12 +214,46 @@ export default function BaziPage() {
                             <div className="text-lg font-chinese font-bold text-xuan-gold">{p.stem}{p.branch}</div>
                             <div className="text-[10px] text-xuan-muted">{p.stemElement}{p.branchElement} · {p.stemYinYang}{p.branchYinYang}</div>
                             <div className="text-[10px] text-xuan-cyan mt-1">{p.shishen || '日主'}</div>
+                            {result.analysis.extras?.kongwang?.emptyBranches?.includes(p.branch) && (
+                              <div className="mt-1 inline-block px-1.5 py-0.5 text-[10px] rounded bg-red-500/15 text-red-300 border border-red-500/30">空亡</div>
+                            )}
                             <div className="text-[10px] text-xuan-muted mt-0.5">纳音：{p.nayin}</div>
                             <div className="text-[10px] text-xuan-muted">
                               藏干：{p.cangGan.map((c: any) => c.stem).join(' ')}
                             </div>
                           </div>
                         ))}
+                      </div>
+                      <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+                        {[
+                          ['胎元', result.analysis.extras?.taiyuan],
+                          ['命宫', result.analysis.extras?.minggong],
+                          ['身宫', result.analysis.extras?.shengong],
+                        ].map(([label, v]: any) => (
+                          <div key={label} className="p-2 bg-xuan-dark rounded-lg border border-xuan-border">
+                            <div className="text-[10px] text-xuan-muted font-chinese">{label}</div>
+                            <div className="text-sm font-chinese font-bold text-xuan-gold">{v?.stem}{v?.branch}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 神煞 */}
+                    <div className="card-xuan p-4 mb-4">
+                      <h4 className="text-sm font-chinese font-bold text-xuan-gold mb-3">神煞</h4>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {(result.analysis.extras?.shensha || []).map((s: any) => (
+                          <div key={s.name} className={`p-2 rounded-lg border text-center ${s.hits.length ? 'border-xuan-gold/40 bg-xuan-gold/5' : 'border-xuan-border bg-xuan-dark'}`}>
+                            <div className="text-xs font-chinese text-xuan-silver">{s.name}</div>
+                            <div className={`text-[10px] mt-0.5 ${s.hits.length ? 'text-xuan-gold' : 'text-xuan-muted'}`}>
+                              {s.hits.length ? s.hits.join('、') : '—'}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-3 text-[11px] text-xuan-muted font-chinese">
+                        旬空：{result.analysis.extras?.kongwang?.xun}（空{result.analysis.extras?.kongwang?.emptyBranches?.join('')}）
+                        {result.analysis.extras?.kongwang?.hitPillars?.length ? `，命中：${result.analysis.extras.kongwang.hitPillars.join('、')}` : '，四柱无空'}
                       </div>
                     </div>
 

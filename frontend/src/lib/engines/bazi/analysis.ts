@@ -3,6 +3,7 @@ import {
   HEAVENLY_STEMS, EARTHLY_BRANCHES,
   getStemElement, getBranchElement, getShiShen, getBranchCangGan,
 } from './constants';
+import { computeExtras, BaziExtras } from './shensha';
 
 interface ElementCount { count: number; score: number }
 type ElementMap = Record<WuXing, ElementCount>;
@@ -65,6 +66,7 @@ export interface BaziAnalysis {
     strengthGauge: { score: number; label: string };
   };
   summary: string;
+  extras: BaziExtras;
 }
 
 const SUPPORTING: ShiShen[] = ['比肩','劫财','正印','偏印'];
@@ -138,6 +140,7 @@ export function analyzeBazi(bazi: BaziResult, gender: 'male' | 'female'): BaziAn
   const detailed = generateDetailedAnalysis(bazi, dm, pattern, gender);
   const chartData = generateChartData(bazi, dm);
   const summary = buildSummary(dm, pattern);
+  const extras = computeExtras(bazi);
 
   return {
     dayMasterAnalysis: dm,
@@ -147,6 +150,7 @@ export function analyzeBazi(bazi: BaziResult, gender: 'male' | 'female'): BaziAn
     detailedAnalysis: detailed,
     chartData,
     summary,
+    extras,
   };
 }
 
