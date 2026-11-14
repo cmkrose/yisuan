@@ -62,24 +62,50 @@ const ELEMENT_ROTATION: string[][] = [
   ['水','水','木'],['水','水','火'],['水','水','土'],['水','水','金'],['水','水','水'],
 ];
 
-export function getKangxiStroke(char: string): number {
+// 常用姓名用字补录（康熙笔画），按字补入，查不到的仍返回 null。
+const EXTRA_STROKES: Record<string, number> = {
+  娜:10, 敏:11, 婷:12, 雅:12, 琳:13, 雯:12, 芳:10, 娟:10, 萱:15, 慧:15,
+  莉:13, 萍:14, 蓉:16, 琪:13, 怡:9, 晴:12, 婉:11, 雪:11, 思:9, 曼:11,
+  欣:8, 莎:13, 菲:14, 宇:6, 博:12, 浩:11, 明:8, 睿:14, 毅:15, 豪:14,
+  志:7, 峰:10, 俊:9, 文:4, 翰:16, 宸:10, 哲:10, 彬:11, 昌:8, 德:15,
+  霖:16, 旭:6, 安:6, 平:5, 康:11, 健:11, 永:5, 嘉:14, 瑞:14, 祥:11,
+  仁:4, 宏:7, 源:14, 鑫:24, 淼:12,
+  偉:11, 靜:16, 華:12, 麗:19, 軍:9, 國:11, 龍:16, 鳳:14, 艷:24, 傑:12,
+  濤:18, 強:11, 軒:10, 鵬:19, 澤:17, 銘:14, 彥:9, 恆:10, 輝:15, 鴻:17,
+  誠:14, 達:16, 寧:14, 悅:11, 穎:16, 瑤:15, 嵐:12, 詩:13, 潔:16, 韻:19,
+};
+
+// 简→繁 字形映射（用于查康熙笔画）。
+const SIMPLIFIED_TO_TRADITIONAL: Record<string, string> = {
+  伟:'偉', 静:'靜', 华:'華', 丽:'麗', 军:'軍', 国:'國', 龙:'龍', 凤:'鳳',
+  艳:'艷', 杰:'傑', 涛:'濤', 强:'強', 轩:'軒', 鹏:'鵬', 泽:'澤', 铭:'銘',
+  彦:'彥', 恒:'恆', 辉:'輝', 鸿:'鴻', 诚:'誠', 达:'達', 宁:'寧', 悦:'悅',
+  颖:'穎', 瑶:'瑤', 岚:'嵐', 诗:'詩', 洁:'潔', 韵:'韻',
+};
+
+export function getKangxiStroke(char: string): number | null {
   if (strokeMap[char]) return strokeMap[char];
-  const code = char.charCodeAt(0);
-  if (code >= 0x4e00 && code <= 0x9fff) return 8;
-  return 6;
+  if (EXTRA_STROKES[char]) return EXTRA_STROKES[char];
+  const trad = SIMPLIFIED_TO_TRADITIONAL[char];
+  if (trad) {
+    if (strokeMap[trad]) return strokeMap[trad];
+    if (EXTRA_STROKES[trad]) return EXTRA_STROKES[trad];
+  }
+  return null;
 }
 
-export function getSurnameStroke(surname: string): number {
-  return surnameStrokes[surname] || getKangxiStroke(surname);
+export function getSurnameStroke(surname: string): number | null {
+  return surnameStrokes[surname] ?? getKangxiStroke(surname);
 }
 
+// 汉字五行通行口径：按笔画个位数（1、2木；3、4火；5、6土；7、8金；9、0水）。
 export function getHanziWuxing(stroke: number): string {
-  const wuxingMap = [
-    { mod: 10, elements: ['水','木','木','火','火','土','土','金','金','水'] },
-    { mod: 12, elements: ['水','木','木','火','火','火','土','土','金','金','金','水'] },
-  ];
-  const r = Math.floor(stroke / 10);
-  return wuxingMap[r % 2].elements[stroke % wuxingMap[r % 2].mod];
+  const d = ((stroke % 10) + 10) % 10;
+  if (d === 1 || d === 2) return '木';
+  if (d === 3 || d === 4) return '火';
+  if (d === 5 || d === 6) return '土';
+  if (d === 7 || d === 8) return '金';
+  return '水';
 }
 
 export { strokeMap, surnameStrokes, ELEMENT_ROTATION };

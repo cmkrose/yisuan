@@ -39,6 +39,7 @@ export interface KangxiDetail {
   char: string;
   strokes: number;
   wuxing: string;
+  unrecorded?: boolean;
 }
 
 export interface WuxingBalance {
@@ -111,6 +112,7 @@ export interface NameAnalysisResult {
   analysis: AnalysisPhase;
   evaluation: EvaluationPhase;
   suggestions: SuggestionItem[];
+  unrecorded: string[];
 }
 
 // ============================================================
@@ -126,7 +128,7 @@ const AUSPICIOUS_STROKES: Record<number, string> = {
   35: '平安之数', 37: '权威之数', 39: '富贵之数', 41: '有德之数',
   45: '顺风之数', 47: '进言之数', 48: '德智之数', 52: '先见之数',
   63: '荣华之数', 65: '寿福之数', 67: '通达之数', 68: '贤能之数',
-  81: '还原之数',
+  57: '寒雪青松', 61: '牡丹芙蓉', 81: '还原之数',
 };
 
 const UNLUCKY_STROKES: Record<number, string> = {
@@ -137,6 +139,11 @@ const UNLUCKY_STROKES: Record<number, string> = {
   44: '烦闷之数', 46: '载宝之数', 49: '吉凶之数', 50: '小舟之数',
   53: '难成之数', 54: '石上栽花', 55: '善恶之数', 56: '晚景之数',
   62: '寒雪之数', 64: '变乱之数', 66: '后悔之数', 69: '非业之数',
+  30: '浮沉之数', 38: '磨铁之数', 43: '散财之数', 51: '沉浮之数',
+  58: '晚行之数', 59: '寒蝉之数', 60: '无谋之数', 70: '惨淡之数',
+  71: '石上金花', 72: '劳苦之数', 73: '无勇之数', 74: '残菊之数',
+  75: '退守之数', 76: '离散之数', 77: '半吉之数', 78: '晚苦之数',
+  79: '云头望月', 80: '遁世之数',
 };
 
 const WUXING_SHENG: Record<string, string> = {
@@ -201,11 +208,11 @@ function normalizeStroke(n: number): number {
   return n;
 }
 
-function strokeAuspicious(n: number): { isAuspicious: boolean; meaning: string } {
+export function strokeAuspicious(n: number): { isAuspicious: boolean; meaning: string } {
   const ns = normalizeStroke(n);
   if (AUSPICIOUS_STROKES[ns]) return { isAuspicious: true, meaning: AUSPICIOUS_STROKES[ns] };
   if (UNLUCKY_STROKES[ns]) return { isAuspicious: false, meaning: UNLUCKY_STROKES[ns] };
-  return { isAuspicious: ns % 2 === 1, meaning: ns % 2 === 1 ? '阳数吉' : '阴数平' };
+  return { isAuspicious: false, meaning: '未收录数理' };
 }
 
 function getInteraction(a: string, b: string): '生' | '被生' | '克' | '被克' | '比和' {
@@ -316,8 +323,8 @@ function computeStrokes(input: NameInput): StrokeData {
   const surLen = surname.length;
   const givLen = givenName.length;
 
-  const surStrokes = surname.split('').map((c) => getSurnameStroke(c));
-  const givStrokes = givenName.split('').map((c) => getKangxiStroke(c));
+  const surStrokes = surname.split('').map((c) => getSurnameStroke(c) ?? 0);
+  const givStrokes = givenName.split('').map((c) => getKangxiStroke(c) ?? 0);
 
   const tianStrokes = surLen === 1 ? surStrokes[0] + 1 : surStrokes.reduce((a, b) => a + b, 0);
   const renStrokes = surStrokes[surLen - 1] + givStrokes[0];
@@ -355,8 +362,8 @@ function computeStrokes(input: NameInput): StrokeData {
 function buildKangxi(surname: string, givenName: string): KangxiDetail[] {
   const allChars = [...surname.split(''), ...givenName.split('')];
   return allChars.map((c) => {
-    const strokes = getKangxiStroke(c);
-    return { char: c, strokes, wuxing: getHanziWuxing(strokes) };
+    const n = getKangxiStroke(c);
+    return { char: c, strokes: n ?? 0, wuxing: n === null ? '未收录' : getHanziWuxing(n), unrecorded: n === null };
   });
 }
 
@@ -396,8 +403,9 @@ function buildZiyi(surname: string, givenName: string): AnalysisPhase['ziyi'] {
   const givChars = givenName.split('');
 
   const buildChar = (c: string, position: string): ZiyiChar => {
-    const strokes = getKangxiStroke(c);
-    const wuxing = getHanziWuxing(strokes);
+    const n = getKangxiStroke(c);
+    const strokes = n ?? 0;
+    const wuxing = n === null ? '未收录' : getHanziWuxing(n);
     const wuxingDesc = ELEMENT_PERSONALITY[wuxing] || '五行平和中正';
     let role = '';
     if (position === 'surname') {
@@ -411,7 +419,9 @@ function buildZiyi(surname: string, givenName: string): AnalysisPhase['ziyi'] {
       char: c,
       strokes,
       wuxing,
-      analysis: `"${c}"——康熙字典${strokes}画，五行属${wuxing}。${role}。`,
+      analysis: n === null
+        ? `"${c}"——该字未收录康熙笔画，未计入评分。`
+        : `"${c}"——康熙字典${strokes}画，五行属${wuxing}。${role}。`,
     };
   };
 
@@ -428,9 +438,9 @@ function buildYinlv(surname: string, givenName: string): string {
   const chars = fullName.split('');
   const charCount = chars.length;
 
-  const strokeDesc = chars.map((c, i) => {
+  const strokeDesc = chars.map((c) => {
     const s = getKangxiStroke(c);
-    return `"${c}"(${s}画)`;
+    return `"${c}"(${s === null ? '未收录' : s + '画'})`;
   }).join(' → ');
 
   return `姓"${surname}"与名"${givenName}"组成"${fullName}"，共${charCount}个汉字。
@@ -728,18 +738,25 @@ function computeCore(input: NameInput): { analysis: AnalysisPhase; evaluation: E
 export function analyzeName(input: NameInput): NameAnalysisResult {
   const { analysis, evaluation } = computeCore(input);
   const suggestions = buildSuggestions(input, evaluation);
-  return { analysis, evaluation, suggestions };
+  const unrecorded = Array.from(new Set(
+    [...input.surname.split(''), ...input.givenName.split('')]
+      .filter((c) => getKangxiStroke(c) === null && getSurnameStroke(c) === null),
+  ));
+  return { analysis, evaluation, suggestions, unrecorded };
 }
 
 export function suggestNames(surname: string, gender: 'male' | 'female', count: number): { name: string; score: number }[] {
+  if (getSurnameStroke(surname) === null) return [];
   const pool = [...(gender === 'male' ? MALE_CHARS : FEMALE_CHARS), ...NEUTRAL_CHARS];
 
   interface Candidate { name: string; score: number }
   const candidates: Candidate[] = [];
 
   for (const c1 of pool) {
+    if (getKangxiStroke(c1) === null) continue;
     for (const c2 of pool) {
       if (c1 === c2) continue;
+      if (getKangxiStroke(c2) === null) continue;
       const givenName = c1 + c2;
       const { evaluation } = computeCore({ surname, givenName, gender });
       candidates.push({ name: surname + c1 + c2, score: evaluation.overallScore });

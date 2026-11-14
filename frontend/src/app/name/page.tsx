@@ -131,7 +131,7 @@ export default function NamePage() {
       case 'sancai':
         return a.sancai ? `【三才配置】${a.sancai.config}\n天格:${a.sancai.heaven} · 人格:${a.sancai.person} · 地格:${a.sancai.earth}\n\n${a.sancai.meaning}` : '暂无数据';
       case 'kangxi':
-        return `【康熙笔画】\n${(a.kangxiStrokes || []).map((ks: any) => `「${ks.char}」：${ks.strokes}画（五行${ks.wuxing}）`).join('\n') || '暂无数据'}`;
+        return `【康熙笔画】\n${(a.kangxiStrokes || []).map((ks: any) => `「${ks.char}」：${ks.unrecorded ? '未收录' : ks.strokes + '画'}（五行${ks.wuxing}）`).join('\n') || '暂无数据'}`;
       case 'wuxing':
         return a.wuxing ? `【五行属性】\n${(a.wuxing.details || []).map((d: any) => `${d.grid}：${d.element}`).join('\n')}\n\n五行平衡：${a.wuxing.balance || '暂无数据'}` : '暂无数据';
       case 'yinlv':
@@ -236,6 +236,12 @@ export default function NamePage() {
                 <div className="flex justify-end">
                   <button onClick={handleSave} className="btn-outline-gold px-6 py-2.5 text-sm font-chinese">保存到我的命盘</button>
                 </div>
+
+                {result.unrecorded && result.unrecorded.length > 0 && (
+                  <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg text-sm font-chinese text-amber-300">
+                    以下字未收录康熙笔画，已不计入评分：{result.unrecorded.join('、')}
+                  </div>
+                )}
 
                 <div className="card-xuan-gold p-6 sm:p-8 text-center">
                   <div className={`text-6xl font-chinese font-bold mb-3 ${
