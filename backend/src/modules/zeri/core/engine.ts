@@ -1,67 +1,72 @@
-import {
-  HEAVENLY_STEMS, EARTHLY_BRANCHES, JIANCHU, ER_SHI_BA_XIU,
-  SHENG_XIAO, YI_JI_TEMPLATES, JIANCHU_YI_JI, DayResult,
-} from './constants';
+import { Solar } from 'lunar-javascript';
+import { JIANCHU, ER_SHI_BA_XIU, YI_JI_TEMPLATES, DayResult, DayTime } from './constants';
 
-const HUANGDAO_JIANCHU = new Set([1,2,5,6,9,10]);
+const TIME_NAMES = ['子时','丑时','寅时','卯时','辰时','巳时','午时','未时','申时','酉时','戌时','亥时'];
+const BRANCHES = '子丑寅卯辰巳午未申酉戌亥';
 
+// 黄历数据统一取自 lunar-javascript 的 Lunar 对象（同一实例），保证宜忌/建除/星宿/天神/彭祖/神煞同源。
 export function getDayInfo(year: number, month: number, day: number): DayResult {
-  const ysi = (year - 4) % 10; const ybi = (year - 4) % 12;
-  const ys = HEAVENLY_STEMS[(ysi + 10) % 10];
-  const yb = EARTHLY_BRANCHES[(ybi + 12) % 12];
+  const lunar = Solar.fromYmd(year, month, day).getLunar();
+  const yearGz = lunar.getYearInGanZhi();
+  const monthGz = lunar.getMonthInGanZhi();
+  const dayGz = lunar.getDayInGanZhi();
 
-  const msi = (ysi * 2 + month - 1) % 10;
-  const mbi = (month + 1) % 12;
-  const ms = HEAVENLY_STEMS[msi % 10];
-  const mb = EARTHLY_BRANCHES[mbi % 12];
+  const jianchu = lunar.getZhiXing();
+  const jcIdx = Math.max(0, (JIANCHU as readonly string[]).indexOf(jianchu));
 
-  // Day stem-branch using periodic calculation
-  const refDay = referenceDays(year, month, day);
-  const dsi = Math.abs((refDay + 10) % 10);
-  const dbi = Math.abs((refDay + 10 + 2) % 12);
-  const ds = HEAVENLY_STEMS[Math.abs(dsi % 10)];
-  const db = EARTHLY_BRANCHES[Math.abs(dbi % 12)];
+  const tianShenType = lunar.getDayTianShenType();
+  const isHuangdao = tianShenType === '黄道';
 
-  // 建除十二神
-  const monthBranchIdx = EARTHLY_BRANCHES.indexOf(mb as any);
-  const dayBranchIdx = EARTHLY_BRANCHES.indexOf(db as any);
-  const jcIdx = ((dayBranchIdx - monthBranchIdx - 1 + 12) % 12);
-  const jianchu = JIANCHU[jcIdx];
+  const xiuShort = lunar.getXiu();
+  const xiuFull = (ER_SHI_BA_XIU as readonly { name: string }[]).find((x) => x.name.startsWith(xiuShort))?.name || xiuShort;
 
-  // 黄道/黑道
-  const isHuangdao = HUANGDAO_JIANCHU.has(jcIdx + 1);
-  const dayType = isHuangdao ? '黄道吉日' : '黑道日';
+  const chongDesc = lunar.getDayChongDesc();
+  const chongAnimal = (chongDesc.match(/[鼠牛虎兔龙蛇马羊猴鸡狗猪]$/) || [''])[0];
 
-  // 二十八宿
-  const xiuIdx = Math.abs((refDay + 5) % 28);
-  const xiu = ER_SHI_BA_XIU[xiuIdx];
-
-  // 冲煞: 冲与日支相冲的生肖
-  const conflictBranchIdx = (dayBranchIdx + 6) % 12;
-  const shaDirections = ['南','南','西','西','北','北','东','东','南','南','西','西','北'];
-  const chongAnimal = SHENG_XIAO[conflictBranchIdx];
-  const sha = `煞${shaDirections[conflictBranchIdx]}`;
-
-  // 宜忌单一口径：按建除十二神查表，保证宜非空且宜∩忌=∅
-  const yiji = JIANCHU_YI_JI[jianchu] || { yi: ['祭祀','祈福'], ji: ['动土'] };
-  const yi = [...yiji.yi];
-  const ji = yiji.ji.filter((x) => !yi.includes(x));
+  const yi = [...lunar.getDayYi()];
+  const ji = lunar.getDayJi().filter((x: string) => !yi.includes(x));
 
   return {
-    date: `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`,
-    yearStem: ys, yearBranch: yb, monthStem: ms, monthBranch: mb,
-    dayStem: ds, dayBranch: db,
-    jianchu: jianchu,
+    date: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+    yearStem: yearGz[0], yearBranch: yearGz[1],
+    monthStem: monthGz[0], monthBranch: monthGz[1],
+    dayStem: dayGz[0], dayBranch: dayGz[1],
+    jianchu,
     jianchuIndex: jcIdx,
     isHuangdao,
-    dayType,
-    ershiba: xiu.name,
-    xiuFortune: xiu.fortune,
+    dayType: isHuangdao ? '黄道吉日' : '黑道日',
+    tianShen: lunar.getDayTianShen(),
+    tianShenType,
+    tianShenLuck: lunar.getDayTianShenLuck(),
+    ershiba: xiuFull,
+    xiuFortune: lunar.getXiuLuck(),
     chongAnimal,
-    sha,
+    chongDesc,
+    sha: `煞${lunar.getDaySha()}`,
+    pengzuGan: lunar.getPengZuGan(),
+    pengzuZhi: lunar.getPengZuZhi(),
+    jiShen: [...lunar.getDayJiShen()],
+    xiongSha: [...lunar.getDayXiongSha()],
     yi,
     ji,
   };
+}
+
+// 可选：逐时辰吉凶（数据同样来自 lunar-javascript）。
+export function getDayTimes(year: number, month: number, day: number): DayTime[] {
+  const lunar = Solar.fromYmd(year, month, day).getLunar();
+  return lunar.getTimes().map((t: any) => {
+    const gz = t.getGanZhi();
+    const bi = BRANCHES.indexOf(gz[1]);
+    return {
+      name: TIME_NAMES[bi] || gz[1],
+      ganZhi: gz,
+      tianShen: t.getTianShen(),
+      luck: t.getTianShenLuck(),
+      yi: [...t.getYi()],
+      ji: [...t.getJi()],
+    };
+  });
 }
 
 export function selectDates(
@@ -93,12 +98,4 @@ export function getMonthCalendar(year: number, month: number): DayResult[] {
     results.push(getDayInfo(year, month, d));
   }
   return results;
-}
-
-function referenceDays(year: number, month: number, day: number): number {
-  if (month <= 2) { month += 12; year--; }
-  const c = Math.floor(year / 100);
-  const y = year % 100;
-  const m = month;
-  return (y + Math.floor(y / 4) + Math.floor(c / 4) - 2 * c + Math.floor(26 * (m + 1) / 10) + day - 1);
 }

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/layout/Header/Navbar';
 import Footer from '@/components/layout/Footer/Footer';
 import { api } from '@/lib/api/client';
-import { zeriCalendar, zeriSelect } from '@/lib/engines/zeri/calculate';
+import { zeriCalendar, zeriSelect, zeriTimes } from '@/lib/engines/zeri/calculate';
 
 type Purpose = 'wedding' | 'business' | 'moving' | 'construction';
 
@@ -288,8 +288,24 @@ interface DayDetail {
   ershiba: string;
   isHuangdao: boolean;
   chongAnimal: string;
+  tianShen?: string;
+  tianShenType?: string;
+  tianShenLuck?: string;
+  pengzuGan?: string;
+  pengzuZhi?: string;
+  jiShen?: string[];
+  xiongSha?: string[];
   yi?: string[];
   ji?: string[];
+}
+
+interface DayTimeItem {
+  name: string;
+  ganZhi: string;
+  tianShen: string;
+  luck: string;
+  yi: string[];
+  ji: string[];
 }
 
 interface ZeriAnalysis {
@@ -303,6 +319,9 @@ interface ZeriAnalysis {
   ershibaAnalysis: string;
   luckyGods: string[];
   unluckyGods: string[];
+  pengzuGan: string;
+  pengzuZhi: string;
+  times: DayTimeItem[];
   taishen: string;
   solarTerm: string;
   solarTermDetail: string;
@@ -400,8 +419,11 @@ export default function ZeriPage() {
       shaInfo: (day as any).sha || '煞方需避之',
       jianchuAnalysis: jianchuDetailed[day.jianchu] || `建除十二神之${day.jianchu}日，需结合其他因素综合判断。`,
       ershibaAnalysis: ershibaDetailed[day.ershiba] || `二十八宿之${day.ershiba}值日，需综合判断其吉凶。`,
-      luckyGods: luckyGodsByJianchu[day.jianchu] || ['天德','月德'],
-      unluckyGods: unluckyGodsByJianchu[day.jianchu] || ['月破','大耗'],
+      luckyGods: (day.jiShen && day.jiShen.length) ? day.jiShen : (luckyGodsByJianchu[day.jianchu] || ['天德','月德']),
+      unluckyGods: (day.xiongSha && day.xiongSha.length) ? day.xiongSha : (unluckyGodsByJianchu[day.jianchu] || ['月破','大耗']),
+      pengzuGan: day.pengzuGan || '',
+      pengzuZhi: day.pengzuZhi || '',
+      times: zeriTimes(year, month, Number(day.date.slice(8, 10))),
       taishen: taishenLocations[(new Date(day.date).getDate() + month * 3) % 12],
       solarTerm: solarTerm ? solarTerm.name : '',
       solarTermDetail: solarTerm ? (solarTermDetails[solarTerm.name] || '') : '',
@@ -524,6 +546,9 @@ export default function ZeriPage() {
             <p className={`text-sm font-chinese font-bold mt-1 ${d.isHuangdao ? 'text-emerald-400' : 'text-red-400'}`}>
               {d.isHuangdao ? '黄道吉日' : '黑道日'}
             </p>
+            {d.tianShen && (
+              <p className="text-[10px] text-xuan-muted font-chinese mt-0.5">{d.tianShen}{d.tianShenType ? `·${d.tianShenType}` : ''}</p>
+            )}
           </div>
         </div>
 
@@ -585,6 +610,17 @@ export default function ZeriPage() {
           <p className="text-xs text-xuan-silver font-chinese leading-relaxed">{analysis.ershibaAnalysis}</p>
         </div>
 
+        {/* 彭祖百忌 */}
+        {(analysis.pengzuGan || analysis.pengzuZhi) && (
+          <div className="p-4 bg-xuan-gold/5 rounded-lg border border-xuan-gold/20">
+            <h4 className="text-sm font-chinese font-bold text-xuan-gold mb-2">彭祖百忌</h4>
+            <div className="space-y-1">
+              {analysis.pengzuGan && <p className="text-xs text-xuan-silver font-chinese leading-relaxed">{analysis.pengzuGan}</p>}
+              {analysis.pengzuZhi && <p className="text-xs text-xuan-silver font-chinese leading-relaxed">{analysis.pengzuZhi}</p>}
+            </div>
+          </div>
+        )}
+
         {/* 吉神 & 凶神 side by side */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="p-4 bg-emerald-500/5 rounded-lg border border-emerald-500/20">
@@ -604,6 +640,25 @@ export default function ZeriPage() {
             </div>
           </div>
         </div>
+
+        {/* 时辰吉凶 */}
+        {analysis.times && analysis.times.length > 0 && (
+          <div className="p-4 bg-xuan-cyan/5 rounded-lg border border-xuan-cyan/20">
+            <h4 className="text-sm font-chinese font-bold text-xuan-cyan mb-2">时辰吉凶</h4>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {analysis.times.map((t) => (
+                <div key={t.name} className="p-2 bg-xuan-dark rounded border border-xuan-border">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-chinese text-xuan-gold">{t.name}</span>
+                    <span className={`text-[10px] font-chinese ${t.luck === '吉' ? 'text-emerald-400' : 'text-red-400'}`}>{t.tianShen}·{t.luck}</span>
+                  </div>
+                  <div className="text-[10px] text-xuan-muted font-chinese mt-1 leading-snug">宜：{t.yi.slice(0, 3).join('、') || '—'}</div>
+                  <div className="text-[10px] text-xuan-muted font-chinese leading-snug">忌：{t.ji.slice(0, 3).join('、') || '—'}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* 胎神 */}
         <div className="p-4 bg-purple-500/5 rounded-lg border border-purple-500/20">

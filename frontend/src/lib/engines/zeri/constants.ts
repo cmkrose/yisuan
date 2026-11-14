@@ -82,7 +82,24 @@ export interface DayResult {
   ershiba: string;
   xiuFortune: string;
   chongAnimal: string;
+  chongDesc: string;
   sha: string;
+  pengzuGan: string;
+  pengzuZhi: string;
+  jiShen: string[];
+  xiongSha: string[];
+  tianShen: string;
+  tianShenType: string;
+  tianShenLuck: string;
+  yi: string[];
+  ji: string[];
+}
+
+export interface DayTime {
+  name: string;
+  ganZhi: string;
+  tianShen: string;
+  luck: string;
   yi: string[];
   ji: string[];
 }
