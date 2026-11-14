@@ -7,6 +7,8 @@ import Footer from '@/components/layout/Footer/Footer';
 import { calculateBazi } from '@/lib/engines/bazi/calculate';
 import { yearRangeDesc } from '@/lib/utils/year';
 import { useRouter } from 'next/navigation';
+import { CHINA_LOCATIONS } from '@/lib/data/china-locations';
+import { computeTrueSolar, hourBranchName } from '@/lib/utils/truesolar';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
 
 type TabKey = 'pillars' | 'analysis' | 'charts' | 'dayun';
@@ -27,6 +29,12 @@ export default function BaziPage() {
     birthYear: 1995, birthMonth: 8, birthDay: 22, birthHour: 6,
     birthPlace: '',  });
 
+  const [province, setProvince] = useState('北京');
+  const [city, setCity] = useState('北京');
+  const [useSolar, setUseSolar] = useState(false);
+  const provinceData = CHINA_LOCATIONS.find((p) => p.province === province) || CHINA_LOCATIONS[0];
+  const cityData = provinceData.cities.find((c) => c.name === city) || provinceData.cities[0];
+
   const goAi = () => {
     try { sessionStorage.setItem('ai_prefill', JSON.stringify({ categories: ['bazi'], baziData: result })); } catch {}
     router.push('/ai-analysis');
@@ -37,11 +45,26 @@ export default function BaziPage() {
     setError('');
     setResult(null);
     try {
-      const data = calculateBazi(form);
+      let input: any = { ...form, birthPlace: cityData?.name || form.birthPlace };
+      let solar: any = null;
+      if (useSolar && cityData) {
+        const t = computeTrueSolar(form.birthYear, form.birthMonth, form.birthDay, form.birthHour, cityData.longitude);
+        solar = {
+          enabled: true,
+          before: hourBranchName(form.birthHour),
+          after: hourBranchName(t.hour),
+          offsetMinutes: t.offsetMinutes,
+          place: `${province}·${cityData.name}`,
+          longitude: cityData.longitude,
+        };
+        input = { ...input, birthYear: t.year, birthMonth: t.month, birthDay: t.day, birthHour: t.hour };
+      }
+      const data = calculateBazi(input);
       if (data?.error) {
         setError('排盘失败：' + data.error);
         return;
       }
+      data.solar = solar;
       setResult(data);
       setActiveTab('analysis');
     } catch (e: any) {
@@ -158,6 +181,28 @@ export default function BaziPage() {
                   {Array.from({length:24},(_,i)=>i).map(h=><option key={h} value={h}>{h}时</option>)}
                 </select>
               </div>
+              <div>
+                <label className="text-xs text-xuan-muted font-chinese mb-1 block">出生地(省)</label>
+                <select value={province} onChange={e => { const p = CHINA_LOCATIONS.find(x => x.province === e.target.value); if (p) { setProvince(p.province); setCity(p.cities[0].name); } }}
+                  className="w-full px-3 py-3 bg-xuan-dark border border-xuan-border rounded-lg text-sm text-white">
+                  {CHINA_LOCATIONS.map(p => <option key={p.province} value={p.province}>{p.province}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-xuan-muted font-chinese mb-1 block">出生地(市)</label>
+                <select value={cityData.name} onChange={e => setCity(e.target.value)}
+                  className="w-full px-3 py-3 bg-xuan-dark border border-xuan-border rounded-lg text-sm text-white">
+                  {provinceData.cities.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-xuan-muted font-chinese mb-1 block">真太阳时</label>
+                <button type="button" onClick={() => setUseSolar(v => !v)}
+                  className={`w-full py-3 rounded-lg text-sm border ${useSolar ? 'border-xuan-cyan bg-xuan-cyan/10 text-xuan-cyan' : 'border-xuan-border text-xuan-muted hover:border-xuan-cyan/30'}`}>
+                  {useSolar ? '已开启校正' : '未校正(默认)'}
+                </button>
+                <div className="text-[10px] text-xuan-muted mt-1 text-center">经度 {cityData.longitude}°E</div>
+              </div>
             </div>
             <div className="flex gap-3">
               <button onClick={calculate} disabled={loading}
@@ -207,6 +252,11 @@ export default function BaziPage() {
                     <div className="card-xuan-gold p-6 mb-6">
                       <h3 className="text-lg font-chinese font-bold text-xuan-gold mb-2 text-center">四柱排盘</h3>
                       <p className="text-xs text-xuan-muted text-center mb-4">日主：{result.bazi.dayMaster}（{result.bazi.dayMasterElement}）· {result.analysis.dayMasterAnalysis.strength}</p>
+                      {result.solar?.enabled && (
+                        <div className="mb-4 p-2 text-xs text-xuan-cyan text-center font-chinese bg-xuan-cyan/5 border border-xuan-cyan/20 rounded-lg">
+                          真太阳时校正：{result.solar.place}（经度{result.solar.longitude}°E，偏移{result.solar.offsetMinutes > 0 ? '+' : ''}{result.solar.offsetMinutes}分钟）· 校正前 {result.solar.before} → 校正后 {result.solar.after}
+                        </div>
+                      )}
                       <div className="grid grid-cols-4 gap-2">
                         {[['年柱', result.bazi.year], ['月柱', result.bazi.month], ['日柱', result.bazi.day], ['时柱', result.bazi.hour]].map(([label, p]: any) => (
                           <div key={label} className="text-center p-3 bg-xuan-dark rounded-lg border border-xuan-border">

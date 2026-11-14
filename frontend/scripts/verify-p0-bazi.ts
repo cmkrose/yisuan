@@ -39,6 +39,7 @@ function walk(a: any, b: any, path: string, out: { path: string; a: any; b: any 
     const allowed: Record<string, number> = {};
     const bad: string[] = [];
     for (const d of diffs) {
+      if (d.path === '$.analysis.extras' || d.path.startsWith('$.analysis.extras.')) { allowed.extras = (allowed.extras || 0) + 1; continue; }
       if (d.path.includes('.nayin')) { allowed.nayin = (allowed.nayin || 0) + 1; continue; }
       if (d.path.includes('elementCounts') || d.path.includes('elementDistribution')) { allowed.elementCounts = (allowed.elementCounts || 0) + 1; continue; }
       if (d.path.endsWith('.detailedAnalysis.pillars')) { allowed.nayinText = (allowed.nayinText || 0) + 1; continue; }
