@@ -41,7 +41,7 @@ const XING_WUXING: Record<string, string> = { 天蓬:'水',天芮:'土',天冲:'
 
 const XING_MEANINGS: Record<string, { ji: boolean; gong: string; desc: string }> = {
   天蓬: { ji: false, gong: '坎', desc: '破财贼盗之星，性凶猛好斗，宜军事不宜民事，犯之损财招灾' },
-  天芮: { ji: false, gong: '坤', desc: '疾病学/生之星，性阴柔迟缓，利求学修行，不利远行求财' },
+  天芮: { ji: false, gong: '坤', desc: '病符之星，主疾病医药，性阴柔迟缓，利求学修行，不利远行求财' },
   天冲: { ji: false, gong: '震', desc: '武事争斗之星，性刚烈迅速，利竞争军事，不利合作婚恋' },
   天辅: { ji: true, gong: '巽', desc: '文教辅佐之星，性温和儒雅，大利文化教育事业，考试文书' },
   天禽: { ji: true, gong: '中', desc: '中正平衡之星，性中和无私，万事皆宜百无禁忌，大吉大利' },

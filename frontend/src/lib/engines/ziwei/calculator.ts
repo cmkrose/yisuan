@@ -13,7 +13,7 @@ const BRANCH_ORDER: string[] = ['子','丑','寅','卯','辰','巳','午','未',
 const MAJOR_BRIGHTNESS: Record<string, Brightness[]> = {
   紫微: ['平','庙','庙','旺','得','旺','庙','庙','旺','平','得','旺'],
   天机: ['庙','陷','得','旺','利','平','庙','陷','得','旺','利','平'],
-  太阳: ['陷','陷','旺','庙','旺','旺','庙','得','得','平','庙','陷'],
+  太阳: ['陷','陷','旺','庙','旺','旺','庙','得','得','平','陷','陷'],
   武曲: ['旺','庙','得','利','庙','平','旺','庙','得','利','庙','平'],
   天同: ['旺','不','利','庙','平','庙','陷','不','利','庙','平','庙'],
   廉贞: ['平','利','庙','平','利','陷','平','利','庙','平','利','陷'],
@@ -43,14 +43,6 @@ const wuxingJuTable: Record<string, string> = {
   '丙午':'水二局','丁未':'水二局','戊申':'土五局','己酉':'土五局','庚戌':'金四局','辛亥':'金四局',
   '壬子':'木三局','癸丑':'木三局','甲寅':'水二局','乙卯':'水二局','丙辰':'土五局','丁巳':'土五局',
   '戊午':'火六局','己未':'火六局','庚申':'木三局','辛酉':'木三局','壬戌':'水二局','癸亥':'水二局',
-};
-
-const ziweiTables: Record<number, number[]> = {
-  2: [0,1,2,3,4,5,6,7,8,9,10,11,0,1,2,3,4,5,6,7,8,9,10,11,0,1,2,3,4,5],
-  3: [0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,0,0,1,1,2,2],
-  4: [0,0,0,1,1,1,2,2,2,3,3,3,4,4,4,5,5,5,6,6,6,7,7,7,8,8,8,9,9,9],
-  5: [0,6,0,6,1,7,0,6,1,7,1,7,2,8,1,7,2,8,2,8,3,9,2,8,3,9,3,9,4,10],
-  6: [0,0,6,6,0,6,1,7,0,6,1,7,1,7,2,8,1,7,2,8,2,8,3,9,2,8,3,9,3,9],
 };
 
 const SIHUA_TABLE: Record<string, { 禄: string; 权: string; 科: string; 忌: string }> = {
@@ -163,7 +155,7 @@ export function calculateZiwei(year: number, month: number, day: number, hour: n
 
   const tempPalaces: { name: string; branch: string; stem: string; majorStars: Star[]; minorStars: Star[]; isBodyPalace: boolean; majorLimit: { startAge: number; endAge: number } | null }[] = [];
   for (let i = 0; i < 12; i++) {
-    const bi = (lifeIdx + i) % 12;
+    const bi = ((lifeIdx - i) % 12 + 12) % 12;
     const stemIdx = (yiStemIdx + (bi - yiBranchIdx + 12) % 12) % 10;
     tempPalaces.push({
       name: PALACES[i],
@@ -178,54 +170,61 @@ export function calculateZiwei(year: number, month: number, day: number, hour: n
   // Five Element Bureau
   const gongSg = tempPalaces[0].stem + tempPalaces[0].branch;
   const bureau = wuxingJuTable[gongSg] || '水二局';
-  const match = bureau.match(/\d/);
-  const bureauNum = match ? parseInt(match[0]) : 2;
+  const BUREAU_NUM: Record<string, number> = { 水二局: 2, 木三局: 3, 金四局: 4, 土五局: 5, 火六局: 6 };
+  const bureauNum = BUREAU_NUM[bureau] || 2;
 
-  // Ziwei star position
-  const div = Math.floor(day / bureauNum);
-  const rem = day % bureauNum;
-  const zwTable = ziweiTables[bureauNum] || ziweiTables[5];
-  const zwOffsetIdx = rem === 0 ? Math.max(0, div - 1) : div;
-  const zwOffset = zwTable[Math.min(zwOffsetIdx, zwTable.length - 1)];
-  const zwIdx = ((lifeIdx - zwOffset) % 12 + 12) % 12;
-
-  // 14 major stars - simple placement
-  const ziweiStars = ['紫微','天机','','太阳','武曲','天同','','','','','廉贞',''];
-  const ziweiOffsets = [0,-1,-2,-3,-4,-5,-6,-7,-8,-9,4,-8];
-
-  for (let j = 0; j < ziweiStars.length; j++) {
-    if (!ziweiStars[j]) continue;
-    const pi = ((zwIdx + ziweiOffsets[j]) % 12 + 12) % 12;
-    tempPalaces[pi].majorStars.push({ name: ziweiStars[j], brightness: getMajorBrightness(ziweiStars[j], tempPalaces[pi].branch), isMajor: true });
-  }
-
-  // Tianfu at 4 positions after Ziwei  
-  const tfIdx = ((zwIdx + 4) % 12 + 12) % 12;
-  const tfStars = ['天府','太阴','贪狼','巨门','天相','天梁','七杀','','','破军'];
-  const tfOffsets = [0,1,2,3,4,5,6,7,8,10];
-
-  for (let j = 0; j < tfStars.length; j++) {
-    if (!tfStars[j]) continue;
-    const pi = ((tfIdx + tfOffsets[j]) % 12 + 12) % 12;
-    tempPalaces[pi].majorStars.push({ name: tfStars[j], brightness: getMajorBrightness(tfStars[j], tempPalaces[pi].branch), isMajor: true });
-  }
-
-  // Simple auxiliary stars
-  const auxData: [string, number][] = [
-    ['文昌', ((10 - (hour % 12)) % 12 + 12) % 12],
-    ['文曲', ((4 - (hour % 12)) % 12 + 12) % 12],
-    ['左辅', ((4 + month - 1) % 12 + 12) % 12],
-    ['右弼', ((10 - (month - 1)) % 12 + 12) % 12],
-    ['天魁', ((ysIdx * 2) % 12 + 12) % 12],
-    ['天钺', ((ysIdx * 2 + 6) % 12 + 12) % 12],
-    ['禄存', ((ysIdx * 3) % 12 + 12) % 12],
-    ['天马', (ybi % 12 + 12) % 12],
-  ];
-
-  for (const [name, relPos] of auxData) {
-    const pi = ((lifeIdx + relPos) % 12 + 12) % 12;
+  // 地支→宫位索引：安星按绝对地支落宫，避免随命宫/时辰漂移。
+  const palaceByBranch: number[] = new Array(12).fill(-1);
+  tempPalaces.forEach((p, idx) => { palaceByBranch[EARTHLY_BRANCHES.indexOf(p.branch as any)] = idx; });
+  const placeMajor = (name: string, branchIdx: number) => {
+    const pi = palaceByBranch[((branchIdx % 12) + 12) % 12];
+    tempPalaces[pi].majorStars.push({ name, brightness: getMajorBrightness(name, tempPalaces[pi].branch), isMajor: true });
+  };
+  const placeMinor = (name: string, branchIdx: number) => {
+    const pi = palaceByBranch[((branchIdx % 12) + 12) % 12];
     tempPalaces[pi].minorStars.push({ name, brightness: '平', isMajor: false });
-  }
+  };
+
+  // 紫微定位（只由农历生日 + 五行局决定）：寅起，商数顺行，余数奇逆偶顺。
+  const q = Math.ceil(day / bureauNum);
+  const r = q * bureauNum - day;
+  const zwBase = 2 + (q - 1);
+  const zwIdx = ((zwBase + (r % 2 === 0 ? r : -r)) % 12 + 12) % 12;
+
+  // 紫微系六星
+  const ziweiStars: [string, number][] = [
+    ['紫微', 0], ['天机', -1], ['太阳', -3], ['武曲', -4], ['天同', -5], ['廉贞', 4],
+  ];
+  for (const [name, off] of ziweiStars) placeMajor(name, zwIdx + off);
+
+  // 天府以寅申轴对称于紫微：天府支序 = (4 - 紫微支序 + 12) % 12
+  const tfIdx = ((4 - zwIdx) % 12 + 12) % 12;
+  const tfStars: [string, number][] = [
+    ['天府', 0], ['太阴', 1], ['贪狼', 2], ['巨门', 3], ['天相', 4], ['天梁', 5], ['七杀', 6], ['破军', 10],
+  ];
+  for (const [name, off] of tfStars) placeMajor(name, tfIdx + off);
+
+  // 辅星查表（地支绝对落宫）
+  const ybIdx = EARTHLY_BRANCHES.indexOf(yb as any);
+  const LUCUN_BY_STEM: Record<string, number> = { 甲:2, 乙:3, 丙:5, 戊:5, 丁:6, 己:6, 庚:8, 辛:9, 壬:11, 癸:0 };
+  const lucunIdx = LUCUN_BY_STEM[ys];
+  const KUI_YUE: Record<string, [number, number]> = {
+    甲:[1,7], 戊:[1,7], 庚:[1,7], 乙:[0,8], 己:[0,8], 丙:[11,9], 丁:[11,9], 辛:[6,2], 壬:[3,5], 癸:[3,5],
+  };
+  const [kuiIdx, yueIdx] = KUI_YUE[ys];
+  const TIANMA: Record<string, number> = { 申:2, 子:2, 辰:2, 寅:8, 午:8, 戌:8, 巳:11, 酉:11, 丑:11, 亥:5, 卯:5, 未:5 };
+  const maIdx = TIANMA[yb];
+
+  placeMinor('文昌', 10 - hIdx);
+  placeMinor('文曲', 4 + hIdx);
+  placeMinor('左辅', 4 + (month - 1));
+  placeMinor('右弼', 10 - (month - 1));
+  placeMinor('天魁', kuiIdx);
+  placeMinor('天钺', yueIdx);
+  placeMinor('禄存', lucunIdx);
+  placeMinor('擎羊', lucunIdx + 1);
+  placeMinor('陀罗', lucunIdx - 1);
+  placeMinor('天马', maIdx);
 
   // Major cycles
   const isYang = ysIdx % 2 === 0;
