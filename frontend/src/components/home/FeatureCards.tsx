@@ -21,7 +21,7 @@ const categories = [
     ],
   },
   {
-    title: '奇门六壬',
+    title: '奇门遁甲',
     subtitle: '式占预测',
     icon: '门',
     href: '/divination/qimen',
@@ -29,7 +29,6 @@ const categories = [
     borderColor: 'border-cyan-500/30 hover:border-cyan-500/60',
     items: [
       { name: '奇门遁甲', href: '/divination/qimen', icon: '门' },
-      { name: '大六壬', href: '/divination/qimen', icon: '壬' },
     ],
   },
   {

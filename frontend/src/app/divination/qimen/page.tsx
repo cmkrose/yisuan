@@ -12,7 +12,6 @@ type TabKey = 'qimen' | 'liuren';
 
 const tabs: { key: TabKey; label: string; icon: string; desc: string }[] = [
   { key: 'qimen', label: '奇门遁甲', icon: '门', desc: '九宫八门 · 九星八神 · 天地人三盘' },
-  { key: 'liuren', label: '大六壬', icon: '壬', desc: '四课三传 · 十二天将 · 六亲' },
 ];
 
 const directionLabels: Record<string, string> = {
@@ -105,12 +104,12 @@ export default function SanshiPage() {
         <div className="max-w-5xl mx-auto">
           <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
             <span className="inline-block text-xs tracking-[0.3em] text-purple-400/70 font-chinese mb-4">高级预测</span>
-            <h1 className="text-3xl sm:text-4xl font-chinese font-bold text-gradient-gold mb-4">奇门六壬</h1>
-            <p className="text-xuan-muted font-chinese">奇门遁甲 · 大六壬 · 式占预测</p>
+            <h1 className="text-3xl sm:text-4xl font-chinese font-bold text-gradient-gold mb-4">奇门遁甲</h1>
+            <p className="text-xuan-muted font-chinese">九宫八门 · 九星八神 · 天地人三盘</p>
           </motion.div>
 
           <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-            className="grid grid-cols-2 gap-3 mb-8">
+            className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
             {tabs.map((t) => (
               <button key={t.key} onClick={() => { setTab(t.key); setResult(null); }}
                 className={`p-4 sm:p-6 rounded-xl border text-center transition-all ${
