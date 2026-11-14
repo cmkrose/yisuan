@@ -68,29 +68,59 @@ const HEXAGRAMS: Record<number, {
   64: { name:'火水未济', symbol:'䷿', upper:'离', lower:'坎', lines:[0,1,0,1,0,1], meaning:'亨小狐汔济濡其尾', interpretation:'事未完成，有待努力。功败垂成需要坚持。' },
 };
 
-const LIUQIN_BY_YAO: Record<string, string[]> = {
-  乾: ['父母','父母','父母','官鬼','官鬼','官鬼'],
-  兑: ['父母','父母','官鬼','官鬼','官鬼','父母'],
-  离: ['官鬼','官鬼','官鬼','父母','父母','父母'],
-  震: ['官鬼','官鬼','父母','父母','父母','官鬼'],
-  巽: ['父母','父母','父母','官鬼','官鬼','官鬼'],
-  坎: ['官鬼','官鬼','父母','父母','父母','官鬼'],
-  艮: ['父母','父母','父母','官鬼','官鬼','官鬼'],
-  坤: ['官鬼','官鬼','官鬼','父母','父母','父母'],
+// 八宫卦序：每宫八卦依次为 本宫、一世、二世、三世、四世、五世、游魂、归魂。
+const GONG_SEQUENCE: Record<string, string[]> = {
+  乾: ['乾为天','天风姤','天山遁','天地否','风地观','山地剥','火地晋','火天大有'],
+  兑: ['兑为泽','泽水困','泽地萃','泽山咸','水山蹇','地山谦','雷山小过','雷泽归妹'],
+  离: ['离为火','火山旅','火风鼎','火水未济','山水蒙','风水涣','天水讼','天火同人'],
+  震: ['震为雷','雷地豫','雷水解','雷风恒','地风升','水风井','泽风大过','泽雷随'],
+  巽: ['巽为风','风天小畜','风火家人','风雷益','天雷无妄','火雷噬嗑','山雷颐','山风蛊'],
+  坎: ['坎为水','水泽节','水雷屯','水火既济','泽火革','雷火丰','地火明夷','地水师'],
+  艮: ['艮为山','山火贲','山天大畜','山泽损','火泽睽','天泽履','风泽中孚','风山渐'],
+  坤: ['坤为地','地雷复','地泽临','地天泰','雷天大壮','泽天夬','水天需','水地比'],
+};
+// 世位（0=初爻..5=上爻）：本宫5、一世0、二世1、三世2、四世3、五世4、游魂3、归魂2。
+const SHI_POSITION_BY_INDEX = [5, 0, 1, 2, 3, 4, 3, 2];
+
+// 纳甲地支（内卦三爻、外卦三爻，自下而上）。
+const NAJIA_BRANCHES: Record<string, { inner: string[]; outer: string[] }> = {
+  乾: { inner: ['子','寅','辰'], outer: ['午','申','戌'] },
+  坤: { inner: ['未','巳','卯'], outer: ['丑','亥','酉'] },
+  震: { inner: ['子','寅','辰'], outer: ['午','申','戌'] },
+  巽: { inner: ['丑','亥','酉'], outer: ['未','巳','卯'] },
+  坎: { inner: ['寅','辰','午'], outer: ['申','戌','子'] },
+  离: { inner: ['卯','丑','亥'], outer: ['酉','未','巳'] },
+  艮: { inner: ['辰','午','申'], outer: ['戌','子','寅'] },
+  兑: { inner: ['巳','卯','丑'], outer: ['亥','酉','未'] },
 };
 
+// 八卦宫五行
+const TRIGRAM_ELEMENT: Record<string, string> = {
+  乾: '金', 兑: '金', 离: '火', 震: '木', 巽: '木', 坎: '水', 艮: '土', 坤: '土',
+};
+
+// 六神顺序（自初爻向上）
 const LIUSHEN = ['青龙','朱雀','勾陈','螣蛇','白虎','玄武'];
 
-const SHIYAO: Record<number, number> = {
-  1:5, 2:2, 3:0, 4:3, 5:4, 6:1, 7:2, 8:5,
-  9:1, 10:4, 11:2, 12:4, 13:2, 14:4, 15:4, 16:0,
-  17:2, 18:1, 19:1, 20:3, 21:4, 22:0, 23:4, 24:0,
-  25:3, 26:1, 27:3, 28:2, 29:4, 30:5, 31:2, 32:2,
-  33:1, 34:3, 35:3, 36:0, 37:1, 38:4, 39:3, 40:1,
-  41:2, 42:2, 43:3, 44:0, 45:2, 46:5, 47:2, 48:4,
-  49:2, 50:1, 51:4, 52:2, 53:1, 54:2, 55:4, 56:0,
-  57:2, 58:4, 59:4, 60:0, 61:3, 62:1, 63:2, 64:4,
-};
-const YINGYAO_OFFSET = 3;
+function getGuaGong(hexName: string): string {
+  for (const [gong, list] of Object.entries(GONG_SEQUENCE)) {
+    if (list.includes(hexName)) return gong;
+  }
+  return '乾';
+}
 
-export { HEXAGRAMS, LIUQIN_BY_YAO, LIUSHEN, SHIYAO };
+function getShiPosition(hexName: string): number {
+  for (const list of Object.values(GONG_SEQUENCE)) {
+    const idx = list.indexOf(hexName);
+    if (idx >= 0) return SHI_POSITION_BY_INDEX[idx];
+  }
+  return 5;
+}
+
+function getNajiaBranches(upper: string, lower: string): string[] {
+  const lo = NAJIA_BRANCHES[lower] || NAJIA_BRANCHES['乾'];
+  const up = NAJIA_BRANCHES[upper] || NAJIA_BRANCHES['乾'];
+  return [...lo.inner, ...up.outer];
+}
+
+export { HEXAGRAMS, LIUSHEN, TRIGRAM_ELEMENT, getGuaGong, getShiPosition, getNajiaBranches };

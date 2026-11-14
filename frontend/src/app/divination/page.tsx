@@ -133,7 +133,7 @@ export default function DivinationPage() {
                               {isYang ? '━━━━━' : '━━ ═━'}
                             </span>
                             {isMoving && <span className="text-xs text-xuan-gold">动</span>}
-                            <span className="text-xs text-xuan-muted ml-auto">{l.liuqin}</span>
+                            <span className="text-xs text-xuan-muted ml-auto">{l.najia}·{l.liuqin}</span>
                             <span className="text-[10px] text-xuan-muted">{['初','二','三','四','五','上'][i]}</span>
                           </div>
                         );

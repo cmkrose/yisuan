@@ -3,8 +3,8 @@ import {
   xiaoLiuRenDivine, quickDivine, randomDivine,
 } from './core';
 
-export function divLiuyao() {
-  return analyzeLiuyao();
+export function divLiuyao(dayGan?: string) {
+  return analyzeLiuyao(dayGan);
 }
 
 export function divMeihuaTime() {
