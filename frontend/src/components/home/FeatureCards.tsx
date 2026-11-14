@@ -16,6 +16,7 @@ const categories = [
       { name: '八字排盘', href: '/bazi', icon: '☰' },
       { name: '紫微斗数', href: '/ziwei', icon: '★' },
       { name: '姓名学', href: '/name', icon: '名' },
+      { name: '八字合婚', href: '/hehun', icon: '合' },
       { name: '择日', href: '/zeri', icon: '历' },
     ],
   },
