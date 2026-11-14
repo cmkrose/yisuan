@@ -8,6 +8,7 @@ import { api } from '@/lib/api/client';
 import { calculateZiweiLocal } from '@/lib/engines/ziwei/calculate';
 import { yearRangeDesc } from '@/lib/utils/year';
 import { useRouter } from 'next/navigation';
+import { downloadShareImage } from '@/lib/utils/share-image';
 
 type TabKey = 'chart' | 'stars' | 'dayun' | 'detailed' | 'overview';
 
@@ -77,6 +78,22 @@ export default function ZiweiPage() {
   const goAi = () => {
     try { sessionStorage.setItem('ai_prefill', JSON.stringify({ categories: ['ziwei'], ziweiData: result })); } catch {}
     router.push('/ai-analysis');
+  };
+
+  const shareZiwei = () => {
+    if (!result) return;
+    const ming = result.palaces?.[0];
+    const stars = (ming?.majorStars || []).map((s: any) => s.name).join('、') || '—';
+    downloadShareImage({
+      title: '紫微斗数命盘',
+      subtitle: `公历 ${form.birthYear}-${form.birthMonth}-${form.birthDay} ${form.birthHour}时`,
+      rows: [
+        { label: '命宫', value: `${ming?.stem || ''}${ming?.branch || ''}  主星：${stars}` },
+        { label: '身宫', value: result.bodyPalace || '—' },
+        { label: '五行局', value: result.fiveElementBureau || '—' },
+        { label: '当前大运', value: result.currentCycle ? `${result.currentCycle.palace}宫 ${result.currentCycle.startAge}-${result.currentCycle.endAge}岁` : '—' },
+      ],
+    }, `紫微命盘_${form.birthYear}.png`);
   };
 
   const handleSave = async () => {
@@ -240,6 +257,7 @@ export default function ZiweiPage() {
             {result && (
               <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} className="space-y-6" ref={reportRef}>
                 <div className="flex justify-end gap-3">
+                  <button onClick={shareZiwei} className="btn-outline-gold px-6 py-2.5 text-sm font-chinese">生成分享图</button>
                   <button onClick={goAi} className="btn-outline-gold px-6 py-2.5 text-sm font-chinese">综合解读</button>
                   <button onClick={handleSave} className="btn-outline-gold px-6 py-2.5 text-sm font-chinese">保存到我的命盘</button>
                 </div>

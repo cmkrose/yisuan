@@ -9,6 +9,7 @@ import { yearRangeDesc } from '@/lib/utils/year';
 import { useRouter } from 'next/navigation';
 import { CHINA_LOCATIONS } from '@/lib/data/china-locations';
 import { computeTrueSolar, hourBranchName } from '@/lib/utils/truesolar';
+import { downloadShareImage } from '@/lib/utils/share-image';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
 
 type TabKey = 'pillars' | 'analysis' | 'charts' | 'dayun';
@@ -72,6 +73,27 @@ export default function BaziPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const shareBazi = () => {
+    if (!result) return;
+    const b = result.bazi;
+    const da = result.analysis.dayMasterAnalysis;
+    const ex = result.analysis.extras;
+    downloadShareImage({
+      title: result.input?.name ? `${result.input.name} 的八字命盘` : '八字命盘',
+      subtitle: `公历 ${result.input?.birthYear}-${result.input?.birthMonth}-${result.input?.birthDay} ${result.input?.birthHourName || ''}`,
+      rows: [
+        { label: '四柱', value: `${b.year.stem}${b.year.branch}  ${b.month.stem}${b.month.branch}  ${b.day.stem}${b.day.branch}  ${b.hour.stem}${b.hour.branch}` },
+        { label: '日主', value: `${b.dayMaster}（${b.dayMasterElement}）· ${da.strength}` },
+        { label: '格局', value: result.analysis.pattern?.name || '—' },
+        { label: '喜用', value: da.favorable.join('、') },
+        { label: '忌神', value: da.unfavorable.join('、') },
+        { label: '胎元/命宫/身宫', value: `${ex?.taiyuan?.stem || ''}${ex?.taiyuan?.branch || ''} / ${ex?.minggong?.stem || ''}${ex?.minggong?.branch || ''} / ${ex?.shengong?.stem || ''}${ex?.shengong?.branch || ''}` },
+        { label: '神煞', value: (ex?.shensha || []).filter((s: any) => s.hits.length).map((s: any) => `${s.name}(${s.hits.join('')})`).join('、') || '—' },
+        { label: '旬空', value: `${ex?.kongwang?.xun || ''}（空${(ex?.kongwang?.emptyBranches || []).join('')}）` },
+      ],
+    }, `八字命盘_${result.input?.name || '命盘'}.png`);
   };
 
   const exportPDF = async () => {
@@ -218,6 +240,10 @@ export default function BaziPage() {
                   <button onClick={goAi}
                     className="px-6 py-4 border border-xuan-gold/30 text-xuan-gold rounded-lg hover:bg-xuan-gold/10 transition-all font-chinese text-sm">
                     综合解读
+                  </button>
+                  <button onClick={shareBazi}
+                    className="px-6 py-4 border border-xuan-gold/30 text-xuan-gold rounded-lg hover:bg-xuan-gold/10 transition-all font-chinese text-sm">
+                    生成分享图
                   </button>
                 </>
               )}
