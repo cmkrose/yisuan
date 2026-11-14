@@ -1,3 +1,5 @@
+import { Solar } from 'lunar-javascript';
+
 export const HEAVENLY_STEMS = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'] as const;
 export const EARTHLY_BRANCHES = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'] as const;
 export const PALACES = ['命宫','兄弟','夫妻','子女','财帛','疾厄','迁移','交友','事业','田宅','福德','父母'];
@@ -135,6 +137,11 @@ function findPalaceCombos(palace: Palace, allPalaces: Palace[], palIdx: number):
 }
 
 export function calculateZiwei(year: number, month: number, day: number, hour: number, gender: 'male' | 'female') {
+  // 入参为公历；紫微安星需农历年/月/日，统一由 lunar-javascript 换算（年以农历年为准）。
+  const lunar = Solar.fromYmd(year, month, day).getLunar();
+  year = lunar.getYear();
+  month = Math.abs(lunar.getMonth());
+  day = lunar.getDay();
   const ysi = (year - 4) % 10, ybi = (year - 4) % 12;
   const ysIdx = ((ysi % 10) + 10) % 10;
   const ys = HEAVENLY_STEMS[ysIdx];
