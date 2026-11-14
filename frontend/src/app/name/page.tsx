@@ -6,6 +6,8 @@ import Navbar from '@/components/layout/Header/Navbar';
 import Footer from '@/components/layout/Footer/Footer';
 import { api } from '@/lib/api/client';
 import { nameAnalyze, nameSuggest } from '@/lib/engines/name-analysis/calculate';
+import { calculateBazi } from '@/lib/engines/bazi/calculate';
+import { yearRangeDesc } from '@/lib/utils/year';
 
 const analysisSections = [
   { key: 'wuge', title: '五格分析', icon: '五' },
@@ -30,6 +32,9 @@ export default function NamePage() {
   const [error, setError] = useState('');
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const reportRef = useRef<HTMLDivElement>(null);
+  const [useBirth, setUseBirth] = useState(false);
+  const [birth, setBirth] = useState({ year: 1990, month: 1, day: 1, hour: 12 });
+  const [birthMatch, setBirthMatch] = useState<any>(null);
 
   const handleAnalyze = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +42,22 @@ export default function NamePage() {
     setError('');
     setLoading(true);
     try {
-      setResult(nameAnalyze(form));
+      const res = nameAnalyze(form);
+      setResult(res);
+      if (useBirth) {
+        const bazi = calculateBazi({ gender: form.gender, birthYear: birth.year, birthMonth: birth.month, birthDay: birth.day, birthHour: birth.hour });
+        const da = bazi.analysis.dayMasterAnalysis;
+        const favorable: string[] = da.favorable;
+        const unfavorable: string[] = da.unfavorable;
+        const chars = [...(res.analysis?.ziyi?.surname || []), ...(res.analysis?.ziyi?.givenName || [])];
+        const nameEls: string[] = chars.map((c: any) => c.wuxing).filter(Boolean);
+        const good = nameEls.filter((e) => favorable.includes(e));
+        const bad = nameEls.filter((e) => unfavorable.includes(e));
+        const verdict = bad.length === 0 && good.length >= 2 ? '补益对路' : good.length > bad.length ? '部分对路' : '未对路';
+        setBirthMatch({ favorable, unfavorable, nameEls, good, bad, verdict, dayMaster: bazi.bazi.dayMaster, element: bazi.bazi.dayMasterElement });
+      } else {
+        setBirthMatch(null);
+      }
     } catch (err: any) {
       setError(err?.message || '分析失败');
     } finally {
@@ -168,6 +188,30 @@ export default function NamePage() {
                 <label className="block text-xs font-chinese text-xuan-muted mb-1.5">性别</label>
                 <div className="flex gap-2">{genderBtn('male', '男')}{genderBtn('female', '女')}</div>
               </div>
+              <div className="col-span-full">
+                <div className="flex flex-wrap items-center gap-2">
+                  <button type="button" onClick={() => setUseBirth(v => !v)}
+                    className={`px-3 py-2 rounded-lg text-sm border ${useBirth ? 'border-xuan-cyan bg-xuan-cyan/10 text-xuan-cyan' : 'border-xuan-border text-xuan-muted hover:border-xuan-cyan/30'}`}>
+                    {useBirth ? '已结合生辰喜用' : '结合生辰喜用(可选)'}
+                  </button>
+                  {useBirth && (
+                    <>
+                      <select value={birth.year} onChange={(e) => setBirth({ ...birth, year: Number(e.target.value) })} className="px-2 py-2 bg-xuan-dark border border-xuan-border rounded-lg text-sm text-white">
+                        {yearRangeDesc().map(y => <option key={y} value={y}>{y}</option>)}
+                      </select>
+                      <select value={birth.month} onChange={(e) => setBirth({ ...birth, month: Number(e.target.value) })} className="px-2 py-2 bg-xuan-dark border border-xuan-border rounded-lg text-sm text-white">
+                        {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}月</option>)}
+                      </select>
+                      <select value={birth.day} onChange={(e) => setBirth({ ...birth, day: Number(e.target.value) })} className="px-2 py-2 bg-xuan-dark border border-xuan-border rounded-lg text-sm text-white">
+                        {Array.from({ length: 31 }, (_, i) => i + 1).map(d => <option key={d} value={d}>{d}日</option>)}
+                      </select>
+                      <select value={birth.hour} onChange={(e) => setBirth({ ...birth, hour: Number(e.target.value) })} className="px-2 py-2 bg-xuan-dark border border-xuan-border rounded-lg text-sm text-white">
+                        {Array.from({ length: 24 }, (_, i) => i).map(h => <option key={h} value={h}>{h}时</option>)}
+                      </select>
+                    </>
+                  )}
+                </div>
+              </div>
               {error && <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-sm text-red-400 font-chinese">{error}</div>}
               <div className="flex gap-3">
                 <button type="submit" disabled={loading} className="flex-1 btn-gold py-4 text-lg font-chinese disabled:opacity-50">
@@ -210,6 +254,20 @@ export default function NamePage() {
                     ))}
                   </div>
                 </div>
+
+                {birthMatch && (
+                  <div className="card-xuan p-5">
+                    <h3 className="text-sm font-chinese font-bold text-xuan-gold mb-2">结合生辰喜用（另一套口径）</h3>
+                    <p className="text-sm text-xuan-silver font-chinese leading-relaxed">
+                      日主{birthMatch.dayMaster}（{birthMatch.element}），喜用：{birthMatch.favorable.join('、')}；名字用字五行：{birthMatch.nameEls.join('、') || '—'}。
+                    </p>
+                    <p className="text-sm font-chinese mt-1">
+                      补益判定：<span className="text-xuan-gold font-bold">{birthMatch.verdict}</span>
+                      <span className="text-xuan-muted">（对路 {birthMatch.good.length} 字，忌神 {birthMatch.bad.length} 字）</span>
+                    </p>
+                    <p className="text-xs text-xuan-muted font-chinese mt-2">注：此判定基于生辰八字喜用神，与上方五格剖象评分属两套不同口径，请勿混为一谈。</p>
+                  </div>
+                )}
 
                 <div className="card-xuan-gold p-6 sm:p-8">
                   <h3 className="text-lg font-chinese font-bold text-xuan-gold mb-6">五格剖象</h3>
