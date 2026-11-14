@@ -1,7 +1,7 @@
 import {
   BAGUA_NAMES, EAST_FOUR, WEST_FOUR, ER_SHI_SI_SHAN,
   SHAN_BAGUA, SHAN_ELEMENT, DIRECTION_DEGREES,
-  HOUSE_GUA_TABLE, FLYING_STAR_GRID, STAR_NAMES, PALACE_INDEX_MAP,
+  STAR_NAMES, PALACE_INDEX_MAP,
   EightMansionResult, FlyingStarResult, CompassData,
 } from './constants';
 
@@ -31,11 +31,15 @@ const WEST_BAD_DIR: Record<string, string[]> = {
 };
 
 export function calculateEightMansion(birthYear: number, gender: 'male' | 'female'): EightMansionResult {
-  const lastDigit = birthYear % 10;
-  const lastTwo = birthYear % 100;
-  const adjustedYear = lastTwo > 0 ? lastTwo : 100;
-  const index = adjustedYear % 20;
-  const guaNum = HOUSE_GUA_TABLE[gender][Math.max(0, index - 1)] || 1;
+  // 命卦通行公式：出生年各位数字和化简为个位 n；
+  // 男命 2000 年前 10-n、2000 年后 9-n；女命 2000 年前 n+5、2000 年后 n+4；得 5 男寄坤、女寄艮。
+  let n = birthYear;
+  while (n > 9) n = String(n).split('').reduce((s, ch) => s + Number(ch), 0);
+  let guaNum = gender === 'male'
+    ? (birthYear < 2000 ? 10 - n : 9 - n)
+    : (birthYear < 2000 ? n + 5 : n + 4);
+  guaNum = ((guaNum - 1) % 9 + 9) % 9 + 1;
+  if (guaNum === 5) guaNum = gender === 'male' ? 2 : 8;
   const birthGua = GUA_TO_BAGUA[guaNum];
   const birthElement = BAGUA_ELEMENT[birthGua];
   const isEastFour = EAST_FOUR.includes(birthGua as any);
@@ -59,11 +63,16 @@ export function calculateEightMansion(birthYear: number, gender: 'male' | 'femal
 }
 
 export function calculateFlyingStars(year: number): FlyingStarResult {
-  const centerStar = 11 - (year % 9) || 9;
-  const arr = FLYING_STAR_GRID[centerStar] || FLYING_STAR_GRID[5];
+  const centerStar = ((10 - (year % 9)) % 9) + 1;
+  // 洛书轨迹顺飞：中→乾→兑→艮→离→坎→坤→震→巽（宫序 5,6,7,8,9,1,2,3,4）。
+  const TRACK = [5, 6, 7, 8, 9, 1, 2, 3, 4];
+  const starByPalace: Record<number, number> = {};
+  TRACK.forEach((palace, k) => {
+    starByPalace[palace] = ((centerStar - 1 + k) % 9) + 1;
+  });
 
-  const grid = PALACE_INDEX_MAP.map((palace, i) => {
-    const star = arr[i];
+  const grid = PALACE_INDEX_MAP.map((palace) => {
+    const star = starByPalace[palace];
     const info = STAR_NAMES[star];
     return {
       palace,
@@ -72,12 +81,13 @@ export function calculateFlyingStars(year: number): FlyingStarResult {
       fortune: info.fortune,
       element: info.element,
       color: info.color,
+      note: info.note,
     };
   });
 
-  // Find wealth position (where star 8 is located)
-  const wealthIdx = arr.indexOf(8);
-  const wealthPalace = PALACE_INDEX_MAP[wealthIdx];
+  // 财位：八白所落之宫
+  const wealthEntry = grid.find((g) => g.star === 8);
+  const wealthPalace = wealthEntry ? wealthEntry.palace : 5;
   const wealthPosNames: Record<number, string> = { 1:'北',2:'西南',3:'东',4:'东南',5:'中',6:'西北',7:'西',8:'东北',9:'南' };
   const wealthPosition = wealthPosNames[wealthPalace] || '不明';
 

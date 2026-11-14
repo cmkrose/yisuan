@@ -305,6 +305,7 @@ export default function FengshuiPage() {
                               <div className="text-xl font-chinese font-bold text-white">{g.star}</div>
                               <div className="text-[10px] font-chinese mt-0.5">{starInfo?.name || g.name}</div>
                               <div className="text-[9px] font-chinese text-xuan-muted">{starInfo?.element}</div>
+                              {(g.note || starInfo?.note) && <div className="text-[9px] font-chinese text-xuan-gold/80 mt-0.5">{g.note || starInfo?.note}</div>}
                             </div>
                           );
                         })}
