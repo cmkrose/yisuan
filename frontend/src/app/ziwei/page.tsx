@@ -9,6 +9,7 @@ import { calculateZiweiLocal } from '@/lib/engines/ziwei/calculate';
 import { yearRangeDesc } from '@/lib/utils/year';
 import { useRouter } from 'next/navigation';
 import { downloadShareImage } from '@/lib/utils/share-image';
+import { lunarToSolar } from '@/lib/utils/lunar';
 
 type TabKey = 'chart' | 'stars' | 'dayun' | 'detailed' | 'overview';
 
@@ -51,6 +52,8 @@ export default function ZiweiPage() {
   const [error, setError] = useState('');
   const reportRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const [calendar, setCalendar] = useState<'solar' | 'lunar'>('solar');
+  const [isLeap, setIsLeap] = useState(false);
 
   const tabs: { key: TabKey; label: string; icon: string }[] = [
     { key: 'chart', label: '命盘', icon: '☰' },
@@ -63,12 +66,19 @@ export default function ZiweiPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setError(''); setLoading(true);
     try {
+      let baseY = Number(form.birthYear), baseM = Number(form.birthMonth), baseD = Number(form.birthDay);
+      let lunarNote = '';
+      if (calendar === 'lunar') {
+        const s = lunarToSolar(baseY, baseM, baseD, isLeap);
+        baseY = s.year; baseM = s.month; baseD = s.day;
+        lunarNote = `农历 ${form.birthYear}年${isLeap ? '闰' : ''}${form.birthMonth}月${form.birthDay}日 → 公历 ${baseY}-${baseM}-${baseD}`;
+      }
       const data = calculateZiweiLocal({
-        birthYear: Number(form.birthYear), birthMonth: Number(form.birthMonth),
-        birthDay: Number(form.birthDay), birthHour: Number(form.birthHour),
+        birthYear: baseY, birthMonth: baseM, birthDay: baseD, birthHour: Number(form.birthHour),
         gender: form.gender,
       });
       if (data?.error) { setError('排盘失败：' + data.error); return; }
+      data.lunarNote = lunarNote;
       setResult(data);
       setActiveTab('detailed');
     } catch (err: any) { setError(err?.message || '排盘失败'); }
@@ -199,6 +209,15 @@ export default function ZiweiPage() {
           <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
             className="card-xuan-gold p-6 sm:p-8 mb-10">
             <form onSubmit={submit} className="space-y-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <button type="button" onClick={() => setCalendar('solar')} className={`px-4 py-2 rounded-lg text-sm border ${calendar === 'solar' ? 'border-xuan-cyan bg-xuan-cyan/10 text-xuan-cyan' : 'border-xuan-border text-xuan-muted'}`}>公历</button>
+                <button type="button" onClick={() => setCalendar('lunar')} className={`px-4 py-2 rounded-lg text-sm border ${calendar === 'lunar' ? 'border-xuan-cyan bg-xuan-cyan/10 text-xuan-cyan' : 'border-xuan-border text-xuan-muted'}`}>农历</button>
+                {calendar === 'lunar' && (
+                  <label className="flex items-center gap-1.5 text-xs text-xuan-muted font-chinese ml-2">
+                    <input type="checkbox" checked={isLeap} onChange={(e) => setIsLeap(e.target.checked)} /> 闰月
+                  </label>
+                )}
+              </div>
               <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
                 <div>
                   <label className="block text-xs font-chinese text-xuan-muted mb-1">年</label>
@@ -218,7 +237,7 @@ export default function ZiweiPage() {
                   <label className="block text-xs font-chinese text-xuan-muted mb-1">日</label>
                   <select value={form.birthDay} onChange={(e) => setForm({ ...form, birthDay: Number(e.target.value) })}
                     className="w-full px-2 py-2.5 bg-xuan-dark border border-xuan-border rounded-lg text-sm text-white">
-                    {Array.from({ length: 31 }, (_, i) => i + 1).map(d => <option key={d} value={d}>{d}日</option>)}
+                    {Array.from({ length: calendar === 'lunar' ? 30 : 31 }, (_, i) => i + 1).map(d => <option key={d} value={d}>{d}日</option>)}
                   </select>
                 </div>
                 <div>
@@ -256,6 +275,9 @@ export default function ZiweiPage() {
           <AnimatePresence>
             {result && (
               <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} className="space-y-6" ref={reportRef}>
+                {result.lunarNote && (
+                  <div className="text-xs text-xuan-muted font-chinese text-center">{result.lunarNote}</div>
+                )}
                 <div className="flex justify-end gap-3">
                   <button onClick={shareZiwei} className="btn-outline-gold px-6 py-2.5 text-sm font-chinese">生成分享图</button>
                   <button onClick={goAi} className="btn-outline-gold px-6 py-2.5 text-sm font-chinese">综合解读</button>

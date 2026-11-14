@@ -192,6 +192,9 @@ importers:
       lucide-react:
         specifier: ^0.363.0
         version: 0.363.0(react@18.2.0)
+      lunar-javascript:
+        specifier: ^1.7.8
+        version: 1.7.8
       next:
         specifier: 14.1.4
         version: 14.1.4(@babel/core@7.29.7)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
@@ -5613,6 +5616,9 @@ packages:
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0
 
+  lunar-javascript@1.7.8:
+    resolution: {integrity: sha512-T79Lq2t5zjPu7nnkuUn3xFqIMIB5LCVSn6uJXQLvgWEqUGdE4KQXqQOVBaoYsVHY/8MIwFd7ol9dJ5bP2ItXUQ==}
+
   luxon@3.7.2:
     resolution: {integrity: sha512-vtEhXh/gNjI9Yg1u4jX/0YVPMvxzHuGgCm6tC5kZyb08yjGWGnqAjGJvcXbqQR2P3MyMEFnRbpcdFS6PBcLqew==}
     engines: {node: '>=12'}
@@ -9363,7 +9369,7 @@ snapshots:
   '@jridgewell/trace-mapping@0.3.9':
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
-      '@jridgewell/sourcemap-codec': 1.4.10
+      '@jridgewell/sourcemap-codec': 1.5.5
 
   '@ljharb/through@2.3.14':
     dependencies:
@@ -14309,6 +14315,8 @@ snapshots:
   lucide-react@0.363.0(react@18.2.0):
     dependencies:
       react: 18.2.0
+
+  lunar-javascript@1.7.8: {}
 
   luxon@3.7.2: {}
 

@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { CHINA_LOCATIONS } from '@/lib/data/china-locations';
 import { computeTrueSolar, hourBranchName } from '@/lib/utils/truesolar';
 import { downloadShareImage } from '@/lib/utils/share-image';
+import { lunarToSolar } from '@/lib/utils/lunar';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
 
 type TabKey = 'pillars' | 'analysis' | 'charts' | 'dayun';
@@ -33,6 +34,8 @@ export default function BaziPage() {
   const [province, setProvince] = useState('北京');
   const [city, setCity] = useState('北京');
   const [useSolar, setUseSolar] = useState(false);
+  const [calendar, setCalendar] = useState<'solar' | 'lunar'>('solar');
+  const [isLeap, setIsLeap] = useState(false);
   const provinceData = CHINA_LOCATIONS.find((p) => p.province === province) || CHINA_LOCATIONS[0];
   const cityData = provinceData.cities.find((c) => c.name === city) || provinceData.cities[0];
 
@@ -46,10 +49,17 @@ export default function BaziPage() {
     setError('');
     setResult(null);
     try {
-      let input: any = { ...form, birthPlace: cityData?.name || form.birthPlace };
+      let baseY = form.birthYear, baseM = form.birthMonth, baseD = form.birthDay;
+      let lunarNote = '';
+      if (calendar === 'lunar') {
+        const s = lunarToSolar(form.birthYear, form.birthMonth, form.birthDay, isLeap);
+        baseY = s.year; baseM = s.month; baseD = s.day;
+        lunarNote = `农历 ${form.birthYear}年${isLeap ? '闰' : ''}${form.birthMonth}月${form.birthDay}日 → 公历 ${baseY}-${baseM}-${baseD}`;
+      }
+      let input: any = { ...form, birthYear: baseY, birthMonth: baseM, birthDay: baseD, birthPlace: cityData?.name || form.birthPlace };
       let solar: any = null;
       if (useSolar && cityData) {
-        const t = computeTrueSolar(form.birthYear, form.birthMonth, form.birthDay, form.birthHour, cityData.longitude);
+        const t = computeTrueSolar(baseY, baseM, baseD, form.birthHour, cityData.longitude);
         solar = {
           enabled: true,
           before: hourBranchName(form.birthHour),
@@ -66,6 +76,7 @@ export default function BaziPage() {
         return;
       }
       data.solar = solar;
+      data.lunarNote = lunarNote;
       setResult(data);
       setActiveTab('analysis');
     } catch (e: any) {
@@ -160,6 +171,15 @@ export default function BaziPage() {
           {/* Input Form */}
           <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
             className="card-xuan-gold p-6 sm:p-8 mb-8">
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <button type="button" onClick={() => setCalendar('solar')} className={`px-4 py-2 rounded-lg text-sm border ${calendar === 'solar' ? 'border-xuan-cyan bg-xuan-cyan/10 text-xuan-cyan' : 'border-xuan-border text-xuan-muted'}`}>公历</button>
+              <button type="button" onClick={() => setCalendar('lunar')} className={`px-4 py-2 rounded-lg text-sm border ${calendar === 'lunar' ? 'border-xuan-cyan bg-xuan-cyan/10 text-xuan-cyan' : 'border-xuan-border text-xuan-muted'}`}>农历</button>
+              {calendar === 'lunar' && (
+                <label className="flex items-center gap-1.5 text-xs text-xuan-muted font-chinese ml-2">
+                  <input type="checkbox" checked={isLeap} onChange={(e) => setIsLeap(e.target.checked)} /> 闰月
+                </label>
+              )}
+            </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4">
               <div>
                 <label className="text-xs text-xuan-muted font-chinese mb-1 block">姓名</label>
@@ -193,7 +213,7 @@ export default function BaziPage() {
                 <label className="text-xs text-xuan-muted font-chinese mb-1 block">日期</label>
                 <select value={form.birthDay} onChange={e => setForm({...form, birthDay: Number(e.target.value)})}
                   className="w-full px-3 py-3 bg-xuan-dark border border-xuan-border rounded-lg text-sm text-white">
-                  {Array.from({length:31},(_,i)=>i+1).map(d=><option key={d} value={d}>{d}日</option>)}
+                  {Array.from({length: calendar === 'lunar' ? 30 : 31},(_,i)=>i+1).map(d=><option key={d} value={d}>{d}日</option>)}
                 </select>
               </div>
               <div>
@@ -278,6 +298,9 @@ export default function BaziPage() {
                     <div className="card-xuan-gold p-6 mb-6">
                       <h3 className="text-lg font-chinese font-bold text-xuan-gold mb-2 text-center">四柱排盘</h3>
                       <p className="text-xs text-xuan-muted text-center mb-4">日主：{result.bazi.dayMaster}（{result.bazi.dayMasterElement}）· {result.analysis.dayMasterAnalysis.strength}</p>
+                      {result.lunarNote && (
+                        <div className="mb-2 text-xs text-xuan-muted text-center font-chinese">{result.lunarNote}</div>
+                      )}
                       {result.solar?.enabled && (
                         <div className="mb-4 p-2 text-xs text-xuan-cyan text-center font-chinese bg-xuan-cyan/5 border border-xuan-cyan/20 rounded-lg">
                           真太阳时校正：{result.solar.place}（经度{result.solar.longitude}°E，偏移{result.solar.offsetMinutes > 0 ? '+' : ''}{result.solar.offsetMinutes}分钟）· 校正前 {result.solar.before} → 校正后 {result.solar.after}
