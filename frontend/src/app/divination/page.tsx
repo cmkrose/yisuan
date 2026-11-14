@@ -6,6 +6,7 @@ import Navbar from '@/components/layout/Header/Navbar';
 import Footer from '@/components/layout/Footer/Footer';
 import { api } from '@/lib/api/client';
 import { divLiuyao, divMeihuaTime, divMeihuaNumber, divMeihuaName, divXiaoLiuRen, divXiaoLiuRenRandom } from '@/lib/engines/divination/calculate';
+import { solarToLunar } from '@/lib/utils/lunar';
 
 type TabKey = 'liuyao' | 'meihua' | 'xiaoliuren';
 
@@ -44,10 +45,11 @@ export default function DivinationPage() {
     } catch (e) {} finally { setLoading(false); }
   };
 
-  // Xiao Liu Ren
+  // Xiao Liu Ren（月、日按农历起课）
+  const initialLunar = solarToLunar(new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate());
   const [xlrMode, setXlrMode] = useState<'time' | 'random'>('time');
-  const [xlrMonth, setXlrMonth] = useState(new Date().getMonth() + 1);
-  const [xlrDay, setXlrDay] = useState(new Date().getDate());
+  const [xlrMonth, setXlrMonth] = useState(initialLunar.month);
+  const [xlrDay, setXlrDay] = useState(initialLunar.day);
   const [xlrHour, setXlrHour] = useState(new Date().getHours());
 
   const castXiaoliuren = async () => {
@@ -166,7 +168,7 @@ export default function DivinationPage() {
               <motion.div key="meihua" initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                 <div className="card-xuan-gold p-6 sm:p-8">
                   <div className="flex gap-2 mb-6">
-                    {[{ v:'time',l:'时间起卦' },{ v:'number',l:'数字起卦' },{ v:'name',l:'姓名起卦' }].map((m) => (
+                    {[{ v:'time',l:'时间起卦' },{ v:'number',l:'数字起卦' },{ v:'name',l:'姓名(娱乐)' }].map((m) => (
                       <button key={m.v} onClick={() => setMeihuaMethod(m.v as any)}
                         className={`flex-1 py-2.5 text-sm font-chinese rounded-lg border transition-all ${
                           meihuaMethod === m.v ? 'border-xuan-cyan bg-xuan-cyan/10 text-xuan-cyan' : 'border-xuan-border text-xuan-muted hover:border-xuan-cyan/30'
@@ -185,6 +187,7 @@ export default function DivinationPage() {
                       <label className="block text-xs font-chinese text-xuan-muted mb-1.5">输入汉字</label>
                       <input type="text" value={meihuaName} onChange={(e) => setMeihuaName(e.target.value)} placeholder="输入任意汉字"
                         className="w-full px-4 py-3 bg-xuan-dark border border-xuan-border rounded-lg text-white text-sm focus:border-xuan-cyan/50" />
+                      <p className="text-[10px] text-xuan-muted font-chinese mt-1">娱乐玩法：按字符编码取数，非真实笔画，仅供参考。</p>
                     </div>
                   )}
                   <button onClick={castMeihua} disabled={loading}
@@ -243,17 +246,17 @@ export default function DivinationPage() {
                   {xlrMode === 'time' && (
                     <div className="grid grid-cols-3 gap-3 mb-4">
                       <div>
-                        <label className="block text-xs font-chinese text-xuan-muted mb-1">月</label>
+                        <label className="block text-xs font-chinese text-xuan-muted mb-1">农历月</label>
                         <select value={xlrMonth} onChange={(e) => setXlrMonth(Number(e.target.value))}
                           className="w-full px-3 py-2.5 bg-xuan-dark border border-xuan-border rounded-lg text-sm text-white">
                           {Array.from({length:12},(_,i)=>i+1).map(m=><option key={m} value={m}>{m}月</option>)}
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs font-chinese text-xuan-muted mb-1">日</label>
+                        <label className="block text-xs font-chinese text-xuan-muted mb-1">农历日</label>
                         <select value={xlrDay} onChange={(e) => setXlrDay(Number(e.target.value))}
                           className="w-full px-3 py-2.5 bg-xuan-dark border border-xuan-border rounded-lg text-sm text-white">
-                          {Array.from({length:31},(_,i)=>i+1).map(d=><option key={d} value={d}>{d}日</option>)}
+                          {Array.from({length:30},(_,i)=>i+1).map(d=><option key={d} value={d}>{d}日</option>)}
                         </select>
                       </div>
                       <div>

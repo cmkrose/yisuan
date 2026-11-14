@@ -1,4 +1,5 @@
 import { HEXAGRAMS } from '../liuyao/hexagram-data';
+import { Solar } from 'lunar-javascript';
 
 export interface MeihuaResult {
   method: string;
@@ -23,7 +24,7 @@ const ELEMENT_RELATION: Record<string, Record<string, string>> = {
   木:{金:'受克',木:'比和',水:'受生',火:'生出',土:'克出'},
   水:{金:'受生',木:'生出',水:'比和',火:'克出',土:'受克'},
   火:{金:'克出',木:'受生',水:'受克',火:'比和',土:'生出'},
-  土:{金:'生出',木:'克出',水:'克出',火:'受生',土:'比和'},
+  土:{金:'生出',木:'受克',水:'克出',火:'受生',土:'比和'},
 };
 
 function getHexByNum(n: number): number {
@@ -33,13 +34,17 @@ function getHexByNum(n: number): number {
 }
 
 export function timeDivination(date: Date): MeihuaResult {
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-  const hour = date.getHours();
+  // 通行时间起卦：上卦=(年支序+农历月+农历日)%8，下卦再加时支序，动爻=总数%6。
+  const lunar = Solar.fromDate(date).getLunar();
+  const yearZhi = '子丑寅卯辰巳午未申酉戌亥'.indexOf(lunar.getYearInGanZhi()[1]) + 1;
+  const lunarMonth = Math.abs(lunar.getMonth());
+  const lunarDay = lunar.getDay();
+  const hourZhi = (Math.floor((date.getHours() + 1) / 2) % 12) + 1;
 
-  const upperNum = month % 8 || 8;
-  const lowerNum = day % 8 || 8;
-  const movingNum = hour % 6 || 6;
+  const upperNum = (yearZhi + lunarMonth + lunarDay) % 8 || 8;
+  const total = yearZhi + lunarMonth + lunarDay + hourZhi;
+  const lowerNum = total % 8 || 8;
+  const movingNum = total % 6 || 6;
 
   return buildMeihuaResult('时间起卦', getHexByNum(upperNum), getHexByNum(lowerNum), movingNum);
 }
@@ -59,7 +64,7 @@ export function nameDivination(chars: string): MeihuaResult {
   const upper = (chars.charCodeAt(0) % 8) || 8;
   const lower = (chars.charCodeAt(chars.length - 1) % 8) || 8;
   const moving = (strokeTotal % 6) || 6;
-  return buildMeihuaResult('姓名起卦', getHexByNum(upper), getHexByNum(lower), moving);
+  return buildMeihuaResult('姓名起卦（娱乐玩法：按字符编码取数，非笔画）', getHexByNum(upper), getHexByNum(lower), moving);
 }
 
 function buildMeihuaResult(method: string, upperId: number, lowerId: number, movingYao: number): MeihuaResult {
@@ -77,8 +82,9 @@ function buildMeihuaResult(method: string, upperId: number, lowerId: number, mov
   }
 
   const hexagram = HEXAGRAMS[hexId] || HEXAGRAMS[1];
-  const bodyGua = movingYao <= 3 ? lowerGua : upperGua;
-  const yongGua = movingYao <= 3 ? upperGua : lowerGua;
+  // 体用：动爻所在卦为「用」，另一卦为「体」。
+  const bodyGua = movingYao <= 3 ? upperGua : lowerGua;
+  const yongGua = movingYao <= 3 ? lowerGua : upperGua;
   const bodyEl = BAGUA_ELEMENT[bodyGua];
   const yongEl = BAGUA_ELEMENT[yongGua];
   const relation = ELEMENT_RELATION[bodyEl]?.[yongEl] || '比和';
