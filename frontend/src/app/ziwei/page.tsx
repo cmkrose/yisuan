@@ -10,6 +10,7 @@ import { yearRangeDesc } from '@/lib/utils/year';
 import { useRouter } from 'next/navigation';
 import { downloadShareImage } from '@/lib/utils/share-image';
 import { lunarToSolar } from '@/lib/utils/lunar';
+import { ZIWEI_STAR_MEANINGS, SIHUA_MEANINGS } from '@/lib/data/meanings/ziwei-stars';
 
 type TabKey = 'chart' | 'stars' | 'dayun' | 'detailed' | 'overview';
 
@@ -307,10 +308,22 @@ export default function ZiweiPage() {
                         </div>
                         {result.siHuaStars && (
                           <div className="grid grid-cols-4 gap-2 mb-4">
-                            <div className="text-center p-2 bg-green-500/10 rounded border border-green-500/20"><div className="text-xs text-green-400">化禄</div><div className="text-sm font-chinese text-white">{result.siHuaStars.禄}</div></div>
-                            <div className="text-center p-2 bg-purple-500/10 rounded border border-purple-500/20"><div className="text-xs text-purple-400">化权</div><div className="text-sm font-chinese text-white">{result.siHuaStars.权}</div></div>
-                            <div className="text-center p-2 bg-blue-500/10 rounded border border-blue-500/20"><div className="text-xs text-blue-400">化科</div><div className="text-sm font-chinese text-white">{result.siHuaStars.科}</div></div>
-                            <div className="text-center p-2 bg-red-500/10 rounded border border-red-500/20"><div className="text-xs text-red-400">化忌</div><div className="text-sm font-chinese text-white">{result.siHuaStars.忌}</div></div>
+                            <div className="text-center p-2 bg-green-500/10 rounded border border-green-500/20" title={SIHUA_MEANINGS['化禄']?.detail}>
+                              <div className="text-xs text-green-400">化禄</div><div className="text-sm font-chinese text-white">{result.siHuaStars.禄}</div>
+                              <div className="text-[9px] text-xuan-muted mt-0.5">{SIHUA_MEANINGS['化禄']?.brief}</div>
+                            </div>
+                            <div className="text-center p-2 bg-purple-500/10 rounded border border-purple-500/20" title={SIHUA_MEANINGS['化权']?.detail}>
+                              <div className="text-xs text-purple-400">化权</div><div className="text-sm font-chinese text-white">{result.siHuaStars.权}</div>
+                              <div className="text-[9px] text-xuan-muted mt-0.5">{SIHUA_MEANINGS['化权']?.brief}</div>
+                            </div>
+                            <div className="text-center p-2 bg-blue-500/10 rounded border border-blue-500/20" title={SIHUA_MEANINGS['化科']?.detail}>
+                              <div className="text-xs text-blue-400">化科</div><div className="text-sm font-chinese text-white">{result.siHuaStars.科}</div>
+                              <div className="text-[9px] text-xuan-muted mt-0.5">{SIHUA_MEANINGS['化科']?.brief}</div>
+                            </div>
+                            <div className="text-center p-2 bg-red-500/10 rounded border border-red-500/20" title={SIHUA_MEANINGS['化忌']?.detail}>
+                              <div className="text-xs text-red-400">化忌</div><div className="text-sm font-chinese text-white">{result.siHuaStars.忌}</div>
+                              <div className="text-[9px] text-xuan-muted mt-0.5">{SIHUA_MEANINGS['化忌']?.brief}</div>
+                            </div>
                           </div>
                         )}
                         <div className="hidden sm:grid grid-cols-3 gap-2">
@@ -345,6 +358,25 @@ export default function ZiweiPage() {
                             return <div key={idx}>{renderPalace(result.palaces[idx])}</div>;
                           })}
                         </div>
+
+                        <div className="mt-4 p-4 bg-xuan-dark rounded-lg border border-xuan-gold/20">
+                          <div className="text-sm font-chinese font-bold text-xuan-gold mb-2">命宫主星解读</div>
+                          {(result.palaces?.[0]?.majorStars || []).length > 0 ? (
+                            (result.palaces[0].majorStars || []).map((s: any) => {
+                              const m = ZIWEI_STAR_MEANINGS[s.name];
+                              return (
+                                <div key={s.name} className="mb-2">
+                                  <span className={`text-xs font-chinese font-bold ${starColors[s.name] || 'text-xuan-silver'}`}>{s.name}</span>
+                                  {m && <p className="text-[11px] text-xuan-silver font-chinese leading-relaxed mt-0.5">{m.mingGong}</p>}
+                                  {m?.note && <p className="text-[10px] text-xuan-muted font-chinese leading-relaxed">{m.note}</p>}
+                                </div>
+                              );
+                            })
+                          ) : (
+                            <p className="text-[11px] text-xuan-muted font-chinese">命宫无主星，借对宫星曜参看。</p>
+                          )}
+                          <p className="text-[10px] text-xuan-muted font-chinese mt-2">以上为模板化解读，仅供参考。</p>
+                        </div>
                       </div>
                     </motion.div>
                   )}
@@ -359,9 +391,14 @@ export default function ZiweiPage() {
                               <div className="text-xs font-chinese text-xuan-gold mb-2">{p.name}宫</div>
                               <div className="space-y-1">
                                 {p.majorStars.map((s: any, i: number) => (
-                                  <div key={i} className="flex items-center justify-between">
-                                    <span className={`text-sm font-chinese font-bold ${starColors[s.name] || 'text-xuan-silver'}`}>{s.name}</span>
-                                    <span className={`text-xs ${brightnessLevels[s.brightness] || 'text-xuan-muted'}`}>{s.brightness}</span>
+                                  <div key={i} className="mb-1">
+                                    <div className="flex items-center justify-between">
+                                      <span className={`text-sm font-chinese font-bold ${starColors[s.name] || 'text-xuan-silver'}`}>{s.name}</span>
+                                      <span className={`text-xs ${brightnessLevels[s.brightness] || 'text-xuan-muted'}`}>{s.brightness}</span>
+                                    </div>
+                                    {ZIWEI_STAR_MEANINGS[s.name]?.brief && (
+                                      <div className="text-[10px] text-xuan-muted leading-snug">{ZIWEI_STAR_MEANINGS[s.name].brief}</div>
+                                    )}
                                   </div>
                                 ))}
                               </div>
@@ -380,6 +417,7 @@ export default function ZiweiPage() {
                             </div>
                           ))}
                         </div>
+                        <div className="mt-3 text-[10px] text-xuan-muted font-chinese text-center">星曜解说为模板化解读，仅供参考。</div>
                       </div>
                     </motion.div>
                   )}

@@ -11,6 +11,9 @@ import { CHINA_LOCATIONS } from '@/lib/data/china-locations';
 import { computeTrueSolar, hourBranchName } from '@/lib/utils/truesolar';
 import { downloadShareImage } from '@/lib/utils/share-image';
 import { lunarToSolar } from '@/lib/utils/lunar';
+import { SHENSHA_MEANINGS } from '@/lib/data/meanings/shensha-meanings';
+import { NAYIN_MEANINGS } from '@/lib/data/meanings/nayin-meanings';
+import { SHISHEN_MEANINGS } from '@/lib/data/meanings/shishen-meanings';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
 
 type TabKey = 'pillars' | 'analysis' | 'charts' | 'dayun';
@@ -313,10 +316,18 @@ export default function BaziPage() {
                             <div className="text-lg font-chinese font-bold text-xuan-gold">{p.stem}{p.branch}</div>
                             <div className="text-[10px] text-xuan-muted">{p.stemElement}{p.branchElement} · {p.stemYinYang}{p.branchYinYang}</div>
                             <div className="text-[10px] text-xuan-cyan mt-1">{p.shishen || '日主'}</div>
+                            {SHISHEN_MEANINGS[p.shishen]?.brief && (
+                              <div className="text-[9px] text-xuan-muted mt-0.5 leading-snug" title={SHISHEN_MEANINGS[p.shishen].detail}>
+                                {SHISHEN_MEANINGS[p.shishen].brief}
+                              </div>
+                            )}
                             {result.analysis.extras?.kongwang?.emptyBranches?.includes(p.branch) && (
                               <div className="mt-1 inline-block px-1.5 py-0.5 text-[10px] rounded bg-red-500/15 text-red-300 border border-red-500/30">空亡</div>
                             )}
                             <div className="text-[10px] text-xuan-muted mt-0.5">纳音：{p.nayin}</div>
+                            {NAYIN_MEANINGS[p.nayin]?.brief && (
+                              <div className="text-[9px] text-xuan-muted leading-snug">{NAYIN_MEANINGS[p.nayin].brief}</div>
+                            )}
                             <div className="text-[10px] text-xuan-muted">
                               藏干：{p.cangGan.map((c: any) => c.stem).join(' ')}
                             </div>
@@ -335,25 +346,39 @@ export default function BaziPage() {
                           </div>
                         ))}
                       </div>
+                      <div className="mt-3 text-[10px] text-xuan-muted text-center font-chinese">十神/纳音解说为模板化解读，仅供参考。</div>
                     </div>
 
                     {/* 神煞 */}
                     <div className="card-xuan p-4 mb-4">
                       <h4 className="text-sm font-chinese font-bold text-xuan-gold mb-3">神煞</h4>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        {(result.analysis.extras?.shensha || []).map((s: any) => (
-                          <div key={s.name} className={`p-2 rounded-lg border text-center ${s.hits.length ? 'border-xuan-gold/40 bg-xuan-gold/5' : 'border-xuan-border bg-xuan-dark'}`}>
-                            <div className="text-xs font-chinese text-xuan-silver">{s.name}</div>
-                            <div className={`text-[10px] mt-0.5 ${s.hits.length ? 'text-xuan-gold' : 'text-xuan-muted'}`}>
-                              {s.hits.length ? s.hits.join('、') : '—'}
+                        {(result.analysis.extras?.shensha || []).map((s: any) => {
+                          const m = SHENSHA_MEANINGS[s.name];
+                          return (
+                            <div key={s.name} title={m?.detail || ''} className={`p-2 rounded-lg border text-center ${s.hits.length ? 'border-xuan-gold/40 bg-xuan-gold/5' : 'border-xuan-border bg-xuan-dark'}`}>
+                              <div className="flex items-center justify-center gap-1">
+                                <span className="text-xs font-chinese text-xuan-silver">{s.name}</span>
+                                {m && (
+                                  <span className={`text-[9px] px-1 rounded ${m.luck === '吉' ? 'text-emerald-300 bg-emerald-500/10' : m.luck === '凶' ? 'text-red-300 bg-red-500/10' : 'text-xuan-muted bg-xuan-dark'}`}>{m.luck}</span>
+                                )}
+                              </div>
+                              <div className={`text-[10px] mt-0.5 ${s.hits.length ? 'text-xuan-gold' : 'text-xuan-muted'}`}>
+                                {s.hits.length ? s.hits.join('、') : '—'}
+                              </div>
+                              {m?.brief && <div className="text-[9px] text-xuan-muted mt-1 leading-snug">{m.brief}</div>}
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                       <div className="mt-3 text-[11px] text-xuan-muted font-chinese">
                         旬空：{result.analysis.extras?.kongwang?.xun}（空{result.analysis.extras?.kongwang?.emptyBranches?.join('')}）
                         {result.analysis.extras?.kongwang?.hitPillars?.length ? `，命中：${result.analysis.extras.kongwang.hitPillars.join('、')}` : '，四柱无空'}
+                        {SHENSHA_MEANINGS['空亡(旬空)']?.brief && (
+                          <div className="mt-1 text-[10px] leading-snug">{SHENSHA_MEANINGS['空亡(旬空)'].brief}</div>
+                        )}
                       </div>
+                      <div className="mt-2 text-[10px] text-xuan-muted text-center font-chinese">神煞解说为模板化解读，仅供参考。</div>
                     </div>
 
                     {/* Five Elements Summary */}
