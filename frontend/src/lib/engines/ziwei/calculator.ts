@@ -145,7 +145,8 @@ export function calculateZiwei(year: number, month: number, day: number, hour: n
 
   const bodyIdx = ((2 + month - 1 + hIdx) % 12 + 12) % 12;
 
-  const yiStemBase: Record<string, number> = { 甲:0, 己:0, 乙:2, 庚:2, 丙:4, 辛:4, 丁:6, 壬:6, 戊:8, 癸:8 };
+  // 五虎遁（年干起寅月）：甲己丙、乙庚戊、丙辛庚、丁壬壬、戊癸甲。
+  const yiStemBase: Record<string, number> = { 甲:2, 己:2, 乙:4, 庚:4, 丙:6, 辛:6, 丁:8, 壬:8, 戊:0, 癸:0 };
   const yiStemIdx = yiStemBase[ys] || 0;
   const yiBranchIdx = EARTHLY_BRANCHES.indexOf('寅');
 

@@ -10,8 +10,8 @@ const DAY_STEM_START: Record<TianGan, number> = {
 };
 
 export function calculatePillars(year: number, month: number, day: number, hour: number): BaziResult {
-  // 年/月/日柱统一取自 lunar-javascript 的干支历（以节气定年、月，避免手写公式在节气边界错位）。
-  const ec = Solar.fromYmd(year, month, day).getLunar().getEightChar();
+  // 年/月/日柱取自 lunar-javascript 的干支历，带入出生时辰以正确跨过节气交接时刻。
+  const ec = Solar.fromYmdHms(year, month, day, hour, 0, 0).getLunar().getEightChar();
   const yearPillar = pillarFromGanZhi(ec.getYear());
   const monthPillar = pillarFromGanZhi(ec.getMonth());
   const dayPillar = pillarFromGanZhi(ec.getDay());
