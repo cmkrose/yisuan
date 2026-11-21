@@ -534,7 +534,7 @@ export default function FengshuiPage() {
                         );
                       })}
                     </div>
-                    <div className="text-[10px] text-xuan-muted font-chinese text-center">以上为原则性解读，不能替代实地勘测。</div>
+                    <div className="text-[10px] text-xuan-muted font-chinese text-center">以上为原则性、模板化解读，仅供参考，不能替代实地勘测。</div>
                   </div>
                 )}
               </motion.div>
