@@ -19,10 +19,10 @@ export class SanshiService {
     return { ...chartData, analysis };
   }
 
-  liuren(input: { month: number; hour: number }) {
+  liuren(input: { year: number; month: number; day: number; hour: number }) {
     this.logger.log(`大六壬: 月${input.month} 时${input.hour}`);
-    const chartData = calculateLiuren(input.month, input.hour);
-    const analysis = analyzeLiuren(chartData, input.month, input.hour);
+    const chartData = calculateLiuren(input.year, input.month, input.day, input.hour);
+    const analysis = analyzeLiuren(chartData);
     return { ...chartData, analysis };
   }
 }

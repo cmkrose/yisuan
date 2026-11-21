@@ -1,280 +1,314 @@
-export interface LiurenLesson {
-  position: string;        // 四课位置
-  stem: string;            // 天干
-  branch: string;          // 地支
-  element: string;         // 五行
-}
-
-export interface LiurenChuan {
-  sequence: string;        // 初传/中传/末传
-  stem: string;
-  branch: string;
-  name: string;            // 六亲/名称
-}
-
-export interface LiurenResult {
-  monthGeneral: string;
-  hourGeneral: string;
-  lessons: LiurenLesson[];
-  chuan: LiurenChuan[];
-  twelveGenerals: { name: string; branch: string; element: string; direction: string }[];
-  interpretation: string;
-}
+import { Solar } from 'lunar-javascript';
 
 const DIZHI = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+const GAN = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
 const BRANCH_ELE: Record<string, string> = {
   子:'水',丑:'土',寅:'木',卯:'木',辰:'土',巳:'火',午:'火',未:'土',申:'金',酉:'金',戌:'土',亥:'水',
 };
+const STEM_ELE: Record<string, string> = {
+  甲:'木',乙:'木',丙:'火',丁:'火',戊:'土',己:'土',庚:'金',辛:'金',壬:'水',癸:'水',
+};
+const SHENG: Record<string, string> = { 木:'火', 火:'土', 土:'金', 金:'水', 水:'木' };
+const KE: Record<string, string> = { 木:'土', 土:'水', 水:'火', 火:'金', 金:'木' };
 
-const SHIER_JIANG = [
-  { name:'贵人', offset:0 }, { name:'螣蛇', offset:1 }, { name:'朱雀', offset:2 },
-  { name:'六合', offset:3 }, { name:'勾陈', offset:4 }, { name:'青龙', offset:5 },
-  { name:'天空', offset:6 }, { name:'白虎', offset:7 }, { name:'太常', offset:8 },
-  { name:'玄武', offset:9 }, { name:'太阴', offset:10 }, { name:'天后', offset:11 },
-];
+// 日干寄宫（子=0）
+const JIGONG: Record<string, number> = { 甲:2, 乙:4, 丙:5, 丁:7, 戊:5, 己:7, 庚:8, 辛:10, 壬:11, 癸:1 };
+const STEM_HE: Record<string, string> = { 甲:'己', 己:'甲', 乙:'庚', 庚:'乙', 丙:'辛', 辛:'丙', 丁:'壬', 壬:'丁', 戊:'癸', 癸:'戊' };
 
-export function calculateLiuren(month: number, hour: number): LiurenResult {
-  const mBranch = DIZHI[(month + 1) % 12];
-  const hBranch = DIZHI[Math.floor((hour + 1) / 2) % 12];
+// 中气换将
+const QI_TO_GENERAL: Record<string, { name: string; branch: string }> = {
+  雨水: { name:'登明', branch:'亥' }, 春分: { name:'河魁', branch:'戌' },
+  谷雨: { name:'从魁', branch:'酉' }, 小满: { name:'传送', branch:'申' },
+  夏至: { name:'小吉', branch:'未' }, 大暑: { name:'胜光', branch:'午' },
+  处暑: { name:'太乙', branch:'巳' }, 秋分: { name:'天罡', branch:'辰' },
+  霜降: { name:'太冲', branch:'卯' }, 小雪: { name:'功曹', branch:'寅' },
+  冬至: { name:'大吉', branch:'丑' }, 大寒: { name:'神后', branch:'子' },
+};
+const SANHE_GROUPS = [['申','子','辰'],['亥','卯','未'],['寅','午','戌'],['巳','酉','丑']];
+const YIMA: Record<string, string> = {};
+for (const g of SANHE_GROUPS) {
+  const ma = g[0] === '申' ? '寅' : g[0] === '亥' ? '巳' : g[0] === '寅' ? '申' : '亥';
+  for (const b of g) YIMA[b] = ma;
+}
+const MENG = ['寅','申','巳','亥'];
+const ZHONG = ['子','午','卯','酉'];
+const GENERALS = ['贵人','螣蛇','朱雀','六合','勾陈','青龙','天空','白虎','太常','玄武','太阴','天后'];
+const GUI_RULE: Record<string, [string, string]> = {
+  甲:['丑','未'], 戊:['丑','未'], 庚:['丑','未'],
+  乙:['子','申'], 己:['子','申'],
+  丙:['亥','酉'], 丁:['亥','酉'],
+  辛:['午','寅'],
+  壬:['卯','巳'], 癸:['卯','巳'],
+};
 
-  const tgList = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+const bi = (i: number) => DIZHI[((i % 12) + 12) % 12];
+const idx = (b: string) => DIZHI.indexOf(b);
+const keEl = (a: string, b: string) => KE[a] === b;
 
-  // Four Lessons (四课)
-  const lessons: LiurenLesson[] = [];
-  for (let i = 0; i < 4; i++) {
-    const stemOffset = (month + i * 2) % 10;
-    const branchOffset = (hour + i * 3) % 12;
-    lessons.push({
-      position: ['日','辰','阴','神'][i],
-      stem: tgList[stemOffset],
-      branch: DIZHI[branchOffset],
-      element: BRANCH_ELE[DIZHI[branchOffset]],
-    });
+function liuqin(dayEl: string, yaoEl: string): string {
+  if (dayEl === yaoEl) return '兄弟';
+  if (SHENG[yaoEl] === dayEl) return '父母';
+  if (SHENG[dayEl] === yaoEl) return '子孙';
+  if (KE[yaoEl] === dayEl) return '官鬼';
+  if (KE[dayEl] === yaoEl) return '妻财';
+  return '兄弟';
+}
+
+function sanhePrev(b: string): string {
+  for (const g of SANHE_GROUPS) {
+    const i = g.indexOf(b);
+    if (i >= 0) return g[(i + 2) % 3];
+  }
+  return b;
+}
+
+export interface LiurenLesson { label: string; lower: string; upper: string; }
+export interface LiurenChuan { sequence: string; branch: string; general: string; liuqin: string; }
+export interface LiurenPlateCell { earth: string; heaven: string; general: string; }
+
+export interface LiurenResult {
+  input: { year: number; month: number; day: number; hour: number; dayGanZhi: string; hourBranch: string };
+  dayStem: string;
+  dayBranch: string;
+  dayGanZhi: string;
+  xunKong: { xun: string; branches: string[] };
+  monthGeneral: { name: string; branch: string; qi: string; sitsOn: string };
+  dayLodge: string;
+  plate: LiurenPlateCell[];
+  lessons: LiurenLesson[];
+  chuan: LiurenChuan[];
+  pattern: string;
+  method: string;
+  generalStart: { gui: string; dayNight: string; forward: boolean; sitsOn: string };
+  interpretation: string;
+}
+
+function getMonthGeneral(year: number, month: number, day: number, hour: number) {
+  const solar = Solar.fromYmdHms(year, month, day, hour, 0, 0);
+  const lunar = solar.getLunar();
+  const target = new Date(year, month - 1, day, hour, 0, 0).getTime();
+  const table: any = lunar.getJieQiTable();
+  let best: { name: string; ts: number } | null = null;
+  let earliest: { name: string; ts: number } | null = null;
+  for (const [name, obj] of Object.entries(table)) {
+    if (!QI_TO_GENERAL[name]) continue;
+    const s: any = obj;
+    if (!s || typeof s.getYear !== 'function') continue;
+    const ts = new Date(s.getYear(), s.getMonth() - 1, s.getDay(), s.getHour(), s.getMinute(), s.getSecond()).getTime();
+    if (!earliest || ts < earliest.ts) earliest = { name, ts };
+    if (ts <= target && (!best || ts > best.ts)) best = { name, ts };
+  }
+  const chosen = best || earliest;
+  const name = chosen?.name || '冬至';
+  const g = QI_TO_GENERAL[name];
+  return { name: g.name, branch: g.branch, qi: name };
+}
+
+export function calculateLiuren(year: number, month: number, day: number, hour: number): LiurenResult {
+  const solar = Solar.fromYmdHms(year, month, day, hour, 0, 0);
+  const lunar = solar.getLunar();
+  const dayGz = lunar.getDayInGanZhi();
+  const dayStem = dayGz[0];
+  const dayBranch = dayGz[1];
+  const hIdx = Math.floor((hour + 1) / 2) % 12;
+  const hourBranch = DIZHI[hIdx];
+  const dayLodge = DIZHI[JIGONG[dayStem]];
+
+  const mg = getMonthGeneral(year, month, day, hour);
+  const mgIdx = idx(mg.branch);
+  const tian = (di: number) => bi(mgIdx - hIdx + di);
+  const inverseTian = (tb: string) => bi(idx(tb) + hIdx - mgIdx);
+  const diOfTian = (tb: string) => ((idx(tb) + hIdx - mgIdx) % 12 + 12) % 12;
+
+  const ganYang = tian(JIGONG[dayStem]);
+  const ganYin = tian(idx(ganYang));
+  const zhiYang = tian(idx(dayBranch));
+  const zhiYin = tian(idx(zhiYang));
+  const lessons: LiurenLesson[] = [
+    { label: '一课', lower: dayLodge, upper: ganYang },
+    { label: '二课', lower: ganYang, upper: ganYin },
+    { label: '三课', lower: dayBranch, upper: zhiYang },
+    { label: '四课', lower: zhiYang, upper: zhiYin },
+  ];
+  const distinct = new Set(lessons.map((l) => `${l.lower}-${l.upper}`)).size;
+  const isYangStem = GAN.indexOf(dayStem) % 2 === 0;
+  const isYangBranch = (b: string) => idx(b) % 2 === 0;
+
+  const keRecords = lessons.map((l) => {
+    if (keEl(BRANCH_ELE[l.upper], BRANCH_ELE[l.lower])) return { ...l, kind: '上克下' as const };
+    if (keEl(BRANCH_ELE[l.lower], BRANCH_ELE[l.upper])) return { ...l, kind: '下贼上' as const };
+    return null;
+  }).filter(Boolean) as (LiurenLesson & { kind: '上克下' | '下贼上' })[];
+
+  const isFu = mgIdx === hIdx;
+  const isFan = ((mgIdx - hIdx) % 12 + 12) % 12 === 6;
+
+  const chainFrom = (init: string, n = 2) => {
+    const out = [init];
+    for (let i = 0; i < n; i++) out.push(tian(idx(out[out.length - 1])));
+    return out;
+  };
+  const pickByYinYang = (pool: (LiurenLesson & { kind: string })[]) => {
+    const hit = pool.find((r) => isYangBranch(r.upper) === isYangStem);
+    return hit || pool[0];
+  };
+  const shehaiScore = (r: LiurenLesson) => {
+    const shen = r.upper;
+    let b = idx(r.lower);
+    const target = idx(shen);
+    let score = 0;
+    for (let step = 0; step < 12; step++) {
+      if (b === target) break;
+      b = (b + 1) % 12;
+      const br = DIZHI[b];
+      if (keEl(BRANCH_ELE[br], BRANCH_ELE[shen])) score += 2;
+      score += MENG.includes(br) ? 2 : ZHONG.includes(br) ? 1 : 0;
+    }
+    return score;
+  };
+
+  let chuanBranches: string[] = [];
+  let pattern = '';
+  let method = '';
+
+  if (isFu) {
+    pattern = '伏吟课';
+    let init: string;
+    if (keRecords.length) {
+      init = pickByYinYang(keRecords).upper;
+      method = '伏吟法（自任）';
+    } else {
+      init = isYangStem ? ganYang : zhiYang;
+      method = '伏吟法（杜传）';
+    }
+    const mid = bi(idx(init) + 6);
+    const last = bi(idx(mid) + 6);
+    chuanBranches = [init, mid, last];
+  } else if (isFan) {
+    pattern = '返吟课';
+    if (keRecords.length) {
+      const init = pickByYinYang(keRecords).upper;
+      chuanBranches = [init, tian(idx(init)), tian(idx(tian(idx(init))))];
+      method = '返吟法';
+    } else {
+      chuanBranches = [YIMA[dayBranch], zhiYang, ganYang];
+      method = '返吟法（井栏）';
+    }
+  } else if (keRecords.length === 1) {
+    const r = keRecords[0];
+    chuanBranches = chainFrom(r.upper);
+    pattern = r.kind === '上克下' ? '元首课' : '重审课';
+    method = r.kind === '上克下' ? '贼克法（一上克下）' : '贼克法（一下贼上）';
+  } else if (keRecords.length > 1) {
+    const same = keRecords.filter((r) => isYangBranch(r.upper) === isYangStem);
+    if (same.length === 1) {
+      chuanBranches = chainFrom(same[0].upper);
+      pattern = '知一课';
+      method = '比用法';
+    } else {
+      const pool = same.length > 1 ? same : keRecords;
+      const ranked = pool.map((r) => ({ r, score: shehaiScore(r) })).sort((a, b) => b.score - a.score);
+      const topScore = ranked[0].score;
+      const top = ranked.filter((x) => x.score === topScore).map((x) => x.r);
+      const chosen = pickByYinYang(top);
+      chuanBranches = chainFrom(chosen.upper);
+      pattern = '涉害课';
+      method = '涉害法';
+    }
+  } else if (distinct === 2) {
+    pattern = '八专课';
+    method = '八专法';
+    const init = isYangStem ? bi(idx(ganYang) + 3) : bi(idx(zhiYin) - 3);
+    chuanBranches = chainFrom(init);
+  } else if (distinct === 3) {
+    pattern = '别责课';
+    method = '别责法';
+    let init: string;
+    if (isYangStem) {
+      const he = STEM_HE[dayStem];
+      init = tian(JIGONG[he]);
+    } else {
+      init = tian(idx(sanhePrev(dayBranch)));
+    }
+    chuanBranches = [init, ganYang, zhiYang];
+  } else {
+    const yao = lessons.filter((l) => keEl(BRANCH_ELE[l.upper], STEM_ELE[dayStem]));
+    const she = lessons.filter((l) => keEl(STEM_ELE[dayStem], BRANCH_ELE[l.upper]));
+    const pool = yao.length ? yao : she;
+    if (pool.length) {
+      const chosen = pickByYinYang(pool as any);
+      chuanBranches = chainFrom(chosen.upper);
+      pattern = '遥克课';
+      method = '遥克法';
+    } else {
+      pattern = '昴星课';
+      method = '昴星法';
+      if (isYangStem) {
+        chuanBranches = [tian(idx('酉')), ganYang, zhiYang];
+      } else {
+        chuanBranches = [inverseTian('酉'), zhiYang, ganYang];
+      }
+    }
   }
 
-  // Three Transmissions (三传)
-  const chuan: LiurenChuan[] = [];
-  const chuanNames = ['初传','中传','末传'];
-  const chuanLabels = ['贼克','比用','涉害'];
-
-  for (let i = 0; i < 3; i++) {
-    const bo = (month + hour + i * 3) % 12;
-    const so = (month + i * 5) % 10;
-    chuan.push({
-      sequence: chuanNames[i],
-      stem: tgList[so],
-      branch: DIZHI[bo],
-      name: chuanLabels[i],
-    });
+  // 十二天将（贵人昼夜 + 顺逆）
+  const night = !(hIdx >= 3 && hIdx <= 8);
+  const rule = GUI_RULE[dayStem];
+  const gui = night ? rule[1] : rule[0];
+  const guiDi = DIZHI[diOfTian(gui)];
+  const forward = ['巳','亥','辰','戌','丑','未'].includes(guiDi);
+  const generalByTian: Record<string, string> = {};
+  for (let k = 0; k < 12; k++) {
+    const t = bi(idx(gui) + (forward ? k : -k));
+    generalByTian[t] = GENERALS[k];
   }
-
-  // Twelve Generals (十二天将)
-  const guirenOffset = (month * 2 + hour) % 12;
-  const twelveGenerals = SHIER_JIANG.map((g) => {
-    const branchIdx = (guirenOffset + g.offset) % 12;
-    const b = DIZHI[branchIdx];
-    const directions = ['北','东北','东北','东','东南','东南','南','西南','西南','西','西北','西北'];
-    return {
-      name: g.name,
-      branch: b,
-      element: BRANCH_ELE[b],
-      direction: directions[branchIdx],
-    };
+  const plate: LiurenPlateCell[] = DIZHI.map((earth, di) => {
+    const heaven = tian(di);
+    return { earth, heaven, general: generalByTian[heaven] || '' };
   });
 
-  // Interpretation
-  const chuanSummary = chuan.map((c) => `${c.sequence}${c.branch}${c.name}`).join(' → ');
-  const interpretation = `四课三传: ${chuanSummary}。贵人乘${twelveGenerals[0].branch}，主${twelveGenerals[0].name}临位。`;
+  // 旬空
+  let dayIdx60 = 0;
+  for (let i = 0; i < 60; i++) {
+    if (GAN[i % 10] === dayStem && DIZHI[i % 12] === dayBranch) { dayIdx60 = i; break; }
+  }
+  const xunStart = Math.floor(dayIdx60 / 10) * 10;
+  const xun = `${GAN[xunStart % 10]}${DIZHI[xunStart % 12]}旬`;
+  const empties = [bi(xunStart + 10), bi(xunStart + 11)];
+
+  const dayEl = STEM_ELE[dayStem];
+  const chuan: LiurenChuan[] = chuanBranches.map((b, i) => ({
+    sequence: ['初传', '中传', '末传'][i],
+    branch: b,
+    general: generalByTian[b] || '',
+    liuqin: liuqin(dayEl, BRANCH_ELE[b]),
+  }));
+
+  const interpretation = `${dayGz}日${hourBranch}时，月将${mg.name}（${mg.branch}）加时；${pattern}，三传${chuan.map((c) => c.branch).join('→')}；贵人${gui}（${night ? '夜' : '昼'}）${forward ? '顺' : '逆'}布。本盘为算法排盘，解说仅作参考。`;
 
   return {
-    monthGeneral: DIZHI[(month + 5) % 12],
-    hourGeneral: hBranch,
+    input: { year, month, day, hour, dayGanZhi: dayGz, hourBranch },
+    dayStem, dayBranch, dayGanZhi: dayGz,
+    xunKong: { xun, branches: empties },
+    monthGeneral: { ...mg, sitsOn: hourBranch },
+    dayLodge,
+    plate,
     lessons,
     chuan,
-    twelveGenerals,
+    pattern,
+    method,
+    generalStart: { gui, dayNight: night ? '夜' : '昼', forward, sitsOn: guiDi },
     interpretation,
   };
 }
 
-const LIUREN_ELEMENT_RELATIONS: Record<string, string> = {
-  '木火': '木生火，为相生关系，主顺遂通达，事业有贵人相助',
-  '火土': '火生土，为相生关系，主根基稳固，财运渐起',
-  '土金': '土生金，为相生关系，主收获丰厚，财富积累',
-  '金水': '金生水，为相生关系，主智慧流通，消息灵通',
-  '水木': '水生木，为相生关系，主生机勃勃，新事顺利',
-  '木土': '木克土，为相克关系，主阻碍困难，宜守不宜攻',
-  '土水': '土克水，为相克关系，主财运受阻，需谨慎行事',
-  '水火': '水克火，为相克关系，主口舌是非，注意人际关系',
-  '火金': '火克金，为相克关系，主破财损耗，投资需谨慎',
-  '金木': '金克木，为相克关系，主压力重重，宜以柔克刚',
-  '木木': '木木比和，为同类相助，主团结合作，人脉广阔',
-  '火火': '火火比和，为同类相助，主热情高涨，名声在外',
-  '土土': '土土比和，为同类相助，主稳重厚实，稳中求进',
-  '金金': '金金比和，为同类相助，主刚毅果断，财源广进',
-  '水水': '水水比和，为同类相助，主智慧深远，谋略得当',
-};
-
-const GENERAL_ANALYSIS: Record<string, string> = {
-  贵人: '贵人主尊贵护佑，临位则贵人相助，逢凶化吉。贵人乘吉支则万事顺遂，乘凶支则贵人远离，需主动寻助。',
-  螣蛇: '螣蛇主虚惊怪异，临位则有口舌是非、怪异之事。螣蛇属火，遇火支则虚惊加倍，宜持正守心，勿轻信虚言。',
-  朱雀: '朱雀主文书信息，临位则有消息传来，利于考试、文书、通讯之事。朱雀得吉则文书顺利，得凶则消息不利。',
-  六合: '六合主和合婚姻，临位则利于合作、婚恋、谈判。六合为和合之神，诸事得助，人缘极佳，利于社交活动。',
-  勾陈: '勾陈主争讼纠纷，临位则易有官非、争斗之事。勾陈属土，宜守不宜攻，避免与人争执，凡事忍让为上。',
-  青龙: '青龙主喜庆升迁，临位则喜事临门，利于求官、求财、升迁。青龙为吉神之首，所到之处多有喜庆之事。',
-  天空: '天空主虚诈不实，临位则易有虚假信息、空欢喜之事。天空临位需谨慎，勿轻信他人许诺，脚踏实地为上。',
-  白虎: '白虎主凶伤灾祸，临位则需防范意外、疾病、血光之灾。白虎为凶神之首，宜安守静待，避免冒险行动。',
-  太常: '太常主饮食宴乐，临位则利于聚会、宴请、享受之事。太常属土，享乐之余需注意节制，避免骄奢。',
-  玄武: '玄武主盗贼暗昧，临位则易有失窃、暗害、阴私之事。玄武属水，宜加强防范，保管财物，谨防小人。',
-  太阴: '太阴主隐秘策划，临位则利于谋略、暗中行事。太阴属金，宜低调行事，暗中布局，待时而动。',
-  天后: '天后主女性贵人，临位则得女性贵人相助，利于婚姻、美容、艺术之事。天后为阴柔之吉神，以柔克刚。',
-};
-
-const SIX_RELATIONS = {
-  父母: '父母爻主文书、学业、长辈之事。父母临旺相则学业有成，考试顺利；父母临休囚则文书迟滞，长辈有忧。',
-  兄弟: '兄弟爻主手足、朋友、同辈之事。兄弟临旺相则朋友得力，合作顺利；兄弟临休囚则朋友离散，孤立无援。',
-  妻财: '妻财爻主财富、妻子、交易之事。妻财临旺相则财运亨通，婚姻美满；妻财临休囚则钱财损耗，感情不和。',
-  官鬼: '官鬼爻主功名、官职、疾病之事。官鬼临旺相则仕途顺利，声望提升；官鬼临休囚则官非缠身，身体有恙。',
-  子孙: '子孙爻主子嗣、娱乐、解忧之事。子孙临旺相则子女安康，心情愉悦；子孙临休囚则子嗣有忧，烦恼不断。',
-};
-
-const ACTION_ADVICE: Record<string, string> = {
-  追求: '当前气场利于进取，建议把握时机主动出击。事业上可积极谋求升迁，感情上可大胆表白，财运上可适当投资。',
-  守成: '当前气场宜守不宜攻，建议稳守既有成果。不宜做出重大决策，投资需谨慎，避免冲动行事。维持现状，积蓄力量。',
-  等待: '当前气场尚需酝酿，建议耐心等待时机。急进反而招损，保持低调行事，待贵人相助或气场转变之后再行动。',
-};
-
-export function analyzeLiuren(result: LiurenResult, month: number, hour: number): string {
+export function analyzeLiuren(result: LiurenResult): string {
   const lines: string[] = [];
-
-  // ===== 课体分析 =====
-  lines.push('【课体分析】');
-  const lessonDescs = result.lessons.map((l, i) => {
-    const posLabel = ['第一课（日）','第二课（辰）','第三课（阴）','第四课（神）'][i];
-    return `${posLabel}：天干${l.stem}、地支${l.branch}、五行属${l.element}，此为${l.element === '木' ? '万物生长之象' : l.element === '火' ? '光明热烈之象' : l.element === '土' ? '厚重载物之象' : l.element === '金' ? '刚毅果断之象' : '智慧流动之象'}`;
-  });
-  lines.push(lessonDescs.join('\n'));
-  lines.push('四课之中，' +
-    `日课${result.lessons[0].stem}${result.lessons[0].branch}主问事之主体，` +
-    `辰课${result.lessons[1].stem}${result.lessons[1].branch}主外部环境，` +
-    `阴课${result.lessons[2].stem}${result.lessons[2].branch}主内部隐情，` +
-    `神课${result.lessons[3].stem}${result.lessons[3].branch}主变化趋势。`);
-
-  const lesson1 = result.lessons[0];
-  const lesson2 = result.lessons[1];
-  const relKey12 = lesson1.element + lesson2.element;
-  const rel12 = LIUREN_ELEMENT_RELATIONS[relKey12] || '课体关系平和中正，无甚偏颇';
-  lines.push(`日课与辰课：${rel12}。`);
-
-  // ===== 三传分析 =====
-  lines.push('');
-  lines.push('【三传分析】');
-  lines.push('三传者，事物发展之三个阶段也：');
-  for (const c of result.chuan) {
-    const stageLabel = c.sequence === '初传' ? '初始阶段' : c.sequence === '中传' ? '发展阶段' : '结果阶段';
-    const methodLabel = c.name === '贼克' ? '贼克法：以克为主，主争讼竞争之事' :
-      c.name === '比用' ? '比用法：以比和为主，主合作和谐之事' :
-      '涉害法：以利害为主，主复杂多变之事';
-    lines.push(`${c.sequence}（${stageLabel}）：天干${c.stem}、地支${c.branch}，取${methodLabel}。`);
-  }
-  const chuanFlow = result.chuan.map((c) => c.branch).join(' → ');
-  lines.push(`三传流势：${chuanFlow}，` +
-    `体现事态从${result.chuan[0].branch}地走向${result.chuan[2].branch}地之变化过程。`);
-
-  // ===== 十二天将分析 =====
-  lines.push('');
-  lines.push('【十二天将分析】');
-  const guiren = result.twelveGenerals[0];
-  lines.push(`月将：${result.monthGeneral}，时神：${result.hourGeneral}。` +
-    `贵人起于${guiren.branch}位，属${guiren.element}，方向在${guiren.direction}。`);
-  for (const g of result.twelveGenerals) {
-    const genAnalysis = GENERAL_ANALYSIS[g.name] || `${g.name}临${g.branch}位，需综合判断吉凶。`;
-    lines.push(`${g.name}：临${g.branch}（${g.element}·${g.direction}）。${genAnalysis}`);
-  }
-
-  // Highlight key generals
-  const qinglong = result.twelveGenerals[5];
-  const baihu = result.twelveGenerals[7];
-  lines.push(`\n重点提示：青龙临${qinglong.branch}${qinglong.direction}方，主吉庆之事；白虎临${baihu.branch}${baihu.direction}方，需防意外之灾。` +
-    `贵人${guiren.branch}位若为吉支，则贵人得力；若为凶支，则贵人难求。`);
-
-  // ===== 六亲关系 =====
-  lines.push('');
-  lines.push('【六亲关系分析】');
-  const allStems = [
-    ...result.lessons.map(l => l.stem),
-    ...result.chuan.map(c => c.stem),
-  ];
-  const uniqueStems = [...new Set(allStems)];
-  const rels = ['父母','兄弟','妻财','官鬼','子孙'];
-  const pickedRels: string[] = [];
-  for (let i = 0; i < Math.min(3, rels.length); i++) {
-    const ri = (month + hour + i * 2) % rels.length;
-    pickedRels.push(rels[ri]);
-  }
-  for (const r of pickedRels) {
-    const key = r as keyof typeof SIX_RELATIONS;
-    const desc = SIX_RELATIONS[key] || `${r}爻需综观全卦而定其吉凶。`;
-    const state = (month + hour) % 3 === 0 ? '旺相' : (month + hour) % 3 === 1 ? '平和' : '休囚';
-    lines.push(`${r}爻（${state}）：${desc}`);
-  }
-  const dominantBranch = result.lessons[0].branch;
-  const branchIdx = DIZHI.indexOf(dominantBranch);
-  const sixHe = DIZHI[(branchIdx + 6) % 12];
-  const sixHarm = DIZHI[(branchIdx + 1) % 12];
-  lines.push(`\n日支${dominantBranch}之六合为${sixHe}，六害为${sixHarm}。` +
-    `主事与属${['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗','猪'][DIZHI.indexOf(sixHe)]}之人合作有利，` +
-    `与属${['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗','猪'][DIZHI.indexOf(sixHarm)]}之人需谨慎相处。`);
-
-  // ===== 吉凶判断 =====
-  lines.push('');
-  lines.push('【吉凶判断】');
-  const goodGenerals = ['贵人','青龙','六合','太常','天后'];
-  const badGenerals = ['白虎','玄武','勾陈','螣蛇','天空'];
-  const goodCount = result.twelveGenerals.filter((g) => goodGenerals.includes(g.name)).length;
-  const badCount = result.twelveGenerals.filter((g) => badGenerals.includes(g.name)).length;
-
-  const ki = (month * 2 + hour) % 3;
-  if (ki === 0) {
-    lines.push('综合来看，本课吉神（贵人、青龙、六合、太常、天后）临位有力，凶神受制，气场以吉为主。' +
-      `贵人乘${guiren.branch}而临，青龙在${qinglong.branch}方，整体格局偏吉。` +
-      '然白虎、玄武等凶神虽受制，亦需防其暗中作祟。总体判断：吉多凶少，宜把握时机积极进取。');
-  } else if (ki === 1) {
-    lines.push('综合来看，本课吉凶参半。吉神虽临位但力量不足，凶神虽在但未成大患。' +
-      '气场处于均衡状态，事态发展取决于自身决策和行动。' +
-      `贵人${guiren.branch}位尚可，但白虎${baihu.branch}位亦需注意。` +
-      '总体判断：中平之象，宜稳中求进，谨慎决策。');
-  } else {
-    lines.push('综合来看，本课凶神较盛，气场偏于不利。宜守不宜攻，避免重大决策。' +
-      `白虎临${baihu.branch}位，需特别注意意外灾害和口舌是非。` +
-      '然天无绝人之路，青龙、贵人虽弱亦存，逢凶化吉之机仍在。' +
-      '总体判断：偏凶之象，宜低调行事，积蓄力量，待时而动。');
-  }
-
-  // ===== 行动建议 =====
-  lines.push('');
-  lines.push('【行动建议】');
-  const adviceKey = ki === 0 ? '追求' : ki === 1 ? '守成' : '等待';
-  lines.push(ACTION_ADVICE[adviceKey]);
-
-  const monthBranchIdx = (month + 1) % 12;
-  const luckyDir = ['东','东南','南','西南','西','西北','北','东北','中','东','南','西'][monthBranchIdx];
-  const unluckyDir = ['西','西北','北','东北','东','东南','南','西南','中','西','北','东'][monthBranchIdx];
-  lines.push(`\n方位建议：吉方在${luckyDir}方，凶方在${unluckyDir}方。` +
-    `重要事宜宜朝向${luckyDir}方进行，避免在${unluckyDir}方做重大决定。`);
-
-  const ausHours: Record<number, string> = { 1: '子时', 5: '辰时', 7: '午时', 11: '申时', 13: '酉时' };
-  const inausHours: Record<number, string> = { 3: '寅时', 9: '巳时', 15: '亥时' };
-  const h = Math.floor((hour + 1) / 2) % 12;
-  const luckyHour = ausHours[month] || '辰时';
-  const unluckyHour = inausHours[(month + 6) % 12] || '亥时';
-  lines.push(`时辰建议：宜选${luckyHour}行事，避开${unluckyHour}时段。`);
-
-  lines.push(`\n总体而言，月将${result.monthGeneral}、时神${result.hourGeneral}，` +
-    `三传${result.chuan.map((c) => c.branch).join('→')}之象，` +
-    `贵人${guiren.branch}位执事。` +
-    '建议结合具体问事类别（求财、求婚、求职、求医等）进行综合判断。' +
-    '六壬之道深奥莫测，此分析仅为盘面解读，最终吉凶祸福仍取决于个人德行修为与实际行动。' +
-    '善行积德可转祸为福，恶行损德则吉亦变凶，愿君慎之。');
-
+  lines.push(`【课体】${result.pattern}（${result.method}）`);
+  lines.push(`日干支 ${result.dayGanZhi}，旬空 ${result.xunKong.branches.join('、')}；月将 ${result.monthGeneral.name}（${result.monthGeneral.branch}）加 ${result.monthGeneral.sitsOn} 时。`);
+  lines.push(`四课：${result.lessons.map((l) => `${l.label}${l.lower}→${l.upper}`).join('；')}`);
+  lines.push(`三传：${result.chuan.map((c) => `${c.sequence}${c.branch}（${c.liuqin}·${c.general}）`).join(' → ')}`);
+  lines.push(`贵人起于 ${result.generalStart.gui}（${result.generalStart.dayNight}贵），${result.generalStart.forward ? '顺布' : '逆布'}。`);
+  lines.push('以上为模板化解读，仅供参考。');
   return lines.join('\n');
 }

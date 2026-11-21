@@ -40,8 +40,23 @@ export function calculateEightMansion(birthYear: number, gender: 'male' | 'femal
     : (birthYear < 2000 ? n + 5 : n + 4);
   guaNum = ((guaNum - 1) % 9 + 9) % 9 + 1;
   if (guaNum === 5) guaNum = gender === 'male' ? 2 : 8;
-  const birthGua = GUA_TO_BAGUA[guaNum];
-  const birthElement = BAGUA_ELEMENT[birthGua];
+  return buildMansion(GUA_TO_BAGUA[guaNum]);
+}
+
+// 按宅卦（坐山八卦）计算八宅八方游星，供阳宅页使用，与个人命卦同一口径。
+export function calculateHouseMansion(sittingGua: string): EightMansionResult {
+  return buildMansion(sittingGua);
+}
+
+// 由朝向（二十四山）取对宫坐山，再映射到八卦宅型。
+export function getSittingGua(facing: string): string {
+  const idx = ER_SHI_SI_SHAN.indexOf(facing as any);
+  const sittingShan = idx >= 0 ? ER_SHI_SI_SHAN[(idx + 12) % 24] : facing;
+  return SHAN_BAGUA[sittingShan] || '坎';
+}
+
+function buildMansion(birthGua: string): EightMansionResult {
+  const birthElement = BAGUA_ELEMENT[birthGua] || '土';
   const isEastFour = EAST_FOUR.includes(birthGua as any);
 
   const goodBagua = isEastFour ? EAST_GOOD_DIR[birthGua] : WEST_GOOD_DIR[birthGua];

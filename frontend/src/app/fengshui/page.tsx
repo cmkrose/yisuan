@@ -8,6 +8,8 @@ import { api } from '@/lib/api/client';
 import { fengshuiCompass, fengshuiEightMansion, fengshuiFlyingStars, fengshuiYangHouse, fengshuiYinHouse } from '@/lib/engines/fengshui/calculate';
 import { yearRangeDesc } from '@/lib/utils/year';
 import { STAR_NAMES } from '@/lib/constants/fengshui';
+import { ER_SHI_SI_SHAN } from '@/lib/engines/fengshui/constants';
+import { BAZHAI_STARS, FEIXING_STARS, YANGZHAI_HOUSES, YINZHAI_TOPICS } from '@/lib/data/meanings/fengshui-meanings';
 
 type TabKey = 'compass' | 'bazhai' | 'feixing' | 'yanghouse' | 'yinhouse';
 
@@ -44,44 +46,84 @@ export default function FengshuiPage() {
   const startRotationRef = useRef(0);
   const compassContainerRef = useRef<HTMLDivElement>(null);
 
+  const [followMode, setFollowMode] = useState(false);
+  const [followSupported, setFollowSupported] = useState(true);
+  const [followMsg, setFollowMsg] = useState('');
+  const followHeadingRef = useRef(0);
+
   useEffect(() => { try { const data: any = fengshuiCompass(); setCompassData(data?.mountains); } catch {} }, []);
 
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDraggingRef.current) return;
-      const container = compassContainerRef.current;
-      if (!container) return;
-      const rect = container.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      const currentAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX) * (180 / Math.PI);
-      let delta = currentAngle - startAngleRef.current;
-      if (delta > 180) delta -= 360;
-      if (delta < -180) delta += 360;
-      let newRotation = startRotationRef.current + delta;
-      newRotation = ((newRotation % 360) + 360) % 360;
-      rotationRef.current = newRotation;
-      setRotation(Math.round(newRotation));
-    };
-    const handleMouseUp = () => { isDraggingRef.current = false; };
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
+    setFollowSupported(typeof window !== 'undefined' && 'DeviceOrientationEvent' in window);
   }, []);
 
-  const handleCompassMouseDown = (e: React.MouseEvent) => {
+  useEffect(() => {
+    if (!followMode) return;
+    const handler = (e: DeviceOrientationEvent) => {
+      const anyE = e as any;
+      let target: number | null = null;
+      if (typeof anyE.webkitCompassHeading === 'number') target = anyE.webkitCompassHeading;
+      else if (typeof e.alpha === 'number') target = (360 - e.alpha + 360) % 360;
+      if (target === null) return;
+      const prev = followHeadingRef.current;
+      const delta = ((target - prev + 540) % 360) - 180;
+      const next = (prev + delta * 0.2 + 360) % 360;
+      followHeadingRef.current = next;
+      rotationRef.current = next;
+      setRotation(next);
+    };
+    window.addEventListener('deviceorientation', handler);
+    return () => window.removeEventListener('deviceorientation', handler);
+  }, [followMode]);
+
+  const calcAngle = (clientX: number, clientY: number) => {
     const container = compassContainerRef.current;
-    if (!container) return;
+    if (!container) return 0;
     const rect = container.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
-    startAngleRef.current = Math.atan2(e.clientY - centerY, e.clientX - centerX) * (180 / Math.PI);
-    startRotationRef.current = rotationRef.current;
+    return Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI);
+  };
+
+  const handleCompassPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (followMode) return;
     isDraggingRef.current = true;
+    startAngleRef.current = calcAngle(e.clientX, e.clientY);
+    startRotationRef.current = rotationRef.current;
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch {}
     e.preventDefault();
+  };
+
+  const handleCompassPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current || followMode) return;
+    let delta = calcAngle(e.clientX, e.clientY) - startAngleRef.current;
+    if (delta > 180) delta -= 360;
+    if (delta < -180) delta += 360;
+    const newRotation = ((startRotationRef.current + delta) % 360 + 360) % 360;
+    rotationRef.current = newRotation;
+    setRotation(newRotation);
+  };
+
+  const endCompassDrag = (e: React.PointerEvent<HTMLDivElement>) => {
+    isDraggingRef.current = false;
+    try { e.currentTarget.releasePointerCapture(e.pointerId); } catch {}
+  };
+
+  const toggleFollow = async () => {
+    if (followMode) { setFollowMode(false); setFollowMsg('已停止跟随'); return; }
+    if (typeof window === 'undefined' || !('DeviceOrientationEvent' in window)) {
+      setFollowSupported(false); setFollowMsg('当前设备不支持方向感应'); return;
+    }
+    try {
+      const anyDOE = DeviceOrientationEvent as any;
+      if (typeof anyDOE.requestPermission === 'function') {
+        const res = await anyDOE.requestPermission();
+        if (res !== 'granted') { setFollowMsg('未获得方向权限'); return; }
+      }
+    } catch { setFollowMsg('方向权限申请失败'); return; }
+    followHeadingRef.current = rotationRef.current;
+    setFollowMsg('');
+    setFollowMode(true);
   };
 
   const [bazhai, setBazhai] = useState({ birthYear: 1990, gender: 'male' as 'male' | 'female' });
@@ -142,9 +184,12 @@ export default function FengshuiPage() {
                   <h3 className="text-xl font-chinese font-bold text-xuan-gold mb-6">二十四山罗盘</h3>
                   <div
                     ref={compassContainerRef}
-                    onMouseDown={handleCompassMouseDown}
-                    className="relative cursor-grab active:cursor-grabbing select-none"
-                    style={{ width: compassRadius * 2 + 60, height: compassRadius * 2 + 60 }}
+                    onPointerDown={handleCompassPointerDown}
+                    onPointerMove={handleCompassPointerMove}
+                    onPointerUp={endCompassDrag}
+                    onPointerCancel={endCompassDrag}
+                    className={`relative select-none ${followMode ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}`}
+                    style={{ width: compassRadius * 2 + 60, height: compassRadius * 2 + 60, touchAction: 'none' }}
                   >
                     <svg width={compassRadius * 2 + 60} height={compassRadius * 2 + 60} viewBox={`0 0 ${compassRadius * 2 + 60} ${compassRadius * 2 + 60}`} style={{ pointerEvents: 'none' }}>
                       <defs><filter id="glow"><feGaussianBlur stdDeviation="2" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge></filter></defs>
@@ -182,10 +227,19 @@ export default function FengshuiPage() {
                   </div>
                   <div className="mt-4 text-center">
                     <div className="text-2xl font-chinese font-bold text-xuan-gold">
-                      {rotation}° · {compassData[topMountainIndex]?.name ?? '—'}山
+                      {Math.round(rotation)}° · {compassData[topMountainIndex]?.name ?? '—'}山
                     </div>
                     <div className="text-xs text-xuan-muted font-chinese">
                       {compassData[topMountainIndex]?.element ?? '—'} · 拖动罗盘调整朝向
+                    </div>
+                    <div className="mt-3 flex flex-col items-center gap-1">
+                      <button type="button" onClick={toggleFollow} disabled={!followSupported}
+                        className={`px-4 py-2 rounded-lg text-sm border font-chinese transition-all ${followMode ? 'border-xuan-jade bg-xuan-jade/10 text-xuan-jade' : 'border-xuan-border text-xuan-silver hover:border-xuan-jade/30'} ${!followSupported ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                        {followMode ? '停止跟随' : '跟随方向'}
+                      </button>
+                      <div className="text-[11px] font-chinese text-xuan-muted">
+                        {!followSupported ? '当前设备不支持方向感应' : followMsg || (followMode ? '跟随设备方向中（已暂停拖动）' : '拖动罗盘或开启方向跟随')}
+                      </div>
                     </div>
                   </div>
                   <div className="mt-4 w-full max-w-lg">
@@ -232,28 +286,41 @@ export default function FengshuiPage() {
                     <div className="card-xuan-gold p-6 text-center">
                       <div className="text-4xl font-chinese font-bold text-xuan-gold mb-2">{result.data.birthGua}</div>
                       <div className="text-sm text-xuan-muted">命卦 ({result.data.birthElement}) · {result.data.isEastFour ? '东四命' : '西四命'}</div>
+                      <div className="text-[10px] text-xuan-muted mt-2">游星解说为模板化解读，仅供参考。</div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="card-xuan p-4 border border-emerald-500/30">
                         <h4 className="text-sm font-chinese font-bold text-emerald-400 mb-3">吉利方位</h4>
                         <div className="space-y-2">
-                          {result.data.favorableDirections.map((d: any, i: number) => (
-                            <div key={i} className="flex justify-between text-xs font-chinese py-1 border-b border-xuan-border">
-                              <span className="text-xuan-gold">{d.direction}({d.shan})</span>
-                              <span className="text-emerald-400">{d.rating}</span>
-                            </div>
-                          ))}
+                          {result.data.favorableDirections.map((d: any, i: number) => {
+                            const m = BAZHAI_STARS[String(d.rating).replace(/\(.*\)$/, '')];
+                            return (
+                              <div key={i} title={m ? `${m.detail}\n布局：${m.layout}` : ''} className="py-2 border-b border-xuan-border">
+                                <div className="flex justify-between text-xs font-chinese">
+                                  <span className="text-xuan-gold">{d.direction}({d.shan})</span>
+                                  <span className="text-emerald-400">{d.rating}</span>
+                                </div>
+                                {m && <div className="text-[10px] text-xuan-muted mt-1 leading-snug">{m.brief}</div>}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                       <div className="card-xuan p-4 border border-red-500/30">
                         <h4 className="text-sm font-chinese font-bold text-red-400 mb-3">不利方位</h4>
                         <div className="space-y-2">
-                          {result.data.unfavorableDirections.map((d: any, i: number) => (
-                            <div key={i} className="flex justify-between text-xs font-chinese py-1 border-b border-xuan-border">
-                              <span className="text-xuan-muted">{d.direction}({d.shan})</span>
-                              <span className="text-red-400">{d.rating}</span>
-                            </div>
-                          ))}
+                          {result.data.unfavorableDirections.map((d: any, i: number) => {
+                            const m = BAZHAI_STARS[String(d.rating).replace(/\(.*\)$/, '')];
+                            return (
+                              <div key={i} title={m ? `${m.detail}\n布局：${m.layout}` : ''} className="py-2 border-b border-xuan-border">
+                                <div className="flex justify-between text-xs font-chinese">
+                                  <span className="text-xuan-muted">{d.direction}({d.shan})</span>
+                                  <span className="text-red-400">{d.rating}</span>
+                                </div>
+                                {m && <div className="text-[10px] text-xuan-muted mt-1 leading-snug">{m.brief}</div>}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     </div>
@@ -293,23 +360,35 @@ export default function FengshuiPage() {
                       <span className="px-3 py-1 bg-xuan-gold/10 text-xuan-gold rounded-full">中宫: {STAR_NAMES[result.data.centerStar]?.name || result.data.centerStar}</span>
                       <span className="px-3 py-1 bg-amber-500/10 text-amber-400 rounded-full">财位: {result.data.wealthPosition}方</span>
                     </div>
+                    {(() => {
+                      const cm = FEIXING_STARS[(STAR_NAMES[result.data.centerStar]?.name || '').slice(0, 2)];
+                      return cm ? (
+                        <div className="card-xuan p-3 text-xs font-chinese text-xuan-silver leading-relaxed">
+                          中宫点评：{cm.nature}｜{cm.brief}
+                        </div>
+                      ) : null;
+                    })()}
                     <div className="card-xuan-gold p-4 sm:p-6">
                       <h3 className="text-lg font-chinese font-bold text-xuan-gold mb-4 text-center">九宫飞星</h3>
                       <div className="grid grid-cols-3 gap-2 max-w-sm mx-auto">
                         {result.data.grid.map((g: any, i: number) => {
                           const starInfo = STAR_NAMES[g.star];
                           const colors = starColors[g.star] || '';
+                          const m = FEIXING_STARS[(starInfo?.name || g.name || '').slice(0, 2)];
                           return (
-                            <div key={i} className={`p-3 rounded-lg border bg-gradient-to-br ${colors} text-center`}>
+                            <div key={i} title={m ? `${m.nature}｜${m.detail}` : ''} className={`p-3 rounded-lg border bg-gradient-to-br ${colors} text-center`}>
                               <div className="text-xs text-xuan-muted mb-1">{['东南','南','西南','东','中','西','东北','北','西北'][i]}</div>
                               <div className="text-xl font-chinese font-bold text-white">{g.star}</div>
                               <div className="text-[10px] font-chinese mt-0.5">{starInfo?.name || g.name}</div>
                               <div className="text-[9px] font-chinese text-xuan-muted">{starInfo?.element}</div>
                               {(g.note || starInfo?.note) && <div className="text-[9px] font-chinese text-xuan-gold/80 mt-0.5">{g.note || starInfo?.note}</div>}
+                              {m && <div className="text-[9px] font-chinese text-xuan-muted mt-0.5 leading-snug">{m.brief}</div>}
+                              {m && <div className="text-[9px] font-chinese text-xuan-gold/80 mt-0.5">{m.nature}</div>}
                             </div>
                           );
                         })}
                       </div>
+                      <div className="mt-3 text-[10px] text-xuan-muted font-chinese text-center">飞星解说为模板化解读，仅供参考。</div>
                     </div>
                     {result.data.analysis && (
                       <div className="card-xuan-gold p-6">
@@ -332,7 +411,7 @@ export default function FengshuiPage() {
                       <label className="text-xs text-xuan-muted font-chinese mb-1 block">房屋坐向</label>
                       <select value={yangHouse.facing} onChange={e => setYangHouse({...yangHouse, facing: e.target.value})}
                         className="w-full px-3 py-3 bg-xuan-dark border border-xuan-border rounded-lg text-sm text-white">
-                        {['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'].map(s=><option key={s} value={s}>{s}山</option>)}
+                        {ER_SHI_SI_SHAN.map(s=><option key={s} value={s}>{s}山</option>)}
                       </select>
                     </div>
                     <div>
@@ -355,6 +434,43 @@ export default function FengshuiPage() {
                         {result.data.summary}
                       </div>
                     </div>
+                    {result.data.sittingGua && (() => {
+                      const gua = result.data.sittingGua;
+                      const h = YANGZHAI_HOUSES[gua];
+                      const baz = result.data.bazhai;
+                      return (
+                        <>
+                          <div className="card-xuan-gold p-6">
+                            <h4 className="text-sm font-chinese font-bold text-xuan-gold mb-3">宅型：{gua}宅（{h?.group || '—'}）</h4>
+                            {h && <>
+                              <p className="text-sm font-chinese text-xuan-silver leading-relaxed">{h.brief}</p>
+                              <p className="text-xs font-chinese text-xuan-silver leading-relaxed mt-2">{h.detail}</p>
+                              <p className="text-xs font-chinese text-xuan-muted leading-relaxed mt-2">门主灶三要：{h.tips}</p>
+                            </>}
+                          </div>
+                          {baz && (
+                            <div className="card-xuan p-4">
+                              <h4 className="text-sm font-chinese font-bold text-xuan-gold mb-3">八方游星（按{gua}宅）</h4>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {[...baz.favorableDirections, ...baz.unfavorableDirections].map((d: any, i: number) => {
+                                  const m = BAZHAI_STARS[String(d.rating).replace(/\(.*\)$/, '')];
+                                  return (
+                                    <div key={i} title={m ? `${m.detail}\n布局：${m.layout}` : ''} className="p-2 bg-xuan-dark rounded border border-xuan-border">
+                                      <div className="flex justify-between text-xs font-chinese">
+                                        <span className="text-xuan-silver">{d.direction}({d.shan})</span>
+                                        <span className={String(d.rating).includes('吉') ? 'text-emerald-400' : 'text-red-400'}>{d.rating}</span>
+                                      </div>
+                                      {m && <div className="text-[10px] text-xuan-muted mt-1 leading-snug">{m.brief}</div>}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              <div className="mt-3 text-[10px] text-xuan-muted font-chinese text-center">阳宅与游星解说为模板化解读，仅供参考。</div>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                     {result.data.keyPoints && (
                       <div className="card-xuan p-4">
                         <h4 className="text-sm font-chinese font-bold text-xuan-gold mb-3">装修建议要点</h4>
@@ -401,16 +517,24 @@ export default function FengshuiPage() {
                         {result.data.summary}
                       </div>
                     </div>
-                    {result.data.keyPoints && (
-                      <div className="card-xuan p-4">
-                        <h4 className="text-sm font-chinese font-bold text-xuan-gold mb-3">选址要点</h4>
-                        <div className="space-y-2">
-                          {result.data.keyPoints.map((kp: string, i: number) => (
-                            <div key={i} className="text-xs font-chinese text-xuan-silver bg-xuan-dark p-3 rounded border border-xuan-border">• {kp}</div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                    <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg text-xs font-chinese text-amber-300">
+                      原则性解读，不能替代实地勘测。
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {['龙','穴','砂','水','向','明堂','水口'].map((k) => {
+                        const t = YINZHAI_TOPICS[k];
+                        if (!t) return null;
+                        return (
+                          <div key={k} className="card-xuan p-4">
+                            <h4 className="text-sm font-chinese font-bold text-xuan-gold mb-2">{k}</h4>
+                            <p className="text-xs font-chinese text-xuan-silver leading-relaxed">{t.brief}</p>
+                            <p className="text-[11px] font-chinese text-xuan-silver leading-relaxed mt-1">{t.detail}</p>
+                            <p className="text-[10px] font-chinese text-xuan-muted leading-relaxed mt-2">评判要点：{t.keyPoints}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="text-[10px] text-xuan-muted font-chinese text-center">以上为原则性解读，不能替代实地勘测。</div>
                   </div>
                 )}
               </motion.div>

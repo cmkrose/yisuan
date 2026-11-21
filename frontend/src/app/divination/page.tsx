@@ -83,6 +83,12 @@ export default function DivinationPage() {
             <p className="text-xuan-muted font-chinese">古老占卜技艺，为您揭示未来趋势</p>
           </motion.div>
 
+          <div className="mb-4 text-center">
+            <a href="/divination/liuren" className="inline-block px-4 py-2 text-sm font-chinese border border-purple-400/40 text-purple-300 rounded-lg hover:bg-purple-500/10 transition-all">
+              大六壬 · 月将加时 · 四课三传 →
+            </a>
+          </div>
+
           {/* Tab Selector */}
           <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
             className="grid grid-cols-3 gap-3 mb-8">

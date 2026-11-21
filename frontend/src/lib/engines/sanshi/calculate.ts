@@ -19,8 +19,11 @@ export function sanshiQimen(input: QimenInput): any {
   return { ...chartData, analysis };
 }
 
-export function sanshiLiuren(input: { month: number; hour: number }): any {
-  const chartData = calculateLiuren(input.month, input.hour);
-  const analysis = analyzeLiuren(chartData, input.month, input.hour);
+export function sanshiLiuren(input: { year?: number; month: number; day?: number; hour: number }): any {
+  const now = new Date();
+  const year = input.year ?? now.getFullYear();
+  const day = input.day ?? now.getDate();
+  const chartData = calculateLiuren(year, input.month, day, input.hour);
+  const analysis = analyzeLiuren(chartData);
   return { ...chartData, analysis };
 }

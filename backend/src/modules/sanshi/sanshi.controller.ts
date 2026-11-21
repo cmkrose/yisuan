@@ -11,7 +11,7 @@ export class SanshiController {
   }
 
   @Post('liuren')
-  liuren(@Body() dto: { month: number; hour: number }) {
+  liuren(@Body() dto: { year: number; month: number; day: number; hour: number }) {
     return this.svc.liuren(dto);
   }
 }

@@ -1,4 +1,4 @@
-import { calculateEightMansion, calculateFlyingStars, getCompassData, analyzeHouse, STAR_NAMES, SHAN_ELEMENT, ER_SHI_SI_SHAN, SHAN_BAGUA } from './index';
+import { calculateEightMansion, calculateHouseMansion, getSittingGua, calculateFlyingStars, getCompassData, analyzeHouse, STAR_NAMES, SHAN_ELEMENT, ER_SHI_SI_SHAN, SHAN_BAGUA } from './index';
 
 export class FengshuiService {
 
@@ -29,10 +29,14 @@ export class FengshuiService {
   yangHouse(dto: { facing: string; year: number }) {
     const feixing = calculateFlyingStars(dto.year);
     const house = analyzeHouse(dto.year, dto.facing);
+    const sittingGua = getSittingGua(dto.facing);
+    const bazhai = calculateHouseMansion(sittingGua);
     return {
       type: '阳宅',
       facing: dto.facing,
       year: dto.year,
+      sittingGua,
+      bazhai,
       flyingStars: feixing,
       houseAnalysis: house,
       summary: this.generateYangHouseSummary(dto.facing, feixing, house),
