@@ -109,6 +109,23 @@ export function calculateFlyingStars(year: number): FlyingStarResult {
   return { year, centerStar, grid, wealthPosition };
 }
 
+// 宅运盘：以元运星入中，按洛书轨迹顺飞（与年盘同一轨迹）。
+export function calculateYunFlyingStars(yun: number) {
+  const centerStar = ((yun - 1) % 9 + 9) % 9 + 1;
+  const TRACK = [5, 6, 7, 8, 9, 1, 2, 3, 4];
+  const starByPalace: Record<number, number> = {};
+  TRACK.forEach((palace, k) => { starByPalace[palace] = ((centerStar - 1 + k) % 9) + 1; });
+  const grid = PALACE_INDEX_MAP.map((palace) => {
+    const star = starByPalace[palace];
+    const info = STAR_NAMES[star];
+    return { palace, star, name: info.name, fortune: info.fortune, element: info.element, color: info.color, note: info.note };
+  });
+  const wealthEntry = grid.find((g) => g.star === 8);
+  const wealthPalace = wealthEntry ? wealthEntry.palace : 5;
+  const wealthPosNames: Record<number, string> = { 1:'北',2:'西南',3:'东',4:'东南',5:'中',6:'西北',7:'西',8:'东北',9:'南' };
+  return { yun: centerStar, centerStar, grid, wealthPosition: wealthPosNames[wealthPalace] || '不明' };
+}
+
 export function getCompassData(): CompassData {
   const mountains = ER_SHI_SI_SHAN.map((name) => ({
     name,
