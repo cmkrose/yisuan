@@ -17,6 +17,7 @@ const footerLinks = {
   关于: [
     { name: '关于我们', href: '/about' },
     { name: '联系我们', href: '/contact' },
+    { name: '意见反馈', href: '/contact#feedback' },
     { name: '隐私政策', href: '/privacy' },
     { name: '用户协议', href: '/terms' },
   ],
