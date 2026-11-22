@@ -126,6 +126,34 @@ export function calculateYunFlyingStars(yun: number) {
   return { yun: centerStar, centerStar, grid, wealthPosition: wealthPosNames[wealthPalace] || '不明' };
 }
 
+const GUA_PALACE: Record<string, number> = { 坎:1, 坤:2, 震:3, 巽:4, 中:5, 乾:6, 兑:7, 艮:8, 离:9 };
+// 三元龙阴阳：天元龙乾巽艮坤阳、子午卯酉阴；地元龙甲庚壬丙阳、辰戌丑未阴；人元龙寅申巳亥阳、乙辛丁癸阴。
+const YANG_SHAN = new Set(['乾','巽','艮','坤','甲','庚','壬','丙','寅','申','巳','亥']);
+function directionalGrid(centerStar: number, forward: boolean) {
+  const TRACK = [5, 6, 7, 8, 9, 1, 2, 3, 4];
+  const out: Record<number, number> = {};
+  TRACK.forEach((palace, k) => {
+    out[palace] = ((centerStar - 1 + (forward ? k : -k)) % 9 + 9) % 9 + 1;
+  });
+  return out;
+}
+
+// 山向盘：以坐山/向首所在宫的运星入中，按三元龙阴阳顺逆飞布。
+export function calculateShanXiang(shan: string, xiang: string, yun: number) {
+  const yunStars = calculateYunFlyingStars(yun);
+  const shanPalace = GUA_PALACE[SHAN_BAGUA[shan]] || 1;
+  const xiangPalace = GUA_PALACE[SHAN_BAGUA[xiang]] || 1;
+  const shanCenter = yunStars.grid.find((g) => g.palace === shanPalace)?.star || 5;
+  const xiangCenter = yunStars.grid.find((g) => g.palace === xiangPalace)?.star || 5;
+  const shanForward = YANG_SHAN.has(shan);
+  const xiangForward = YANG_SHAN.has(xiang);
+  return {
+    yun, shan, xiang, shanPalace, xiangPalace, shanCenter, xiangCenter, shanForward, xiangForward,
+    shanByPalace: directionalGrid(shanCenter, shanForward),
+    xiangByPalace: directionalGrid(xiangCenter, xiangForward),
+  };
+}
+
 export function getCompassData(): CompassData {
   const mountains = ER_SHI_SI_SHAN.map((name) => ({
     name,

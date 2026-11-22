@@ -10,7 +10,7 @@ import { yearRangeDesc } from '@/lib/utils/year';
 import { STAR_NAMES } from '@/lib/constants/fengshui';
 import { ER_SHI_SI_SHAN } from '@/lib/engines/fengshui/constants';
 import { BAZHAI_STARS, FEIXING_STARS, FEIXING_COMBOS, FEIXING_COMBO_LEVEL, YANGZHAI_HOUSES, YINZHAI_TOPICS } from '@/lib/data/meanings/fengshui-meanings';
-import { calculateHouseMansion, calculateYunFlyingStars } from '@/lib/engines/fengshui/engine';
+import { calculateHouseMansion, calculateYunFlyingStars, calculateShanXiang } from '@/lib/engines/fengshui/engine';
 
 const HOUSE_SITS = [
   { gua: '坎', label: '坐北（坎）' }, { gua: '坤', label: '坐西南（坤）' },
@@ -289,13 +289,16 @@ export default function FengshuiPage() {
 
   const [fsYear, setFsYear] = useState(new Date().getFullYear());
   const [fsBuildYear, setFsBuildYear] = useState(new Date().getFullYear());
+  const [fsShan, setFsShan] = useState('子');
+  const [fsXiang, setFsXiang] = useState('午');
   const runFeixing = async () => {
     setLoading(true);
     try {
       const base: any = fengshuiFlyingStars({ year: Number(fsYear) });
       const yun = yunOf(Number(fsBuildYear));
       const yunStars = calculateYunFlyingStars(yun);
-      setResult({ type: 'feixing', data: { ...base, buildYear: Number(fsBuildYear), yun, yunStars } });
+      const shanXiang = calculateShanXiang(fsShan, fsXiang, yun);
+      setResult({ type: 'feixing', data: { ...base, buildYear: Number(fsBuildYear), yun, yunStars, shanXiang } });
     } catch (e) {} finally { setLoading(false); }
   };
 
@@ -550,31 +553,47 @@ export default function FengshuiPage() {
             {tab === 'feixing' && (
               <motion.div key="feixing" initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }}>
                 <div className="card-xuan-gold p-6 sm:p-8 mb-6">
-                  <div className="flex gap-4 mb-4 items-end">
-                    <div className="flex-1">
-                      <label className="text-xs text-xuan-muted font-chinese mb-1 block">年份</label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                    <div>
+                      <label className="text-xs text-xuan-muted font-chinese mb-1 block">年盘年份</label>
                       <select value={fsYear} onChange={e => setFsYear(Number(e.target.value))}
                         className="w-full px-3 py-3 bg-xuan-dark border border-xuan-border rounded-lg text-sm text-white">
                         {yearRangeDesc().map(y=><option key={y} value={y}>{y}年</option>)}
                       </select>
                     </div>
-                    <div className="flex-1">
+                    <div>
                       <label className="text-xs text-xuan-muted font-chinese mb-1 block">入住/建造年份</label>
                       <select value={fsBuildYear} onChange={e => setFsBuildYear(Number(e.target.value))}
                         className="w-full px-3 py-3 bg-xuan-dark border border-xuan-border rounded-lg text-sm text-white">
                         {yearRangeDesc().map(y => <option key={y} value={y}>{y}年</option>)}
                       </select>
                     </div>
-                    <button onClick={runFeixing} disabled={loading} className="btn-gold px-6 py-3 font-chinese disabled:opacity-50">
-                      {loading ? '...' : '推算'}
-                    </button>
+                    <div>
+                      <label className="text-xs text-xuan-muted font-chinese mb-1 block">坐山</label>
+                      <select value={fsShan} onChange={e => setFsShan(e.target.value)}
+                        className="w-full px-3 py-3 bg-xuan-dark border border-xuan-border rounded-lg text-sm text-white">
+                        {ER_SHI_SI_SHAN.map(s => <option key={s} value={s}>{s}山</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs text-xuan-muted font-chinese mb-1 block">向首</label>
+                      <select value={fsXiang} onChange={e => setFsXiang(e.target.value)}
+                        className="w-full px-3 py-3 bg-xuan-dark border border-xuan-border rounded-lg text-sm text-white">
+                        {ER_SHI_SI_SHAN.map(s => <option key={s} value={s}>{s}山</option>)}
+                      </select>
+                    </div>
                   </div>
+                  <button onClick={runFeixing} disabled={loading} className="w-full btn-gold py-3 font-chinese disabled:opacity-50">
+                    {loading ? '...' : '推算'}
+                  </button>
                 </div>
                 {result?.type === 'feixing' && (
                   <div className="space-y-4">
                     <div className="card-xuan p-4 flex flex-wrap gap-2 text-sm font-chinese">
                       <span className="px-3 py-1 bg-purple-500/10 text-purple-400 rounded-full">{result.data.year}年</span>
                       <span className="px-3 py-1 bg-cyan-500/10 text-cyan-400 rounded-full">{result.data.buildYear}年入住 · {result.data.yun}运</span>
+                      <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full">坐山 {result.data.shanXiang?.shan} · 向首 {result.data.shanXiang?.xiang}</span>
+                      <span className="px-3 py-1 bg-amber-500/10 text-amber-400 rounded-full">山星入中 {result.data.shanXiang?.shanCenter} · 向星入中 {result.data.shanXiang?.xiangCenter}</span>
                       <span className="px-3 py-1 bg-xuan-gold/10 text-xuan-gold rounded-full">中宫: {STAR_NAMES[result.data.centerStar]?.name || result.data.centerStar}</span>
                       <span className="px-3 py-1 bg-amber-500/10 text-amber-400 rounded-full">财位: {result.data.wealthPosition}方</span>
                     </div>
@@ -595,30 +614,29 @@ export default function FengshuiPage() {
                           const m = FEIXING_STARS[(starInfo?.name || g.name || '').slice(0, 2)];
                           const yg = result.data.yunStars?.grid.find((x: any) => x.palace === g.palace);
                           const yInfo = yg ? STAR_NAMES[yg.star] : null;
-                          const ym = yg ? FEIXING_STARS[(yInfo?.name || '').slice(0, 2)] : null;
-                          const keyA = yg ? `${Math.min(g.star, yg.star)}-${Math.max(g.star, yg.star)}` : '';
-                          const combo = yg ? (FEIXING_COMBOS[keyA] || FEIXING_COMBOS[`${g.star}-${yg.star}`] || '') : '';
-                          const level = yg ? (FEIXING_COMBO_LEVEL[keyA] || FEIXING_COMBO_LEVEL[`${g.star}-${yg.star}`] || '平') : '平';
+                          const sg = result.data.shanXiang?.shanByPalace[g.palace];
+                          const xg = result.data.shanXiang?.xiangByPalace[g.palace];
+                          const sm = sg ? FEIXING_STARS[(STAR_NAMES[sg]?.name || '').slice(0, 2)] : null;
+                          const xm = xg ? FEIXING_STARS[(STAR_NAMES[xg]?.name || '').slice(0, 2)] : null;
+                          const keyA = sg && xg ? `${Math.min(sg, xg)}-${Math.max(sg, xg)}` : '';
+                          const combo = keyA ? (FEIXING_COMBOS[keyA] || FEIXING_COMBOS[`${sg}-${xg}`] || '') : '';
+                          const level = keyA ? (FEIXING_COMBO_LEVEL[keyA] || FEIXING_COMBO_LEVEL[`${sg}-${xg}`] || '平') : '平';
                           return (
                             <div key={i} title={m ? `${m.nature}｜${m.detail}` : ''} className={`p-2.5 rounded-lg border bg-gradient-to-br ${colors} text-center`}>
                               <div className="text-[10px] text-xuan-muted mb-0.5">{['东南','南','西南','东','中','西','东北','北','西北'][i]}</div>
-                              {yg ? (
-                                <div className="text-[11px] font-chinese font-bold text-white">运{yg.star} · 年{g.star}</div>
-                              ) : (
-                                <div className="text-xl font-chinese font-bold text-white">{g.star}</div>
-                              )}
+                              <div className="text-[11px] font-chinese font-bold text-white">运{yg?.star ?? '—'} · 山{sg ?? '—'} · 向{xg ?? '—'}</div>
                               <div className="text-[10px] font-chinese mt-0.5">{starInfo?.name || g.name}</div>
-                              {yg && <div className="text-[9px] font-chinese text-xuan-muted">运星 {yInfo?.name} · 年星 {starInfo?.name}</div>}
-                              <div className={`text-[9px] font-chinese ${level === '吉' ? 'text-emerald-300' : level === '凶' ? 'text-red-300' : 'text-xuan-gold/80'}`}>双星{level}</div>
+                              <div className="text-[9px] font-chinese text-xuan-muted">运星 {yInfo?.name || '—'} · 年星 {starInfo?.name || '—'}</div>
+                              <div className={`text-[9px] font-chinese ${level === '吉' ? 'text-emerald-300' : level === '凶' ? 'text-red-300' : 'text-xuan-gold/80'}`}>山向二星{level}</div>
                               {combo ? (
                                 <div className="text-[9px] font-chinese text-xuan-silver mt-0.5 leading-snug">{combo}</div>
                               ) : (
                                 <>
-                                  {m && <div className="text-[9px] font-chinese text-xuan-muted mt-0.5 leading-snug">{m.brief}</div>}
-                                  {ym && <div className="text-[9px] font-chinese text-xuan-muted leading-snug">运：{ym.brief}</div>}
+                                  {sm && <div className="text-[9px] font-chinese text-xuan-muted mt-0.5 leading-snug">山：{sm.brief}</div>}
+                                  {xm && <div className="text-[9px] font-chinese text-xuan-muted leading-snug">向：{xm.brief}</div>}
                                 </>
                               )}
-                              {m && <div className="text-[9px] font-chinese text-xuan-gold/80 mt-0.5">{m.nature}</div>}
+                              {m && <div className="text-[9px] font-chinese text-xuan-gold/80 mt-0.5">年星{m.nature}</div>}
                             </div>
                           );
                         })}

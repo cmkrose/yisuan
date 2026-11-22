@@ -6,7 +6,7 @@ import Navbar from '@/components/layout/Header/Navbar';
 import Footer from '@/components/layout/Footer/Footer';
 import { sanshiLiuren } from '@/lib/engines/sanshi/calculate';
 import { yearRangeDesc } from '@/lib/utils/year';
-import { LIUREN_GENERALS, LIUREN_PATTERNS, LIUREN_MONTH_GENERALS } from '@/lib/data/meanings/liuren-meanings';
+import { LIUREN_GENERALS, LIUREN_PATTERNS, LIUREN_MONTH_GENERALS, LIUREN_LIUQIN, LIUREN_CHUAN_STAGE } from '@/lib/data/meanings/liuren-meanings';
 
 const defaultForm = () => {
   const n = new Date();
@@ -134,14 +134,42 @@ export default function LiurenPage() {
                         {LIUREN_GENERALS[c.general]?.brief && (
                           <div className="text-[10px] text-xuan-muted font-chinese mt-1 leading-snug">{LIUREN_GENERALS[c.general].brief}</div>
                         )}
+                        <div className="text-[10px] text-xuan-muted font-chinese leading-snug">主事：{LIUREN_CHUAN_STAGE[c.sequence]} · 六亲：{LIUREN_LIUQIN[c.liuqin]}</div>
+                        {LIUREN_GENERALS[c.general]?.detail && (
+                          <div className="text-[10px] text-xuan-silver/80 font-chinese leading-snug mt-0.5">{LIUREN_GENERALS[c.general].detail}</div>
+                        )}
                       </div>
                     ))}
                   </div>
                 </div>
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="card-xuan p-4">
+                  <h4 className="text-sm font-chinese font-bold text-xuan-gold mb-2">四课要点</h4>
+                  <div className="space-y-1">
+                    {result.lessons.map((l: any, i: number) => (
+                      <div key={l.label} className="text-[11px] font-chinese text-xuan-silver">
+                        <span className="text-xuan-gold">{l.label}</span> {l.lower}→{l.upper}
+                        <span className="text-xuan-muted"> · {['自身/日干', '外部/干上', '家庭/日支', '隐情/支上'][i]} · {l.relation || '无克'}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="card-xuan p-4">
+                  <h4 className="text-sm font-chinese font-bold text-xuan-gold mb-2">贵人顺逆 · 旬空</h4>
+                  <p className="text-[11px] font-chinese text-xuan-silver leading-relaxed">
+                    贵人{result.generalStart.gui}（{result.generalStart.dayNight}贵）临地盘{result.generalStart.sitsOn}，{result.generalStart.forward ? '顺布' : '逆布'}。
+                  </p>
+                  <p className="text-[11px] font-chinese text-xuan-silver leading-relaxed mt-1">
+                    旬空：{result.xunKong.xun} 空{result.xunKong.branches.join('')}；落在三传：
+                    {result.chuan.filter((c: any) => result.xunKong.branches.includes(c.branch)).map((c: any) => `${c.sequence}${c.branch}`).join('、') || '不落三传'}。
+                  </p>
+                </div>
+              </div>
+
               <div className="card-xuan-gold p-6">
-                <h4 className="text-sm font-chinese font-bold text-xuan-gold mb-2">课体 · {result.pattern}</h4>
+                <h4 className="text-sm font-chinese font-bold text-xuan-gold mb-2">课体断语 · {result.pattern}</h4>
                 {patternInfo ? (
                   <>
                     <div className="text-[11px] font-chinese text-xuan-cyan mb-1">{result.method} · {patternInfo.nature}</div>

@@ -12,7 +12,7 @@ export interface XiaoLiuRenResult {
 
 const NAMES = ['大安','留连','速喜','赤口','小吉','空亡'];
 
-const POSITIONS = [
+export const XIAOLIUREN_POSITIONS = [
   { name:'大安', fortune:'大吉', direction:'东方', meaning:'身不动时，五行属木，颜色青色，方位东方。临青龙，凡谋事主一、五、七。', suggestion:'大安事事昌，求谋在东方，失物不远去，宅舍保安康。' },
   { name:'留连', fortune:'中平', direction:'北方', meaning:'人未归时，五行属水，颜色黑色，方位北方。临玄武，凡谋事主二、八、十。', suggestion:'留连事难成，求谋日不明，官事只宜缓，去者未回程。' },
   { name:'速喜', fortune:'小吉', direction:'南方', meaning:'人便至时，五行属火，颜色红色，方位南方。临朱雀，凡谋事主三、六、九。', suggestion:'速喜喜来临，求财向南行，失物申午见，行人路上寻。' },
@@ -26,7 +26,7 @@ export function xiaoLiuRenDivine(month: number, day: number, hour: number): Xiao
   const m = month || 1, d = day || 1;
   const hi = Math.floor(((hour || 0) + 1) / 2) % 12;
   const index = ((m - 1 + d - 1 + hi) % 6 + 6) % 6;
-  return { ...POSITIONS[index], index, position: NAMES[index] };
+  return { ...XIAOLIUREN_POSITIONS[index], index, position: NAMES[index] };
 }
 
 export function quickDivine(): XiaoLiuRenResult {
@@ -37,5 +37,5 @@ export function quickDivine(): XiaoLiuRenResult {
 
 export function randomDivine(): XiaoLiuRenResult {
   const idx = Math.floor(Math.random() * 6);
-  return { ...POSITIONS[idx], index: idx, position: NAMES[idx] };
+  return { ...XIAOLIUREN_POSITIONS[idx], index: idx, position: NAMES[idx] };
 }

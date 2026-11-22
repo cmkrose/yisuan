@@ -25,6 +25,8 @@ export default function BaziPage() {
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [openDayun, setOpenDayun] = useState<number | null>(null);
+  const [openLiunian, setOpenLiunian] = useState<number | null>(null);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const reportRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -159,6 +161,18 @@ export default function BaziPage() {
     { key: 'weaknesses', title: '命局不足', data: result?.analysis?.detailedAnalysis?.weaknesses },
     { key: 'overallSummary', title: '综合评述', data: result?.analysis?.detailedAnalysis?.overallSummary },
   ];
+
+  const shishenHint = (s: string) => ({
+    正财: '财务/稳定收入', 偏财: '投资/机会财', 正官: '职位/规则', 七杀: '压力/竞争',
+    正印: '学业/贵人', 偏印: '偏门/思考', 食神: '才华/享受', 伤官: '表达/变动',
+    比肩: '同辈/合作', 劫财: '竞争/分利',
+  } as Record<string, string>)[s] || '综合';
+  const findDayunForYear = (year: number) => {
+    const birthYear = result?.input?.birthYear;
+    if (!birthYear || !result?.analysis?.dayun) return null;
+    const age = year - birthYear;
+    return result.analysis.dayun.find((dec: any[]) => age >= dec[0].age && age <= dec[0].age + 9)?.[0] || null;
+  };
 
   return (
     <main className="min-h-screen bg-xuan-black">
@@ -493,36 +507,56 @@ export default function BaziPage() {
                 {activeTab === 'dayun' && (
                   <motion.div key="dayun" initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                     <div className="space-y-4">
-                      {/* DaYun Grid */}
-                      {result.analysis.dayun.map((decade: any[], idx: number) => (
-                        <div key={idx} className="card-xuan-gold p-4">
-                          <h4 className="text-sm font-chinese font-bold text-xuan-gold mb-3">
-                            第{idx + 1}大运（{decade[0].age}-{decade[9].age}岁）
-                          </h4>
-                          <div className="grid grid-cols-5 sm:grid-cols-10 gap-1">
-                            {decade.map((y: any) => (
-                              <div key={y.age} className={`text-center p-1.5 rounded text-xs ${y.isGood ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-red-500/10 border border-red-500/30'}`}>
-                                <div className="text-xuan-muted">{y.age}岁</div>
-                                <div className="font-chinese font-bold text-white">{y.stem}{y.branch}</div>
-                                <div className="text-[10px] text-xuan-muted">{y.element}</div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-
-                      {/* LiuNian */}
-                      <div className="card-xuan-gold p-4">
-                        <h4 className="text-sm font-chinese font-bold text-xuan-gold mb-3">流年运势（近十年）</h4>
-                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                          {result.analysis.liunian.map((l: any) => (
-                            <div key={l.year} className="text-center p-3 bg-xuan-dark rounded-lg border border-xuan-border">
-                              <div className="text-xs text-xuan-muted">{l.year}年</div>
-                              <div className="text-lg font-chinese font-bold text-xuan-gold">{l.stem}{l.branch}</div>
-                              <div className="text-[10px] text-xuan-cyan">{l.shishen}</div>
-                              <div className="text-[10px] text-xuan-muted">{l.element}</div>
+                      <div className="space-y-2">
+                        {result.analysis.dayun.map((decade: any[], idx: number) => {
+                          const d = decade[0];
+                          const open = openDayun === idx;
+                          return (
+                            <div key={idx} className="card-xuan-gold p-4">
+                              <button type="button" onClick={() => setOpenDayun(open ? null : idx)} className="w-full flex items-center justify-between text-left">
+                                <span className="text-sm font-chinese font-bold text-xuan-gold">
+                                  第{idx + 1}大运：{d.stem}{d.branch}（{d.shishen || '十神未明'}） · {d.age}-{decade[9].age}岁
+                                </span>
+                                <span className={`text-xs font-chinese ${d.isGood ? 'text-emerald-400' : 'text-red-400'}`}>
+                                  {d.isGood ? '喜用/扶身' : '忌神/克泄'} {open ? '▲' : '▼'}
+                                </span>
+                              </button>
+                              {open && (
+                                <div className="mt-3 p-3 bg-xuan-dark rounded border border-xuan-border text-xs font-chinese text-xuan-silver leading-relaxed">
+                                  <p>大运干支：{d.stem}{d.branch}（{d.element}），十神：{d.shishen || '未明'}。</p>
+                                  <p className="mt-1">与命局：{d.isGood ? '此运扶助日主/为喜用，适合主动作为、积累资源；' : '此运克泄耗日主/为忌神，宜守成、控风险、先固本。'}命局喜用为{result.analysis.dayMasterAnalysis.favorable.join('、') || '未明'}，忌{result.analysis.dayMasterAnalysis.unfavorable.join('、') || '未明'}。</p>
+                                  <p className="mt-1">十神提示：{shishenHint(d.shishen || '')}。</p>
+                                </div>
+                              )}
                             </div>
-                          ))}
+                          );
+                        })}
+                      </div>
+
+                      <div className="card-xuan-gold p-4">
+                        <h4 className="text-sm font-chinese font-bold text-xuan-gold mb-3">流年运势（近十年，点选看详情）</h4>
+                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                          {result.analysis.liunian.map((l: any, idx: number) => {
+                            const open = openLiunian === idx;
+                            const dy = findDayunForYear(l.year);
+                            return (
+                              <div key={l.year} className={`rounded-lg border ${open ? 'border-xuan-cyan' : 'border-xuan-border'} bg-xuan-dark`}>
+                                <button type="button" onClick={() => setOpenLiunian(open ? null : idx)} className="w-full text-center p-3">
+                                  <div className="text-xs text-xuan-muted">{l.year}年</div>
+                                  <div className="text-lg font-chinese font-bold text-xuan-gold">{l.stem}{l.branch}</div>
+                                  <div className="text-[10px] text-xuan-cyan">{l.shishen}</div>
+                                  <div className="text-[10px] text-xuan-muted">{l.element}</div>
+                                </button>
+                                {open && (
+                                  <div className="px-3 pb-3 text-[11px] font-chinese text-xuan-silver leading-relaxed">
+                                    <p>流年{l.year}：{l.stem}{l.branch}（{l.shishen}），{shishenHint(l.shishen)}。</p>
+                                    <p className="mt-1">与命局：{/官|杀/.test(l.shishen) ? '官杀主压力/职位，注意规则与健康。' : /财/.test(l.shishen) ? '财星主财务/机会，收支同步放大。' : /印/.test(l.shishen) ? '印星主学习/贵人，利文书与平台。' : /食|伤/.test(l.shishen) ? '食伤主表达/变动，利创作与副业。' : '比劫主同辈/竞争，合作需分明。'}</p>
+                                    <p className="mt-1">所在大运：{dy ? `${dy.stem}${dy.branch}（${dy.shishen || '十神未明'}）` : '数据未取到'}。</p>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     </div>

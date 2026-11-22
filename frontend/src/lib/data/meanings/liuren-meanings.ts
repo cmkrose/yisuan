@@ -152,3 +152,18 @@ export const LIUREN_MONTH_GENERALS: Record<string, MonthGeneralMeaning> = {
   '大吉': { branch: '丑', solarTerm: '冬至后', brief: '大吉丑将，主厚重积累、田产根基。' },
   '神后': { branch: '子', solarTerm: '大寒后', brief: '神后子将，主阴水智慧、隐伏待发。' },
 };
+
+// 六亲与三传阶段断语（通行大六壬口径，供结果页逐项展示）。
+export const LIUREN_LIUQIN: Record<string, string> = {
+  父母: '文书、学业、长辈与庇护',
+  兄弟: '同辈、竞争、合伙与分利',
+  妻财: '财务、投资、妻子与交易',
+  官鬼: '事业、职位、压力与官非',
+  子孙: '子女、解忧、投资与福气',
+};
+
+export const LIUREN_CHUAN_STAGE: Record<string, string> = {
+  初传: '事之初起/起因',
+  中传: '发展/过程',
+  末传: '结果/归宿',
+};

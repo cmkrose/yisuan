@@ -34,6 +34,7 @@ export interface Dayun {
   branch: DiZhi;
   element: WuXing;
   isGood: boolean;
+  shishen?: string;
 }
 
 export interface DetailedAnalysis {
@@ -291,6 +292,7 @@ export function calcDayun(bazi: BaziResult, gender: 'male' | 'female'): Dayun[][
         branch,
         element: getStemElement(stem),
         isGood: favor,
+        shishen: shi,
       });
     }
     result.push(decade);

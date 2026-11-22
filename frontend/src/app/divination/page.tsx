@@ -6,6 +6,7 @@ import Navbar from '@/components/layout/Header/Navbar';
 import Footer from '@/components/layout/Footer/Footer';
 import { api } from '@/lib/api/client';
 import { divLiuyao, divMeihuaTime, divMeihuaNumber, divMeihuaName, divXiaoLiuRen, divXiaoLiuRenRandom } from '@/lib/engines/divination/calculate';
+import { XIAOLIUREN_POSITIONS } from '@/lib/engines/divination/xiaoliuren/engine';
 import { solarToLunar } from '@/lib/utils/lunar';
 
 type TabKey = 'liuyao' | 'meihua' | 'xiaoliuren';
@@ -16,12 +17,23 @@ const tabs: { key: TabKey; label: string; icon: string; desc: string }[] = [
   { key: 'xiaoliuren', label: '小六壬', icon: '☯', desc: '掌诀推算 · 大安留连 · 速喜赤口' },
 ];
 
+const LIUYAO_CATS = [
+  { key: 'wealth', label: '财运/投资', yong: ['妻财'], yongLabel: '妻财' },
+  { key: 'career', label: '事业', yong: ['官鬼'], yongLabel: '官鬼' },
+  { key: 'love', label: '感情/婚姻', yong: ['妻财', '官鬼'], yongLabel: '妻财（男）/官鬼（女）' },
+  { key: 'health', label: '健康', yong: ['子孙'], yongLabel: '子孙' },
+  { key: 'study', label: '学业/考试', yong: ['父母'], yongLabel: '父母' },
+  { key: 'travel', label: '出行/决策', yong: ['兄弟'], yongLabel: '兄弟' },
+  { key: 'general', label: '通用', yong: ['子孙'], yongLabel: '子孙' },
+];
+
 export default function DivinationPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('liuyao');
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
   // Six Yao
+  const [liuyaoCat, setLiuyaoCat] = useState('wealth');
   const castLiuyao = async () => { setLoading(true);
     const data = divLiuyao(); setResult({ type:'liuyao', data }); setLoading(false); };
 
@@ -116,6 +128,13 @@ export default function DivinationPage() {
                   <div className="text-6xl font-chinese mb-4">☰</div>
                   <h3 className="text-xl font-chinese font-bold text-xuan-gold mb-2">六爻纳甲起卦</h3>
                   <p className="text-sm text-xuan-muted font-chinese mb-6">心中默念所问之事，点击起卦</p>
+                  <div className="max-w-xs mx-auto mb-4 text-left">
+                    <label className="block text-xs font-chinese text-xuan-muted mb-1.5">占问类别（定用神）</label>
+                    <select value={liuyaoCat} onChange={(e) => setLiuyaoCat(e.target.value)}
+                      className="w-full px-3 py-2.5 bg-xuan-dark border border-xuan-border rounded-lg text-sm text-white">
+                      {LIUYAO_CATS.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
+                    </select>
+                  </div>
                   <button onClick={castLiuyao} disabled={loading}
                     className="btn-gold px-10 py-4 text-lg font-chinese disabled:opacity-50">
                     {loading ? '起卦中...' : '开始起卦'}
@@ -164,6 +183,33 @@ export default function DivinationPage() {
                     <div className="mt-4 p-4 bg-xuan-dark rounded-lg text-sm font-chinese text-xuan-silver leading-relaxed">
                       {result.data.interpretation}
                     </div>
+                    {(() => {
+                      const cat = LIUYAO_CATS.find(c => c.key === liuyaoCat) || LIUYAO_CATS[6];
+                      const ys = result.data.lines.filter((l: any) => cat.yong.includes(l.liuqin));
+                      const movers = result.data.lines.filter((l: any) => l.moving);
+                      return (
+                        <div className="mt-4 space-y-3">
+                          <div className="p-3 bg-xuan-dark rounded-lg border border-xuan-border">
+                            <div className="text-xs text-xuan-gold font-chinese mb-1">本卦大意</div>
+                            <p className="text-xs text-xuan-silver font-chinese leading-relaxed">{result.data.hexagramName}：{result.data.meaning}。{result.data.interpretation}</p>
+                          </div>
+                          <div className="p-3 bg-xuan-dark rounded-lg border border-xuan-border">
+                            <div className="text-xs text-xuan-gold font-chinese mb-1">用神与世应</div>
+                            <p className="text-xs text-xuan-silver font-chinese leading-relaxed">
+                              占问「{cat.label}」，以{cat.yongLabel}为用神；
+                              {ys.length ? `用神在${ys.map((l: any) => `第${l.position}爻（${l.liuqin}，${l.najia}）`).join('、')}${ys.some((l: any) => l.moving) ? '，且发动' : ''}。` : '用神不上卦，需参考伏神或对宫。'}
+                              世爻第{result.data.shiyao}爻，应爻第{result.data.yingyao}爻。
+                            </p>
+                          </div>
+                          <div className="p-3 bg-xuan-dark rounded-lg border border-xuan-border">
+                            <div className="text-xs text-xuan-gold font-chinese mb-1">动爻提示</div>
+                            <p className="text-xs text-xuan-silver font-chinese leading-relaxed">
+                              {movers.length ? movers.map((l: any) => `第${l.position}爻 ${l.najia}${l.liuqin}（${l.liushen}）`).join('；') : '六爻安静，以本卦世应、用神旺衰与月建日辰综合判断。'}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </motion.div>
                 )}
               </motion.div>
@@ -212,14 +258,14 @@ export default function DivinationPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="card-xuan p-4 text-center">
-                        <div className="text-xs text-xuan-muted mb-1">上卦（用）</div>
-                        <div className="text-lg font-chinese font-bold text-xuan-cyan">{result.data.upperGua.name}</div>
-                        <div className="text-xs text-xuan-muted">{result.data.upperGua.element}</div>
+                        <div className="text-xs text-xuan-muted mb-1">体卦</div>
+                        <div className="text-lg font-chinese font-bold text-xuan-gold">{result.data.bodyGua}</div>
+                        <div className="text-xs text-xuan-muted">上{result.data.upperGua.name} / 下{result.data.lowerGua.name}</div>
                       </div>
                       <div className="card-xuan p-4 text-center">
-                        <div className="text-xs text-xuan-muted mb-1">下卦（体）</div>
-                        <div className="text-lg font-chinese font-bold text-xuan-gold">{result.data.lowerGua.name}</div>
-                        <div className="text-xs text-xuan-muted">{result.data.lowerGua.element}</div>
+                        <div className="text-xs text-xuan-muted mb-1">用卦</div>
+                        <div className="text-lg font-chinese font-bold text-xuan-cyan">{result.data.yongGua}</div>
+                        <div className="text-xs text-xuan-muted">{result.data.bodyYongRelation}</div>
                       </div>
                     </div>
                     <div className={`card-xuan p-4 text-center border ${
@@ -228,6 +274,20 @@ export default function DivinationPage() {
                     }`}>
                       <span className="text-sm font-chinese text-xuan-muted">体用关系: </span>
                       <span className="text-lg font-chinese font-bold text-xuan-gold">{result.data.bodyYongRelation}</span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="card-xuan p-4">
+                        <div className="text-xs text-xuan-cyan font-chinese mb-1">互卦 · {result.data.mutualHexagram?.name || '—'}</div>
+                        <p className="text-[11px] text-xuan-silver font-chinese leading-relaxed">
+                          {result.data.mutualHexagram ? `${result.data.mutualHexagram.meaning}：${result.data.mutualHexagram.interpretation}` : '互卦未取到'}
+                        </p>
+                      </div>
+                      <div className="card-xuan p-4">
+                        <div className="text-xs text-xuan-gold font-chinese mb-1">变卦 · {result.data.changedHexagram?.name || '—'}</div>
+                        <p className="text-[11px] text-xuan-silver font-chinese leading-relaxed">
+                          {result.data.changedHexagram ? `${result.data.changedHexagram.meaning}：${result.data.changedHexagram.interpretation}` : '无动爻/变卦未取到'}
+                        </p>
+                      </div>
                     </div>
                     <div className="card-xuan-gold p-4 text-sm font-chinese text-xuan-silver leading-relaxed">
                       {result.data.interpretation}
@@ -312,6 +372,22 @@ export default function DivinationPage() {
                       <div className="text-sm font-chinese text-xuan-gold italic">
                         "{result.data.suggestion}"
                       </div>
+                    </div>
+                    <div className="card-xuan p-4">
+                      <h4 className="text-sm font-chinese font-bold text-xuan-gold mb-3">六宫落位速览</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {XIAOLIUREN_POSITIONS.map((p) => (
+                          <div key={p.name} className={`p-3 rounded-lg border ${p.name === result.data.name ? 'border-xuan-cyan bg-xuan-cyan/5' : 'border-xuan-border bg-xuan-dark'}`}>
+                            <div className="flex justify-between text-xs font-chinese">
+                              <span className="text-xuan-gold">{p.name}</span>
+                              <span className="text-xuan-muted">{p.fortune} · {p.direction}</span>
+                            </div>
+                            <p className="text-[11px] text-xuan-silver font-chinese leading-relaxed mt-1">{p.meaning}</p>
+                            <p className="text-[10px] text-xuan-muted font-chinese mt-1">口诀：{p.suggestion}</p>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="text-[10px] text-xuan-muted font-chinese text-center mt-2">六宫断语为通行小六壬掌诀，模板化参考。</div>
                     </div>
                   </motion.div>
                 )}

@@ -13,6 +13,8 @@ export interface MeihuaResult {
   yongGua: string;
   bodyYongRelation: string;
   interpretation: string;
+  mutualHexagram?: { name: string; symbol: string; meaning: string; interpretation: string };
+  changedHexagram?: { name: string; symbol: string; meaning: string; interpretation: string };
 }
 
 const BAGUA = ['乾','兑','离','震','巽','坎','艮','坤'];
@@ -82,6 +84,19 @@ function buildMeihuaResult(method: string, upperId: number, lowerId: number, mov
   }
 
   const hexagram = HEXAGRAMS[hexId] || HEXAGRAMS[1];
+  const ml = hexagram.lines || [];
+  const findHex = (arr: number[]) => {
+    for (let i = 1; i <= 64; i++) {
+      if (JSON.stringify(HEXAGRAMS[i].lines) === JSON.stringify(arr)) return HEXAGRAMS[i];
+    }
+    return null;
+  };
+  const mutualLines = ml.length === 6 ? [ml[1], ml[2], ml[3], ml[2], ml[3], ml[4]] : [];
+  const mutualHex = findHex(mutualLines);
+  const changedLines = [...ml];
+  if (changedLines.length === 6) changedLines[movingYao - 1] = changedLines[movingYao - 1] ? 0 : 1;
+  const changedHex = findHex(changedLines);
+  const hexBrief = (h: any) => h ? { name: h.name, symbol: h.symbol, meaning: h.meaning, interpretation: h.interpretation } : undefined;
   // 体用：动爻所在卦为「用」，另一卦为「体」。
   const bodyGua = movingYao <= 3 ? upperGua : lowerGua;
   const yongGua = movingYao <= 3 ? lowerGua : upperGua;
@@ -109,5 +124,7 @@ function buildMeihuaResult(method: string, upperId: number, lowerId: number, mov
     yongGua,
     bodyYongRelation: relation,
     interpretation: `${relationMeaning[relation] || ''} 本卦${hexagram.name}，动爻第${movingYao}爻。`,
+    mutualHexagram: hexBrief(mutualHex),
+    changedHexagram: hexBrief(changedHex),
   };
 }

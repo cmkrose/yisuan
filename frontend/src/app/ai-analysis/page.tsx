@@ -42,7 +42,9 @@ export default function AiConsultantPage() {
   const [categories, setCategories] = useState<('bazi' | 'ziwei' | 'divination')[]>(['bazi', 'ziwei']);
   const [prefill, setPrefill] = useState<any>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const endRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const lastAssistantRef = useRef<HTMLDivElement>(null);
+  const shouldScrollRef = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -69,7 +71,13 @@ export default function AiConsultantPage() {
   }, []);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (!shouldScrollRef.current) return;
+    shouldScrollRef.current = false;
+    const box = messagesContainerRef.current;
+    const el = lastAssistantRef.current;
+    if (!box || !el) return;
+    const top = el.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 8;
+    box.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
   }, [messages]);
 
   useEffect(() => {
@@ -167,6 +175,7 @@ export default function AiConsultantPage() {
 
       const assistantMsg: Message = { role: 'assistant', content: '', report: data, timestamp: Date.now() };
       const updatedMessages = [...newMessages, assistantMsg];
+      shouldScrollRef.current = true;
       setMessages(updatedMessages);
       if (convId) {
         updateConversationMessages(convId, updatedMessages);
@@ -227,6 +236,7 @@ export default function AiConsultantPage() {
 
       const assistantMsg: Message = { role: 'assistant', content: '', report: data, timestamp: Date.now() };
       const updatedMessages = [...newMessages, assistantMsg];
+      shouldScrollRef.current = true;
       setMessages(updatedMessages);
       if (convId) {
         updateConversationMessages(convId, updatedMessages);
@@ -411,9 +421,10 @@ export default function AiConsultantPage() {
               ))}
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-4 mb-4 p-4 card-xuan-gold min-h-0">
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto space-y-4 mb-4 p-4 card-xuan-gold min-h-0">
               {messages.map((m, i) => (
-                <motion.div key={i} initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }}
+                <motion.div key={i} ref={i === messages.length - 1 && m.role === 'assistant' ? lastAssistantRef : undefined}
+                  initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }}
                   className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[85%] sm:max-w-[75%] rounded-2xl p-4 ${
                     m.role === 'user' ? 'bg-xuan-gold/10 border border-xuan-gold/30' : 'card-xuan'
@@ -460,7 +471,7 @@ export default function AiConsultantPage() {
                   </div>
                 </div>
               )}
-              <div ref={endRef} />
+              <div ref={undefined} />
             </div>
 
             {messages.length <= 1 && (

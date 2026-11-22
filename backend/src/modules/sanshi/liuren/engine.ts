@@ -73,7 +73,7 @@ function sanhePrev(b: string): string {
   return b;
 }
 
-export interface LiurenLesson { label: string; lower: string; upper: string; }
+export interface LiurenLesson { label: string; lower: string; upper: string; relation?: string; }
 export interface LiurenChuan { sequence: string; branch: string; general: string; liuqin: string; }
 export interface LiurenPlateCell { earth: string; heaven: string; general: string; }
 
@@ -164,6 +164,9 @@ export function calculateLiuren(year: number, month: number, day: number, hour: 
     if (keEl(lowerEl, upperEl)) return { ...l, kind: '下贼上' as const };
     return null;
   }).filter(Boolean) as (LiurenLesson & { kind: '上克下' | '下贼上' })[];
+
+  const keByLabel = new Map(keRecords.map((r) => [r.label, r.kind]));
+  lessons.forEach((l) => { l.relation = keByLabel.get(l.label) || '无克'; });
 
   const isFu = mgIdx === hIdx;
   const isFan = ((mgIdx - hIdx) % 12 + 12) % 12 === 6;

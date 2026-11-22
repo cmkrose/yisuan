@@ -123,6 +123,7 @@ export default function HehunPage() {
                 ))}
               </div>
 
+              <h3 className="text-sm font-chinese font-bold text-xuan-gold">分项明细（五项加权）</h3>
               <div className="space-y-3">
                 {result.dimensions.map((d: any) => (
                   <div key={d.key} className="card-xuan p-4">
