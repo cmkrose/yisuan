@@ -119,7 +119,7 @@ export const FEIXING_STARS: Record<string, FeixingStarMeaning> = {
   },
 };
 
-// 宫内两星组合（键为两星数字升序 'a-b'，顺序无关）；未收录的组合页面只显示两星各自解说。
+// 宫内两星组合（双向键 'a-b' 与 'b-a' 均收录）；未收录的组合页面只显示两星各自解说。
 export const FEIXING_COMBOS: Record<string, string> = {
   '2-5': '二五交加，病伤大凶之兆，主家人疾病缠绵、手术意外，此宫全年忌动土、忌久卧，宜静置铜器泄化。',
   '5-2': '二五交加，病伤大凶之兆，主家人疾病缠绵、手术意外，此宫全年忌动土、忌久卧，宜静置铜器泄化。',
