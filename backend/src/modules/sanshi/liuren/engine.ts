@@ -13,16 +13,23 @@ const KE: Record<string, string> = { 木:'土', 土:'水', 水:'火', 火:'金',
 
 // 日干寄宫（子=0）
 const JIGONG: Record<string, number> = { 甲:2, 乙:4, 丙:5, 丁:7, 戊:5, 己:7, 庚:8, 辛:10, 壬:11, 癸:1 };
+const HOUR_STEM_START: Record<string, number> = { 甲:0, 己:0, 乙:2, 庚:2, 丙:4, 辛:4, 丁:6, 壬:6, 戊:8, 癸:8 };
 const STEM_HE: Record<string, string> = { 甲:'己', 己:'甲', 乙:'庚', 庚:'乙', 丙:'辛', 辛:'丙', 丁:'壬', 壬:'丁', 戊:'癸', 癸:'戊' };
 
-// 中气换将
-const QI_TO_GENERAL: Record<string, { name: string; branch: string }> = {
-  雨水: { name:'登明', branch:'亥' }, 春分: { name:'河魁', branch:'戌' },
-  谷雨: { name:'从魁', branch:'酉' }, 小满: { name:'传送', branch:'申' },
-  夏至: { name:'小吉', branch:'未' }, 大暑: { name:'胜光', branch:'午' },
-  处暑: { name:'太乙', branch:'巳' }, 秋分: { name:'天罡', branch:'辰' },
-  霜降: { name:'太冲', branch:'卯' }, 小雪: { name:'功曹', branch:'寅' },
-  冬至: { name:'大吉', branch:'丑' }, 大寒: { name:'神后', branch:'子' },
+// 与 kinliuren 一致：以当前节气名定月将（中气起，含其后之节）。
+const TERM_TO_GENERAL: Record<string, { name: string; branch: string }> = {
+  雨水: { name:'登明', branch:'亥' }, 惊蛰: { name:'登明', branch:'亥' },
+  春分: { name:'河魁', branch:'戌' }, 清明: { name:'河魁', branch:'戌' },
+  谷雨: { name:'从魁', branch:'酉' }, 立夏: { name:'从魁', branch:'酉' },
+  小满: { name:'传送', branch:'申' }, 芒种: { name:'传送', branch:'申' },
+  夏至: { name:'小吉', branch:'未' }, 小暑: { name:'小吉', branch:'未' },
+  大暑: { name:'胜光', branch:'午' }, 立秋: { name:'胜光', branch:'午' },
+  处暑: { name:'太乙', branch:'巳' }, 白露: { name:'太乙', branch:'巳' },
+  秋分: { name:'天罡', branch:'辰' }, 寒露: { name:'天罡', branch:'辰' },
+  霜降: { name:'太冲', branch:'卯' }, 立冬: { name:'太冲', branch:'卯' },
+  小雪: { name:'功曹', branch:'寅' }, 大雪: { name:'功曹', branch:'寅' },
+  冬至: { name:'大吉', branch:'丑' }, 小寒: { name:'大吉', branch:'丑' },
+  大寒: { name:'神后', branch:'子' }, 立春: { name:'神后', branch:'子' },
 };
 const SANHE_GROUPS = [['申','子','辰'],['亥','卯','未'],['寅','午','戌'],['巳','酉','丑']];
 const YIMA: Record<string, string> = {};
@@ -32,13 +39,17 @@ for (const g of SANHE_GROUPS) {
 }
 const MENG = ['寅','申','巳','亥'];
 const ZHONG = ['子','午','卯','酉'];
+const XING: Record<string, string> = {
+  子:'卯', 卯:'子', 寅:'巳', 巳:'申', 申:'寅', 丑:'戌', 戌:'未', 未:'丑',
+  辰:'辰', 午:'午', 酉:'酉', 亥:'亥',
+};
 const GENERALS = ['贵人','螣蛇','朱雀','六合','勾陈','青龙','天空','白虎','太常','玄武','太阴','天后'];
 const GUI_RULE: Record<string, [string, string]> = {
   甲:['丑','未'], 戊:['丑','未'], 庚:['丑','未'],
   乙:['子','申'], 己:['子','申'],
   丙:['亥','酉'], 丁:['亥','酉'],
   辛:['午','寅'],
-  壬:['卯','巳'], 癸:['卯','巳'],
+  壬:['巳','卯'], 癸:['巳','卯'],
 };
 
 const bi = (i: number) => DIZHI[((i % 12) + 12) % 12];
@@ -84,24 +95,10 @@ export interface LiurenResult {
 }
 
 function getMonthGeneral(year: number, month: number, day: number, hour: number) {
-  const solar = Solar.fromYmdHms(year, month, day, hour, 0, 0);
-  const lunar = solar.getLunar();
-  const target = new Date(year, month - 1, day, hour, 0, 0).getTime();
-  const table: any = lunar.getJieQiTable();
-  let best: { name: string; ts: number } | null = null;
-  let earliest: { name: string; ts: number } | null = null;
-  for (const [name, obj] of Object.entries(table)) {
-    if (!QI_TO_GENERAL[name]) continue;
-    const s: any = obj;
-    if (!s || typeof s.getYear !== 'function') continue;
-    const ts = new Date(s.getYear(), s.getMonth() - 1, s.getDay(), s.getHour(), s.getMinute(), s.getSecond()).getTime();
-    if (!earliest || ts < earliest.ts) earliest = { name, ts };
-    if (ts <= target && (!best || ts > best.ts)) best = { name, ts };
-  }
-  const chosen = best || earliest;
-  const name = chosen?.name || '冬至';
-  const g = QI_TO_GENERAL[name];
-  return { name: g.name, branch: g.branch, qi: name };
+  const lunar = Solar.fromYmdHms(year, month, day, hour, 0, 0).getLunar();
+  const term = lunar.getPrevJieQi(false).getName();
+  const g = TERM_TO_GENERAL[term] || TERM_TO_GENERAL['冬至'];
+  return { name: g.name, branch: g.branch, qi: term };
 }
 
 export function calculateLiuren(year: number, month: number, day: number, hour: number): LiurenResult {
@@ -133,10 +130,38 @@ export function calculateLiuren(year: number, month: number, day: number, hour: 
   const distinct = new Set(lessons.map((l) => `${l.lower}-${l.upper}`)).size;
   const isYangStem = GAN.indexOf(dayStem) % 2 === 0;
   const isYangBranch = (b: string) => idx(b) % 2 === 0;
+  const hourStem = GAN[(HOUR_STEM_START[dayStem] + hIdx) % 10];
+  const hourEl = STEM_ELE[hourStem];
+  const hourBranchEl = BRANCH_ELE[hourBranch];
+  const dayEl = STEM_ELE[dayStem];
+  const dayBranchEl = BRANCH_ELE[dayBranch];
+  const hourStemYang = GAN.indexOf(hourStem) % 2 === 0;
+  const hourBranchYang = hIdx % 2 === 0;
+  const relationToDay = (upper: string) => {
+    const u = BRANCH_ELE[upper];
+    if (u === dayEl) return '比和';
+    if (KE[u] === dayEl) return '克';
+    if (KE[dayEl] === u) return '被克';
+    if (SHENG[dayEl] === u) return '被生';
+    if (SHENG[u] === dayEl) return '生';
+    return '比和';
+  };
+  const shangkeList = lessons.map((l) => relationToDay(l.upper));
+  const kinOrder = [lessons[3], lessons[2], lessons[1], lessons[0]];
+  const charEls: string[] = [];
+  kinOrder.forEach((l, i) => {
+    charEls.push(BRANCH_ELE[l.upper]);
+    charEls.push(i === 3 ? STEM_ELE[dayStem] : BRANCH_ELE[l.lower]);
+  });
+  const elemCounts: Record<string, number> = {};
+  for (const e of charEls) elemCounts[e] = (elemCounts[e] || 0) + 1;
+  const firstElemByCount = (min: number) => charEls.find((e) => (elemCounts[e] || 0) >= min) || '';
 
-  const keRecords = lessons.map((l) => {
-    if (keEl(BRANCH_ELE[l.upper], BRANCH_ELE[l.lower])) return { ...l, kind: '上克下' as const };
-    if (keEl(BRANCH_ELE[l.lower], BRANCH_ELE[l.upper])) return { ...l, kind: '下贼上' as const };
+  const keRecords = lessons.map((l, i) => {
+    const upperEl = BRANCH_ELE[l.upper];
+    const lowerEl = i === 0 ? STEM_ELE[dayStem] : BRANCH_ELE[l.lower];
+    if (keEl(upperEl, lowerEl)) return { ...l, kind: '上克下' as const };
+    if (keEl(lowerEl, upperEl)) return { ...l, kind: '下贼上' as const };
     return null;
   }).filter(Boolean) as (LiurenLesson & { kind: '上克下' | '下贼上' })[];
 
@@ -171,82 +196,113 @@ export function calculateLiuren(year: number, month: number, day: number, hour: 
   let pattern = '';
   let method = '';
 
+  const pickByKe = (pool: (LiurenLesson & { kind: '上克下' | '下贼上' })[]) => {
+    if (pool.length === 1) {
+      const r = pool[0];
+      return {
+        init: r.upper,
+        pattern: r.kind === '下贼上' ? '重审课' : '元首课',
+        method: r.kind === '下贼上' ? '贼克法（一下贼上）' : '贼克法（一上克下）',
+      };
+    }
+    const same = pool.filter((r) => isYangBranch(r.upper) === isYangStem);
+    if (same.length === 1) return { init: same[0].upper, pattern: '知一课', method: '比用法' };
+    const cand = same.length > 1 ? same : pool;
+    const ranked = cand.map((r) => ({ r, score: shehaiScore(r) })).sort((a, b) => b.score - a.score);
+    const topScore = ranked[0].score;
+    const top = ranked.filter((x) => x.score === topScore).map((x) => x.r);
+    const chosen = pickByYinYang(top);
+    return { init: chosen.upper, pattern: '涉害课', method: '涉害法' };
+  };
+
   if (isFu) {
     pattern = '伏吟课';
-    let init: string;
-    if (keRecords.length) {
-      init = pickByYinYang(keRecords).upper;
-      method = '伏吟法（自任）';
-    } else {
-      init = isYangStem ? ganYang : zhiYang;
-      method = '伏吟法（杜传）';
-    }
-    const mid = bi(idx(init) + 6);
-    const last = bi(idx(mid) + 6);
+    const init = keRecords.length ? pickByKe(keRecords as any).init : (isYangStem ? ganYang : zhiYang);
+    method = '伏吟法（自任）';
+    const mid = XING[init] || init;
+    const last = XING[mid] || mid;
     chuanBranches = [init, mid, last];
   } else if (isFan) {
     pattern = '返吟课';
-    if (keRecords.length) {
-      const init = pickByYinYang(keRecords).upper;
+    const zei = keRecords.filter((r) => r.kind === '下贼上');
+    const up = keRecords.filter((r) => r.kind === '上克下');
+    const pool = zei.length ? zei : up;
+    const specialD = isYangStem && zei.length === 2 && !hourStemYang && dayBranchEl !== hourBranchEl && hourStemYang === hourBranchYang;
+    const specialE = up.length === 1 && zei.length === 1 && dayEl !== hourEl && firstElemByCount(4) === dayBranchEl && dayBranchEl !== hourEl;
+    if (specialD) {
+      const init = lessons[2].lower;
+      chuanBranches = [init, tian(idx(init)), tian(idx(tian(idx(init))))];
+      method = '返吟法（元胎赘婿）';
+    } else if (specialE) {
+      const init = lessons[0].upper;
+      chuanBranches = [init, tian(idx(init)), tian(idx(tian(idx(init))))];
+      method = '返吟法（无依）';
+    } else if (pool.length) {
+      const init = pickByKe(pool as any).init;
       chuanBranches = [init, tian(idx(init)), tian(idx(tian(idx(init))))];
       method = '返吟法';
     } else {
       chuanBranches = [YIMA[dayBranch], zhiYang, ganYang];
       method = '返吟法（井栏）';
     }
-  } else if (keRecords.length === 1) {
-    const r = keRecords[0];
-    chuanBranches = chainFrom(r.upper);
-    pattern = r.kind === '上克下' ? '元首课' : '重审课';
-    method = r.kind === '上克下' ? '贼克法（一上克下）' : '贼克法（一下贼上）';
-  } else if (keRecords.length > 1) {
-    const same = keRecords.filter((r) => isYangBranch(r.upper) === isYangStem);
-    if (same.length === 1) {
-      chuanBranches = chainFrom(same[0].upper);
-      pattern = '知一课';
-      method = '比用法';
-    } else {
-      const pool = same.length > 1 ? same : keRecords;
-      const ranked = pool.map((r) => ({ r, score: shehaiScore(r) })).sort((a, b) => b.score - a.score);
-      const topScore = ranked[0].score;
-      const top = ranked.filter((x) => x.score === topScore).map((x) => x.r);
-      const chosen = pickByYinYang(top);
-      chuanBranches = chainFrom(chosen.upper);
-      pattern = '涉害课';
-      method = '涉害法';
-    }
-  } else if (distinct === 2) {
-    pattern = '八专课';
-    method = '八专法';
-    const init = isYangStem ? bi(idx(ganYang) + 3) : bi(idx(zhiYin) - 3);
-    chuanBranches = chainFrom(init);
-  } else if (distinct === 3) {
-    pattern = '别责课';
-    method = '别责法';
-    let init: string;
-    if (isYangStem) {
-      const he = STEM_HE[dayStem];
-      init = tian(JIGONG[he]);
-    } else {
-      init = tian(idx(sanhePrev(dayBranch)));
-    }
-    chuanBranches = [init, ganYang, zhiYang];
   } else {
-    const yao = lessons.filter((l) => keEl(BRANCH_ELE[l.upper], STEM_ELE[dayStem]));
-    const she = lessons.filter((l) => keEl(STEM_ELE[dayStem], BRANCH_ELE[l.upper]));
-    const pool = yao.length ? yao : she;
-    if (pool.length) {
-      const chosen = pickByYinYang(pool as any);
-      chuanBranches = chainFrom(chosen.upper);
-      pattern = '遥克课';
-      method = '遥克法';
+    const zei = keRecords.filter((r) => r.kind === '下贼上');
+    const up = keRecords.filter((r) => r.kind === '上克下');
+    const pool = zei.length ? zei : up;
+    const upCount = up.length;
+    const zeiCount = zei.length;
+    let special: { init: string; pattern: string; method: string } | null = null;
+    if (upCount === 2 && zeiCount === 0 && shangkeList.filter((x) => x === '被克').length > 1 && shangkeList.filter((x) => x === '克').length === 0) {
+      special = { init: lessons[1].upper, pattern: '涉害课', method: '涉害法（间传）' };
+    } else if (zeiCount === 3 && dayStem === hourStem && dayEl === hourEl && hourEl === hourBranchEl) {
+      special = { init: lessons[1].upper, pattern: '涉害课', method: '涉害法（从革）' };
+    } else if (zeiCount === 2 && dayEl === hourEl && dayEl !== hourBranchEl) {
+      special = { init: lessons[2].upper, pattern: '涉害课', method: '涉害法（间传）' };
+    } else if (zeiCount === 2 && isYangStem && hourStemYang && hourBranchYang && firstElemByCount(2) !== hourEl) {
+      special = { init: lessons[3].upper, pattern: '比用课', method: '退茹法' };
+    }
+    if (special) {
+      chuanBranches = chainFrom(special.init);
+      pattern = special.pattern;
+      method = special.method;
+    } else if (pool.length) {
+      const res = pickByKe(pool as any);
+      chuanBranches = chainFrom(res.init);
+      pattern = res.pattern;
+      method = res.method;
+    } else if (distinct === 2) {
+      pattern = '八专课';
+      method = '八专法';
+      const init = isYangStem ? bi(idx(ganYang) + 3) : bi(idx(zhiYin) - 3);
+      chuanBranches = chainFrom(init);
     } else {
-      pattern = '昴星课';
-      method = '昴星法';
-      if (isYangStem) {
-        chuanBranches = [tian(idx('酉')), ganYang, zhiYang];
+      const yao = lessons.filter((l) => keEl(BRANCH_ELE[l.upper], dayEl));
+      const she = lessons.filter((l) => keEl(dayEl, BRANCH_ELE[l.upper]));
+      const ypool = yao.length ? yao : she;
+      if (ypool.length) {
+        const chosen = pickByYinYang(ypool as any);
+        chuanBranches = chainFrom(chosen.upper);
+        pattern = '遥克课';
+        method = '遥克法';
+      } else if (distinct === 3) {
+        pattern = '别责课';
+        method = '别责法';
+        let init: string;
+        if (isYangStem) {
+          const he = STEM_HE[dayStem];
+          init = tian(JIGONG[he]);
+        } else {
+          init = tian(idx(sanhePrev(dayBranch)));
+        }
+        chuanBranches = [init, ganYang, ganYang];
       } else {
-        chuanBranches = [inverseTian('酉'), zhiYang, ganYang];
+        pattern = '昴星课';
+        method = '昴星法';
+        if (isYangStem) {
+          chuanBranches = [tian(idx('酉')), ganYang, zhiYang];
+        } else {
+          chuanBranches = [inverseTian('酉'), zhiYang, ganYang];
+        }
       }
     }
   }
@@ -256,7 +312,7 @@ export function calculateLiuren(year: number, month: number, day: number, hour: 
   const rule = GUI_RULE[dayStem];
   const gui = night ? rule[1] : rule[0];
   const guiDi = DIZHI[diOfTian(gui)];
-  const forward = ['巳','亥','辰','戌','丑','未'].includes(guiDi);
+  const forward = ['亥','子','丑','寅','卯','辰'].includes(guiDi);
   const generalByTian: Record<string, string> = {};
   for (let k = 0; k < 12; k++) {
     const t = bi(idx(gui) + (forward ? k : -k));
@@ -276,7 +332,6 @@ export function calculateLiuren(year: number, month: number, day: number, hour: 
   const xun = `${GAN[xunStart % 10]}${DIZHI[xunStart % 12]}旬`;
   const empties = [bi(xunStart + 10), bi(xunStart + 11)];
 
-  const dayEl = STEM_ELE[dayStem];
   const chuan: LiurenChuan[] = chuanBranches.map((b, i) => ({
     sequence: ['初传', '中传', '末传'][i],
     branch: b,

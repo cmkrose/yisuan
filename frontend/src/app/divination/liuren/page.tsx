@@ -30,7 +30,8 @@ export default function LiurenPage() {
   };
 
   const daysInMonth = new Date(form.year, form.month, 0).getDate();
-  const patternInfo = result ? LIUREN_PATTERNS[result.pattern] : null;
+  const patternKey = result ? (result.pattern === '比用课' ? '知一课' : result.pattern) : null;
+  const patternInfo = patternKey ? LIUREN_PATTERNS[patternKey] : null;
   const monthGeneralInfo = result ? LIUREN_MONTH_GENERALS[result.monthGeneral?.name] : null;
   const chuanGenerals: string[] = result ? Array.from(new Set((result.chuan || []).map((c: any) => c.general).filter(Boolean))) : [];
 
@@ -143,7 +144,7 @@ export default function LiurenPage() {
                 <h4 className="text-sm font-chinese font-bold text-xuan-gold mb-2">课体 · {result.pattern}</h4>
                 {patternInfo ? (
                   <>
-                    <div className="text-[11px] font-chinese text-xuan-cyan mb-1">{patternInfo.method} · {patternInfo.nature}</div>
+                    <div className="text-[11px] font-chinese text-xuan-cyan mb-1">{result.method} · {patternInfo.nature}</div>
                     <p className="text-sm font-chinese text-xuan-silver leading-relaxed">{patternInfo.brief}</p>
                     <p className="text-xs font-chinese text-xuan-muted leading-relaxed mt-2">{patternInfo.detail}</p>
                   </>
